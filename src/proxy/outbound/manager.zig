@@ -5,6 +5,48 @@ const Proxy = @import("../../config.zig").Proxy;
 const ProxyType = @import("../../config.zig").ProxyType;
 const ss = @import("shadowsocks.zig");
 
+/// 代理流包装器
+pub const ProxyStream = struct {
+    base_stream: net.Stream,
+    ss_client: ?*ss.ShadowsocksClient = null,
+    is_encrypted: bool = false,
+
+    pub fn initDirect(stream: net.Stream) ProxyStream {
+        return .{
+            .base_stream = stream,
+            .is_encrypted = false,
+        };
+    }
+
+    pub fn initShadowsocks(stream: net.Stream, client: *ss.ShadowsocksClient) ProxyStream {
+        return .{
+            .base_stream = stream,
+            .ss_client = client,
+            .is_encrypted = true,
+        };
+    }
+
+    pub fn write(self: *ProxyStream, data: []const u8) !void {
+        if (self.is_encrypted) {
+            try self.ss_client.?.write(data);
+        } else {
+            try self.base_stream.writeAll(data);
+        }
+    }
+
+    pub fn read(self: *ProxyStream, buf: []u8) !usize {
+        if (self.is_encrypted) {
+            return try self.ss_client.?.read(buf);
+        } else {
+            return try self.base_stream.read(buf);
+        }
+    }
+
+    pub fn close(self: *ProxyStream) void {
+        self.base_stream.close();
+    }
+};
+
 /// 代理出站管理器
 pub const OutboundManager = struct {
     allocator: std.mem.Allocator,
@@ -45,14 +87,12 @@ pub const OutboundManager = struct {
         self.ss_clients.deinit();
     }
 
-    /// 根据代理名称获取连接
+    /// 根据代理名称建立连接（返回原始 stream，加密由调用方处理）
     pub fn connect(self: *OutboundManager, proxy_name: []const u8, target: []const u8, port: u16) !net.Stream {
-        // 查找代理配置
         const proxy = self.findProxy(proxy_name) orelse return error.ProxyNotFound;
 
         switch (proxy.proxy_type) {
             .direct => {
-                // 直接连接目标
                 var addr_list = try net.getAddressList(self.allocator, target, port);
                 defer addr_list.deinit();
                 if (addr_list.addrs.len == 0) return error.HostNotFound;

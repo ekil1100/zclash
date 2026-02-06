@@ -1,7 +1,7 @@
 const std = @import("std");
 
 /// Shadowsocks AEAD 加密支持
-/// 目前支持：AES-128-GCM, ChaCha20-Poly1305
+/// 支持：AES-128-GCM, AES-256-GCM, ChaCha20-Poly1305
 
 pub const CipherType = enum {
     aes_128_gcm,
@@ -10,62 +10,133 @@ pub const CipherType = enum {
     chacha20_ietf_poly1305,
 };
 
-pub const AeadCipher = struct {
-    cipher_type: CipherType,
-    key: [32]u8,  // Max key size
-    key_len: usize,
-    nonce_len: usize,
-    tag_len: usize = 16,
-
-    pub fn init(cipher_type: CipherType, password: []const u8, salt: []const u8) !AeadCipher {
-        var cipher: AeadCipher = undefined;
-        cipher.cipher_type = cipher_type;
-
-        switch (cipher_type) {
-            .aes_128_gcm => {
-                cipher.key_len = 16;
-                cipher.nonce_len = 12;
-            },
-            .aes_256_gcm => {
-                cipher.key_len = 32;
-                cipher.nonce_len = 12;
-            },
-            .chacha20_poly1305, .chacha20_ietf_poly1305 => {
-                cipher.key_len = 32;
-                cipher.nonce_len = 12;
-            },
+/// Shadowsocks 流封装（AEAD Chunk）
+pub const AeadStream = struct {
+    cipher: AeadCipher,
+    enc_nonce: [12]u8 = std.mem.zeroes([12]u8),
+    dec_nonce: [12]u8 = std.mem.zeroes([12]u8),
+    
+    pub const AeadCipher = union(enum) {
+        aes_128_gcm: [16]u8,
+        aes_256_gcm: [32]u8,
+        chacha20_poly1305: [32]u8,
+        
+        pub fn init(cipher_type: CipherType, password: []const u8, salt: []const u8) !AeadCipher {
+            switch (cipher_type) {
+                .aes_128_gcm => {
+                    var key: [16]u8 = undefined;
+                    try hkdfSha1(password, salt, &key);
+                    return .{ .aes_128_gcm = key };
+                },
+                .aes_256_gcm => {
+                    var key: [32]u8 = undefined;
+                    try hkdfSha1(password, salt, &key);
+                    return .{ .aes_256_gcm = key };
+                },
+                .chacha20_poly1305, .chacha20_ietf_poly1305 => {
+                    var key: [32]u8 = undefined;
+                    try hkdfSha1(password, salt, &key);
+                    return .{ .chacha20_poly1305 = key };
+                },
+            }
         }
-
-        // Derive key using HKDF-SHA1 (Shadowsocks standard)
-        try hkdfSha1(password, salt, cipher.key[0..cipher.key_len]);
-
-        return cipher;
+        
+        pub fn tagLen(self: AeadCipher) usize {
+            _ = self;
+            return 16;
+        }
+        
+        pub fn encrypt(self: AeadCipher, nonce: [12]u8, plaintext: []const u8, ciphertext: []u8, tag: []u8) void {
+            switch (self) {
+                .aes_128_gcm => |key| {
+                    std.crypto.aead.aes_gcm.Aes128Gcm.encrypt(ciphertext, tag[0..16], plaintext, &[_]u8{}, nonce, key);
+                },
+                .aes_256_gcm => |key| {
+                    std.crypto.aead.aes_gcm.Aes256Gcm.encrypt(ciphertext, tag[0..16], plaintext, &[_]u8{}, nonce, key);
+                },
+                .chacha20_poly1305 => |key| {
+                    std.crypto.aead.chacha_poly.ChaCha20Poly1305.encrypt(ciphertext, tag[0..16], plaintext, &[_]u8{}, nonce, key);
+                },
+            }
+        }
+        
+        pub fn decrypt(self: AeadCipher, nonce: [12]u8, ciphertext: []const u8, tag: []const u8, plaintext: []u8) !void {
+            switch (self) {
+                .aes_128_gcm => |key| {
+                    try std.crypto.aead.aes_gcm.Aes128Gcm.decrypt(plaintext, ciphertext, tag[0..16], &[_]u8{}, nonce, key);
+                },
+                .aes_256_gcm => |key| {
+                    try std.crypto.aead.aes_gcm.Aes256Gcm.decrypt(plaintext, ciphertext, tag[0..16], &[_]u8{}, nonce, key);
+                },
+                .chacha20_poly1305 => |key| {
+                    try std.crypto.aead.chacha_poly.ChaCha20Poly1305.decrypt(plaintext, ciphertext, tag[0..16], &[_]u8{}, nonce, key);
+                },
+            }
+        }
+    };
+    
+    pub fn init(cipher_type: CipherType, password: []const u8, salt: []const u8) !AeadStream {
+        const cipher = try AeadCipher.init(cipher_type, password, salt);
+        return .{
+            .cipher = cipher,
+        };
     }
-
-    /// 加密数据：out 必须有足够空间 (in.len + tag_len)
-    pub fn encrypt(self: *const AeadCipher, nonce: []const u8, in: []const u8, out: []u8) !void {
-        _ = self;
-        _ = nonce;
-        _ = in;
-        _ = out;
-        // TODO: 实际加密实现
-        // 需要使用 OpenSSL 或自研 crypto
-        return error.NotImplemented;
+    
+    /// 加密一块数据（Shadowsocks AEAD chunk）
+    /// chunk 格式: [len (2 bytes encrypted + 16 byte tag)][payload (n bytes encrypted + 16 byte tag)]
+    pub fn encryptChunk(self: *AeadStream, payload: []const u8, out: []u8) !usize {
+        const tag_len = self.cipher.tagLen();
+        
+        // 加密长度 (2 bytes)
+        const len_bytes = [2]u8{
+            @intCast(payload.len >> 8),
+            @intCast(payload.len & 0xFF),
+        };
+        
+        self.cipher.encrypt(self.enc_nonce, &len_bytes, out[0..2], out[2..2+tag_len]);
+        incrementNonce(&self.enc_nonce);
+        
+        // 加密 payload
+        const payload_out = out[2+tag_len..];
+        self.cipher.encrypt(self.enc_nonce, payload, payload_out[0..payload.len], payload_out[payload.len..payload.len+tag_len]);
+        incrementNonce(&self.enc_nonce);
+        
+        return 2 + tag_len + payload.len + tag_len;
     }
-
-    /// 解密数据
-    pub fn decrypt(self: *const AeadCipher, nonce: []const u8, in: []const u8, out: []u8) !void {
-        _ = self;
-        _ = nonce;
-        _ = in;
-        _ = out;
-        return error.NotImplemented;
+    
+    /// 解密长度头
+    pub fn decryptLen(self: *AeadStream, enc_len: []const u8) !u16 {
+        const tag_len = self.cipher.tagLen();
+        if (enc_len.len != 2 + tag_len) return error.InvalidLength;
+        
+        var len_bytes: [2]u8 = undefined;
+        try self.cipher.decrypt(self.dec_nonce, enc_len[0..2], enc_len[2..2+tag_len], &len_bytes);
+        incrementNonce(&self.dec_nonce);
+        
+        return (@as(u16, len_bytes[0]) << 8) | len_bytes[1];
+    }
+    
+    /// 解密 payload
+    pub fn decryptPayload(self: *AeadStream, enc_payload: []const u8, out: []u8) !void {
+        const tag_len = self.cipher.tagLen();
+        if (enc_payload.len < tag_len) return error.InvalidLength;
+        
+        const payload_len = enc_payload.len - tag_len;
+        try self.cipher.decrypt(self.dec_nonce, enc_payload[0..payload_len], enc_payload[payload_len..], out[0..payload_len]);
+        incrementNonce(&self.dec_nonce);
+    }
+    
+    fn incrementNonce(nonce: *[12]u8) void {
+        var i: usize = 0;
+        while (i < 12) : (i += 1) {
+            nonce[i] +%= 1;
+            if (nonce[i] != 0) break;
+        }
     }
 };
 
-/// HKDF-SHA1 key derivation (Shadowsocks standard)
+/// HKDF-SHA1 key derivation (Shadowsocks standard EVP_BytesToKey style)
 fn hkdfSha1(password: []const u8, salt: []const u8, out: []u8) !void {
-    // Simplified HKDF: EVP_BytesToKey style
     var buf: [64]u8 = undefined;
     var last: []const u8 = password;
     var offset: usize = 0;
@@ -131,4 +202,29 @@ pub const Address = struct {
 test "hkdf sha1" {
     var key: [16]u8 = undefined;
     try hkdfSha1("password", &[_]u8{0} ** 32, &key);
+}
+
+test "chacha20-poly1305 encrypt/decrypt" {
+    const password = "C7a6kndb";
+    var salt: [32]u8 = undefined;
+    std.crypto.random.bytes(&salt);
+    
+    var stream = try AeadStream.init(.chacha20_poly1305, password, &salt);
+    
+    const plaintext = "Hello, Shadowsocks!";
+    var encrypted: [100]u8 = undefined;
+    
+    const enc_len = try stream.encryptChunk(plaintext, &encrypted);
+    
+    // Decrypt
+    const tag_len = 16;
+    const enc_len_hdr = encrypted[0..2+tag_len];
+    const payload_len = try stream.decryptLen(enc_len_hdr);
+    try std.testing.expectEqual(plaintext.len, payload_len);
+    
+    const enc_payload = encrypted[2+tag_len..enc_len];
+    var decrypted: [100]u8 = undefined;
+    try stream.decryptPayload(enc_payload, &decrypted);
+    
+    try std.testing.expectEqualStrings(plaintext, decrypted[0..payload_len]);
 }
