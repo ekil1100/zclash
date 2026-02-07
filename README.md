@@ -31,6 +31,7 @@
 - [x] REST API (端口 9090)
 - [x] WebSocket 传输
 - [x] TLS 支持
+- [x] TUI 界面
 - [ ] 完整 TLS 握手实现
 
 ## 测试
