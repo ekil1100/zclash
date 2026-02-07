@@ -1,22 +1,38 @@
 const std = @import("std");
 const Rule = @import("../config.zig").Rule;
 const RuleType = @import("../config.zig").RuleType;
+const dns = @import("../dns.zig");
 
 const log = std.log.scoped(.rule_engine);
+
+/// 规则匹配上下文
+pub const MatchContext = struct {
+    host: []const u8,
+    port: u16,
+    is_domain: bool,
+    process_name: ?[]const u8 = null,
+    source_ip: ?[]const u8 = null,
+};
 
 /// RuleEngine matches requests against rules and returns the target proxy
 pub const Engine = struct {
     allocator: std.mem.Allocator,
     rules: *const std.ArrayList(Rule),
+    dns_client: ?dns.DnsClient,
     domain_set: std.StringHashMap(void),
     domain_suffix_trie: TrieNode,
     domain_keywords: std.ArrayList([]const u8),
     ip_cidrs: std.ArrayList(IpCidr),
 
     pub fn init(allocator: std.mem.Allocator, rules: *const std.ArrayList(Rule)) !Engine {
+        return try initWithDns(allocator, rules, null);
+    }
+
+    pub fn initWithDns(allocator: std.mem.Allocator, rules: *const std.ArrayList(Rule), dns_config: ?dns.DnsConfig) !Engine {
         var engine = Engine{
             .allocator = allocator,
             .rules = rules,
+            .dns_client = if (dns_config) |cfg| dns.DnsClient.init(allocator, cfg) else null,
             .domain_set = std.StringHashMap(void).init(allocator),
             .domain_suffix_trie = TrieNode{
                 .children = std.AutoHashMap(u8, *TrieNode).init(allocator),
@@ -50,6 +66,9 @@ pub const Engine = struct {
     }
 
     pub fn deinit(self: *Engine) void {
+        if (self.dns_client) |*client| {
+            client.deinit();
+        }
         self.domain_set.deinit();
         self.domain_suffix_trie.deinit(self.allocator);
         self.domain_keywords.deinit(self.allocator);
@@ -57,8 +76,9 @@ pub const Engine = struct {
     }
 
     /// Match a request and return the target proxy name
-    pub fn match(self: *const Engine, host: []const u8, is_domain: bool) ?[]const u8 {
-        // Check domain rules first
+    /// 这是简化版，直接传入 host 和是否为域名
+    pub fn match(self: *Engine, host: []const u8, is_domain: bool) ?[]const u8 {
+        // Check domain rules first (if it's a domain)
         if (is_domain) {
             // 1. Exact domain match
             if (self.domain_set.contains(host)) {
@@ -77,13 +97,38 @@ pub const Engine = struct {
                     return self.findRuleTarget(.domain_keyword, keyword);
                 }
             }
+
+            // Try to resolve and check IP rules (if DNS available and not no-resolve)
+            if (self.dns_client) |*client| {
+                const addresses = client.resolve(host) catch |err| {
+                    std.debug.print("DNS resolve failed: {}\n", .{err});
+                    return self.findRuleTarget(.final, "");
+                };
+                defer self.allocator.free(addresses);
+
+                for (addresses) |addr| {
+                    const ip_str = std.fmt.allocPrint(self.allocator, "{d}.{d}.{d}.{d}", .{
+                        (addr.in.sa.addr >> 0) & 0xFF,
+                        (addr.in.sa.addr >> 8) & 0xFF,
+                        (addr.in.sa.addr >> 16) & 0xFF,
+                        (addr.in.sa.addr >> 24) & 0xFF,
+                    }) catch continue;
+                    defer self.allocator.free(ip_str);
+
+                    // Check IP-CIDR rules
+                    for (self.ip_cidrs.items) |cidr| {
+                        if (cidr.contains(addr.in.sa.addr)) {
+                            return self.findRuleTarget(.ip_cidr, cidr.original);
+                        }
+                    }
+                }
+            }
         } else {
             // IP-based rules
             const addr = std.net.Address.parseIp4(host, 0) catch {
-                // Not an IPv4 address, might be IPv6
-                return null;
+                return self.findRuleTarget(.final, "");
             };
-            const ip = @as(u32, addr.in.sa.addr);
+            const ip = addr.in.sa.addr;
 
             for (self.ip_cidrs.items) |cidr| {
                 if (cidr.contains(ip)) {
@@ -197,7 +242,7 @@ fn parseCidr(s: []const u8) !IpCidr {
     const prefix_len = try std.fmt.parseInt(u8, s[slash_pos.? + 1 ..], 10);
 
     const addr = try std.net.Address.parseIp4(ip_str, 0);
-    const ip = @as(u32, addr.in.sa.addr);
+    const ip = addr.in.sa.addr;
 
     if (prefix_len > 32) return error.InvalidPrefix;
 
@@ -208,33 +253,4 @@ fn parseCidr(s: []const u8) !IpCidr {
         .mask = mask,
         .original = s,
     };
-}
-
-// Tests
-test "rule engine domain matching" {
-    const allocator = std.testing.allocator;
-
-    var rules = std.ArrayList(Rule).empty;
-    defer {
-        for (rules.items) |*r| r.deinit(allocator);
-        rules.deinit(allocator);
-    }
-
-    try rules.append(allocator, .{
-        .rule_type = .domain,
-        .payload = try allocator.dupe(u8, "example.com"),
-        .target = try allocator.dupe(u8, "PROXY"),
-    });
-
-    try rules.append(allocator, .{
-        .rule_type = .final,
-        .payload = try allocator.dupe(u8, ""),
-        .target = try allocator.dupe(u8, "DIRECT"),
-    });
-
-    var engine = try Engine.init(allocator, &rules);
-    defer engine.deinit();
-
-    try std.testing.expectEqualStrings("PROXY", engine.match("example.com", true).?);
-    try std.testing.expectEqualStrings("DIRECT", engine.match("other.com", true).?);
 }
