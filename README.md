@@ -59,9 +59,27 @@ zig build
 # 指定配置文件
 ./zig-out/bin/zclash -c /path/to/config.yaml
 
+# 启用 TUI 界面
+./zig-out/bin/zclash --tui
+
 # 查看帮助
 ./zig-out/bin/zclash -h
 ```
+
+## TUI 界面
+
+使用 `--tui` 参数启用交互式终端界面：
+
+- **j/k** 或 **↑/↓**: 导航代理列表
+- **Enter**: 选择代理  
+- **q**: 退出
+
+显示信息：
+- 当前使用的代理
+- 上传/下载速度
+- 活跃连接数
+- 可用代理列表
+- 日志输出
 
 ## 配置示例
 
