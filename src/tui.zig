@@ -1,22 +1,23 @@
 const std = @import("std");
 const net = std.net;
 const posix = std.posix;
+const Config = @import("config.zig").Config;
+const ProxyGroup = @import("config.zig").ProxyGroup;
 
 /// TUI 状态
 pub const TuiState = struct {
     running: bool = true,
-    selected_row: usize = 0,
+    selected_group: usize = 0,
+    selected_proxy: usize = 0,
     current_proxy: []const u8 = "DIRECT",
     upload_speed: u64 = 0,
     download_speed: u64 = 0,
     active_connections: usize = 0,
     log_messages: std.ArrayList([]const u8),
-    proxy_list: std.ArrayList([]const u8),
     
     pub fn init() TuiState {
         return .{
             .log_messages = std.ArrayList([]const u8).empty,
-            .proxy_list = std.ArrayList([]const u8).empty,
         };
     }
     
@@ -25,23 +26,20 @@ pub const TuiState = struct {
             allocator.free(msg);
         }
         self.log_messages.deinit(allocator);
-        
-        for (self.proxy_list.items) |proxy| {
-            allocator.free(proxy);
-        }
-        self.proxy_list.deinit(allocator);
     }
 };
 
 /// TUI 管理器
 pub const TuiManager = struct {
     allocator: std.mem.Allocator,
+    config: *const Config,
     state: TuiState,
     original_termios: posix.termios,
     
-    pub fn init(allocator: std.mem.Allocator) !TuiManager {
+    pub fn init(allocator: std.mem.Allocator, config: *const Config) !TuiManager {
         var manager = TuiManager{
             .allocator = allocator,
+            .config = config,
             .state = TuiState.init(),
             .original_termios = undefined,
         };
@@ -93,19 +91,23 @@ pub const TuiManager = struct {
                 switch (buf[0]) {
                     'q', 'Q' => self.state.running = false,
                     'j', 'J', 0x42 => { // 下箭头
-                        if (self.state.selected_row + 1 < self.state.proxy_list.items.len) {
-                            self.state.selected_row += 1;
+                        const group = self.getCurrentGroup();
+                        if (group) |g| {
+                            if (self.state.selected_proxy + 1 < g.proxies.items.len) {
+                                self.state.selected_proxy += 1;
+                            }
                         }
                     },
                     'k', 'K', 0x41 => { // 上箭头
-                        if (self.state.selected_row > 0) {
-                            self.state.selected_row -= 1;
+                        if (self.state.selected_proxy > 0) {
+                            self.state.selected_proxy -= 1;
                         }
                     },
-                    '\r', '\n' => { // Enter
-                        if (self.state.selected_row < self.state.proxy_list.items.len) {
-                            self.state.current_proxy = self.state.proxy_list.items[self.state.selected_row];
-                        }
+                    '\r', '\n' => { // Enter - 选择代理
+                        self.selectCurrentProxy();
+                    },
+                    '\t' => { // Tab - 切换代理组
+                        self.nextGroup();
                     },
                     else => {},
                 }
@@ -114,6 +116,30 @@ pub const TuiManager = struct {
             // 刷新率控制
             std.Thread.sleep(50 * std.time.ns_per_ms);
         }
+    }
+    
+    fn getCurrentGroup(self: *TuiManager) ?*const ProxyGroup {
+        if (self.config.proxy_groups.items.len == 0) return null;
+        if (self.state.selected_group >= self.config.proxy_groups.items.len) return null;
+        return &self.config.proxy_groups.items[self.state.selected_group];
+    }
+    
+    fn nextGroup(self: *TuiManager) void {
+        if (self.config.proxy_groups.items.len == 0) return;
+        self.state.selected_group = (self.state.selected_group + 1) % self.config.proxy_groups.items.len;
+        self.state.selected_proxy = 0; // 重置代理选择
+    }
+    
+    fn selectCurrentProxy(self: *TuiManager) void {
+        const group = self.getCurrentGroup() orelse return;
+        if (self.state.selected_proxy >= group.proxies.items.len) return;
+        
+        const proxy_name = group.proxies.items[self.state.selected_proxy];
+        self.state.current_proxy = proxy_name;
+        
+        // 记录日志
+        const msg = std.fmt.allocPrint(self.allocator, "Switched to proxy: {s}", .{proxy_name}) catch return;
+        self.log(msg) catch {};
     }
     
     /// 绘制界面
@@ -129,7 +155,7 @@ pub const TuiManager = struct {
         try printLine("╚══════════════════════════════════════════════════════════════╝");
         try resetColor();
         
-        // 状态栏
+        // 当前代理状态
         try printLine("");
         try setBold();
         try print("Current Proxy: ");
@@ -161,34 +187,58 @@ pub const TuiManager = struct {
         try printLine(" connections");
         try resetColor();
         
-        // 代理列表
+        // 代理组列表
+        try printLine("");
+        try setColor(90);
+        try printLine("───────────────── Proxy Groups ───────────────");
+        try resetColor();
+        
+        for (self.config.proxy_groups.items, 0..) |group, i| {
+            if (i == self.state.selected_group) {
+                try setBold();
+                try setColor(36); // Cyan
+                try print("> ");
+                try print(group.name);
+                try printLine(" <");
+                try resetColor();
+            } else {
+                try print("  ");
+                try printLine(group.name);
+            }
+        }
+        
+        // 当前组的代理节点列表
         try printLine("");
         try setColor(90);
         try printLine("───────────────── Proxies ───────────────────");
         try resetColor();
         
-        for (self.state.proxy_list.items, 0..) |proxy, i| {
-            if (i == self.state.selected_row) {
-                try setColor(7); // Reverse
-                try setBold();
-                try print("> ");
-                try print(proxy);
-                
-                // 填充空格
-                const padding = 40 - proxy.len;
-                if (padding > 0) {
-                    var j: usize = 0;
-                    while (j < padding) : (j += 1) {
-                        try print(" ");
+        if (self.getCurrentGroup()) |group| {
+            for (group.proxies.items, 0..) |proxy, i| {
+                if (i == self.state.selected_proxy) {
+                    try setColor(7); // Reverse
+                    try setBold();
+                    try print("> ");
+                    try print(proxy);
+                    
+                    // 填充空格
+                    const padding = 40 - proxy.len;
+                    if (padding > 0) {
+                        var j: usize = 0;
+                        while (j < padding) : (j += 1) {
+                            try print(" ");
+                        }
                     }
+                    
+                    try printLine(" <");
+                    try resetColor();
+                } else {
+                    try print("  ");
+                    try printLine(proxy);
                 }
-                
-                try printLine(" <");
-                try resetColor();
-            } else {
-                try print("  ");
-                try printLine(proxy);
             }
+        } else {
+            try printLine("  (no proxy groups configured)");
         }
         
         // 日志区域
@@ -203,7 +253,6 @@ pub const TuiManager = struct {
             0;
         
         for (self.state.log_messages.items[log_start..]) |msg| {
-            // 截断长消息
             if (msg.len > 50) {
                 try print(msg[0..50]);
                 try printLine("...");
@@ -217,7 +266,7 @@ pub const TuiManager = struct {
         try setColor(90);
         try printLine("───────────────── Help ──────────────────────");
         try resetColor();
-        try printLine("j/k or ↑/↓: Navigate  Enter: Select  q: Quit");
+        try printLine("Tab: Switch Group  j/k/↑/↓: Navigate  Enter: Select  q: Quit");
     }
     
     fn formatSpeed(self: *TuiManager, bytes_per_sec: u64) []const u8 {
@@ -232,11 +281,6 @@ pub const TuiManager = struct {
         } else {
             return "1 GB";
         }
-    }
-    
-    /// 添加代理
-    pub fn addProxy(self: *TuiManager, name: []const u8) !void {
-        try self.state.proxy_list.append(self.allocator, try self.allocator.dupe(u8, name));
     }
     
     /// 添加日志
@@ -257,9 +301,14 @@ pub const TuiManager = struct {
         self.state.download_speed = download;
         self.state.active_connections = connections;
     }
+    
+    /// 获取当前选中的代理名称
+    pub fn getCurrentProxy(self: *TuiManager) []const u8 {
+        return self.state.current_proxy;
+    }
 };
 
-// ANSI 转义序列辅助函数 - 使用 std.debug.print
+// ANSI 转义序列辅助函数
 
 fn clearScreen() !void {
     std.debug.print("\x1B[2J\x1B[H", .{});
@@ -271,10 +320,6 @@ fn hideCursor() !void {
 
 fn showCursor() !void {
     std.debug.print("\x1B[?25h", .{});
-}
-
-fn moveCursor(row: usize, col: usize) !void {
-    std.debug.print("\x1B[{d};{d}H", .{ row, col });
 }
 
 fn setBold() !void {

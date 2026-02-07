@@ -114,13 +114,8 @@ fn runTui(allocator: std.mem.Allocator, cfg: *const config.Config, engine: *rule
     _ = engine;
     _ = manager;
     
-    var tui_manager = try tui.TuiManager.init(allocator);
+    var tui_manager = try tui.TuiManager.init(allocator, cfg);
     defer tui_manager.deinit();
-
-    // Add proxies to TUI
-    for (cfg.proxies.items) |proxy| {
-        try tui_manager.addProxy(proxy.name);
-    }
 
     // Add some sample logs
     try tui_manager.log("zclash started");
