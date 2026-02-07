@@ -27,11 +27,11 @@
 
 ### 其他
 - [x] YAML 配置解析
-- [x] 规则组 (select)
-- [ ] URL-Test / Fallback / Load-Balance
-- [ ] REST API
-- [ ] WebSocket 传输
-- [ ] TLS 支持
+- [x] 规则组 (select, url-test, fallback, load-balance)
+- [x] REST API (端口 9090)
+- [x] WebSocket 传输
+- [x] TLS 支持
+- [ ] 完整 TLS 握手实现
 
 ## 编译
 
