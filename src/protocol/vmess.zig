@@ -266,14 +266,81 @@ fn parseIpv4(str: []const u8, out: *[4]u8) bool {
     return true;
 }
 
-/// 解析 IPv6 地址 (简化版)
+/// 解析 IPv6 地址 (RFC 5952 兼容)
 fn parseIpv6(str: []const u8, out: *[16]u8) bool {
-    // Simplified - just check if it looks like IPv6
-    if (std.mem.indexOf(u8, str, ":") == null) return false;
-    
-    // TODO: Proper IPv6 parsing
-    _ = out;
-    return false;
+    // Supports: full form, compressed (::), and IPv4-mapped (::ffff:x.x.x.x)
+    @memset(out, 0);
+
+    // Check for IPv4-mapped IPv6 (::ffff:x.x.x.x)
+    if (std.mem.startsWith(u8, str, "::ffff:") or std.mem.startsWith(u8, str, "::FFFF:")) {
+        const ipv4_part = str[7..];
+        var ipv4: [4]u8 = undefined;
+        if (!parseIpv4(ipv4_part, &ipv4)) return false;
+        out[10] = 0xff;
+        out[11] = 0xff;
+        @memcpy(out[12..16], &ipv4);
+        return true;
+    }
+
+    // Find :: position for compressed form
+    const double_colon = std.mem.indexOf(u8, str, "::");
+    var parts: [8]u16 = undefined;
+    @memset(&parts, 0);
+    var part_count: usize = 0;
+
+    if (double_colon) |dc_pos| {
+        // Parse before ::
+        if (dc_pos > 0) {
+            var it = std.mem.splitScalar(u8, str[0..dc_pos], ':');
+            while (it.next()) |part| {
+                if (part.len == 0 or part.len > 4) return false;
+                parts[part_count] = std.fmt.parseInt(u16, part, 16) catch return false;
+                part_count += 1;
+                if (part_count > 8) return false;
+            }
+        }
+
+        // Parse after ::
+        const after = str[dc_pos + 2 ..];
+        var after_parts: [8]u16 = undefined;
+        var after_count: usize = 0;
+        if (after.len > 0) {
+            var it = std.mem.splitScalar(u8, after, ':');
+            while (it.next()) |part| {
+                if (part.len == 0 or part.len > 4) return false;
+                after_parts[after_count] = std.fmt.parseInt(u16, part, 16) catch return false;
+                after_count += 1;
+                if (after_count > 8) return false;
+            }
+        }
+
+        // Total parts must not exceed 8
+        if (part_count + after_count >= 8) return false;
+
+        // Fill middle zeros and copy after parts
+        const zero_count = 8 - part_count - after_count;
+        for (0..after_count) |i| {
+            parts[part_count + zero_count + i] = after_parts[i];
+        }
+    } else {
+        // Full form: exactly 8 parts
+        var it = std.mem.splitScalar(u8, str, ':');
+        while (it.next()) |part| {
+            if (part.len == 0 or part.len > 4) return false;
+            if (part_count >= 8) return false;
+            parts[part_count] = std.fmt.parseInt(u16, part, 16) catch return false;
+            part_count += 1;
+        }
+        if (part_count != 8) return false;
+    }
+
+    // Convert to 16-byte representation (network byte order)
+    for (0..8) |i| {
+        out[i * 2] = @intCast(parts[i] >> 8);
+        out[i * 2 + 1] = @intCast(parts[i] & 0xFF);
+    }
+
+    return true;
 }
 
 /// 派生响应密钥和 IV
@@ -293,4 +360,31 @@ fn deriveCommandKeyIv(req_key: *[16]u8, req_iv: *[16]u8, cmd_key: *[16]u8, cmd_i
         cmd_key[i] = req_key[i] ^ 0xA5;
         cmd_iv[i] = req_iv[i] ^ 0xA5;
     }
+}
+
+const testing = std.testing;
+
+test "VMess parseIpv6 full" {
+    var out: [16]u8 = undefined;
+    try testing.expect(parseIpv6("2001:0db8:85a3:0000:0000:8a2e:0370:7334", &out));
+    try testing.expectEqual(@as(u8, 0x20), out[0]);
+    try testing.expectEqual(@as(u8, 0x01), out[1]);
+    try testing.expectEqual(@as(u8, 0x73), out[14]);
+    try testing.expectEqual(@as(u8, 0x34), out[15]);
+}
+
+test "VMess parseIpv6 compressed" {
+    var out: [16]u8 = undefined;
+    try testing.expect(parseIpv6("2001:db8::1", &out));
+    try testing.expectEqual(@as(u8, 0x20), out[0]);
+    try testing.expectEqual(@as(u8, 1), out[15]);
+}
+
+test "VMess parseIpv6 ipv4-mapped" {
+    var out: [16]u8 = undefined;
+    try testing.expect(parseIpv6("::ffff:192.168.1.1", &out));
+    try testing.expectEqual(@as(u8, 0xff), out[10]);
+    try testing.expectEqual(@as(u8, 0xff), out[11]);
+    try testing.expectEqual(@as(u8, 192), out[12]);
+    try testing.expectEqual(@as(u8, 168), out[13]);
 }

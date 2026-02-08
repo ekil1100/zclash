@@ -249,7 +249,17 @@ pub const Engine = struct {
                     }
                     // IPv6
                     else if (addr.any.family == std.posix.AF.INET6) {
-                        // TODO: IPv6 GEOIP and CIDR6 matching
+                        var ip6: [16]u8 = undefined;
+                        @memcpy(&ip6, &addr.in6.sa.addr);
+
+                        // IP-CIDR6 检查
+                        for (self.ip_cidr6s.items) |cidr6| {
+                            if (cidr6.contains(ip6)) {
+                                return self.findRuleTarget(.ip_cidr6, cidr6.original);
+                            }
+                        }
+
+                        // TODO: IPv6 GEOIP (needs IPv6 GeoIP database)
                     }
                 }
             } else {
@@ -278,8 +288,18 @@ pub const Engine = struct {
                 }
             } else |_| {
                 // IPv6?
-                if (std.net.Address.parseIp6(ctx.target_host, 0)) |_| {
-                    // TODO: IPv6 matching
+                if (std.net.Address.parseIp6(ctx.target_host, 0)) |addr6| {
+                    var ip6: [16]u8 = undefined;
+                    @memcpy(&ip6, &addr6.in6.sa.addr);
+
+                    // IP-CIDR6 检查
+                    for (self.ip_cidr6s.items) |cidr6| {
+                        if (cidr6.contains(ip6)) {
+                            return self.findRuleTarget(.ip_cidr6, cidr6.original);
+                        }
+                    }
+
+                    // TODO: IPv6 GEOIP (needs IPv6 GeoIP database)
                 } else |_| {}
             }
         }

@@ -29,9 +29,6 @@ const Reply = struct {
 };
 
 pub fn start(allocator: std.mem.Allocator, port: u16, engine: *Engine, manager: *OutboundManager) !void {
-    _ = engine;
-    _ = manager;
-    
     const address = try net.Address.parseIp4("0.0.0.0", port);
     var server = try address.listen(.{
         .reuse_address = true,
@@ -42,27 +39,48 @@ pub fn start(allocator: std.mem.Allocator, port: u16, engine: *Engine, manager: 
 
     while (true) {
         const conn = try server.accept();
-        
-        handleConnection(allocator, conn) catch |err| {
-            std.debug.print("SOCKS5 connection error: {}\n", .{err});
-            conn.stream.close();
+
+        // Pass engine and manager to each connection handler
+        const ctx = try allocator.create(ConnectionContext);
+        ctx.* = .{
+            .allocator = allocator,
+            .engine = engine,
+            .manager = manager,
         };
+
+        const thread = try std.Thread.spawn(.{}, handleConnectionThread, .{ ctx, conn });
+        thread.detach();
     }
 }
 
-fn handleConnection(allocator: std.mem.Allocator, conn: net.Server.Connection) !void {
+const ConnectionContext = struct {
+    allocator: std.mem.Allocator,
+    engine: *Engine,
+    manager: *OutboundManager,
+};
+
+fn handleConnectionThread(ctx: *ConnectionContext, conn: net.Server.Connection) !void {
+    defer ctx.allocator.destroy(ctx);
+    handleConnection(ctx.allocator, conn, ctx.engine, ctx.manager) catch |err| {
+        std.debug.print("SOCKS5 connection error: {}\n", .{err});
+        conn.stream.close();
+    };
+}
+
+fn handleConnection(_allocator: std.mem.Allocator, conn: net.Server.Connection, engine: *Engine, manager: *OutboundManager) !void {
+    _ = _allocator;
     defer conn.stream.close();
-    
+
     // 1. Greeting phase
     var buf: [256]u8 = undefined;
     const n = try conn.stream.read(&buf);
     if (n < 3) return error.InvalidGreeting;
-    
+
     if (buf[0] != Socks5Version) return error.InvalidVersion;
-    
+
     const num_methods = buf[1];
     if (n < 2 + num_methods) return error.InvalidGreeting;
-    
+
     var found_no_auth = false;
     for (0..num_methods) |i| {
         if (buf[2 + i] == AuthMethods.NoAuth) {
@@ -70,32 +88,32 @@ fn handleConnection(allocator: std.mem.Allocator, conn: net.Server.Connection) !
             break;
         }
     }
-    
+
     if (!found_no_auth) {
         try conn.stream.writeAll(&.{ Socks5Version, AuthMethods.NoAcceptable });
         return error.NoAcceptableAuth;
     }
-    
+
     try conn.stream.writeAll(&.{ Socks5Version, AuthMethods.NoAuth });
-    
+
     // 2. Request phase
     const req_n = try conn.stream.read(&buf);
     if (req_n < 10) return error.InvalidRequest;
-    
+
     if (buf[0] != Socks5Version) return error.InvalidVersion;
-    
+
     const cmd = buf[1];
     const atyp = buf[3];
-    
+
     if (cmd != Command.Connect) {
         try sendReply(conn.stream, Reply.GeneralFailure, 0, &[_]u8{0} ** 4, 0);
         return error.CommandNotSupported;
     }
-    
+
     var target_host: []const u8 = undefined;
     var target_port: u16 = undefined;
     var host_buf: [256]u8 = undefined;
-    
+
     switch (atyp) {
         AddressType.Ipv4 => {
             if (req_n < 10) return error.InvalidRequest;
@@ -114,22 +132,25 @@ fn handleConnection(allocator: std.mem.Allocator, conn: net.Server.Connection) !
         },
         else => return error.InvalidAddressType,
     }
-    
-    std.debug.print("[SOCKS5] CONNECT {s}:{d}\n", .{ target_host, target_port });
-    
-    // TODO: Apply rules from engine and connect via manager
-    // For now, direct connection
-    
-    var target_addr_list = try net.getAddressList(allocator, target_host, target_port);
-    defer target_addr_list.deinit();
-    
-    if (target_addr_list.addrs.len == 0) {
-        try sendReply(conn.stream, Reply.HostUnreachable, 0, &[_]u8{0} ** 4, 0);
-        return;
-    }
 
-    var target_stream = net.tcpConnectToAddress(target_addr_list.addrs[0]) catch {
-        try sendReply(conn.stream, Reply.ConnectionRefused, 0, &[_]u8{0} ** 4, 0);
+    std.debug.print("[SOCKS5] CONNECT {s}:{d}\n", .{ target_host, target_port });
+
+    // Apply rules from engine and connect via manager
+    const proxy_name = engine.matchCtx(.{
+        .target_host = target_host,
+        .target_port = target_port,
+        .is_domain = atyp == AddressType.Domain,
+    }) orelse "DIRECT";
+    std.debug.print("[SOCKS5] Rule matched: {s}\n", .{proxy_name});
+
+    var target_stream = manager.connect(proxy_name, target_host, target_port) catch |err| {
+        std.debug.print("[SOCKS5] Connection failed: {}\n", .{err});
+        const reply_code = switch (err) {
+            error.ConnectionRejected => Reply.ConnectionRefused,
+            error.HostNotFound, error.ProxyNotFound => Reply.HostUnreachable,
+            else => Reply.GeneralFailure,
+        };
+        try sendReply(conn.stream, reply_code, 0, &[_]u8{0} ** 4, 0);
         return;
     };
     defer target_stream.close();
