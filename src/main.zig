@@ -1,5 +1,6 @@
 const std = @import("std");
 const config = @import("config.zig");
+const validator = @import("config_validator.zig");
 const http_proxy = @import("proxy/http.zig");
 const socks5_proxy = @import("proxy/socks5.zig");
 const mixed_proxy = @import("proxy/mixed.zig");
@@ -8,9 +9,19 @@ const outbound = @import("proxy/outbound/manager.zig");
 const api = @import("api/server.zig");
 const tui = @import("tui.zig");
 
+// 全局配置路径，用于重载
+var g_config_path: ?[]const u8 = null;
+var gpa_holder: ?*std.heap.GeneralPurposeAllocator(.{}) = null;
+
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
+    gpa_holder = &gpa;
+    defer {
+        if (g_config_path) |path| {
+            gpa.allocator().free(path);
+        }
+        _ = gpa.deinit();
+    }
     const allocator = gpa.allocator();
 
     std.debug.print("zclash v0.1.0\n", .{});
@@ -36,11 +47,13 @@ pub fn main() !void {
         }
     }
 
-    // Load configuration
-    var cfg = if (config_path) |path|
-        try config.load(allocator, path)
-    else
-        try config.loadDefault(allocator);
+    // 保存配置路径用于重载
+    if (config_path) |path| {
+        g_config_path = try allocator.dupe(u8, path);
+    }
+
+    // 加载并验证配置
+    var cfg = try loadAndValidateConfig(allocator, config_path);
     defer cfg.deinit();
 
     // Initialize outbound manager
@@ -77,7 +90,6 @@ pub fn main() !void {
         std.debug.print("  Proxies: {}\n", .{cfg.proxies.items.len});
         std.debug.print("  Rules: {}\n", .{cfg.rules.items.len});
         std.debug.print("\nProxy server running. Press Ctrl+C to stop.\n", .{});
-        std.debug.print("Use --tui flag to enable interactive dashboard.\n", .{});
         
         while (true) {
             std.Thread.sleep(1 * std.time.ns_per_s);
@@ -85,8 +97,26 @@ pub fn main() !void {
     }
 }
 
+fn loadAndValidateConfig(allocator: std.mem.Allocator, config_path: ?[]const u8) !config.Config {
+    var cfg = if (config_path) |path|
+        try config.load(allocator, path)
+    else
+        try config.loadDefault(allocator);
+
+    var validation_result = try validator.validate(allocator, &cfg);
+    defer validation_result.deinit();
+    validator.printResult(&validation_result);
+    
+    if (!validation_result.isValid()) {
+        cfg.deinit();
+        std.process.exit(1);
+    }
+    
+    return cfg;
+}
+
 fn proxyThreadFn(allocator: std.mem.Allocator, cfg: *const config.Config, engine: *rule_engine.Engine, manager: *outbound.OutboundManager) void {
-    std.Thread.sleep(100 * std.time.ns_per_ms); // Wait a bit for TUI to start
+    std.Thread.sleep(100 * std.time.ns_per_ms);
 
     if (cfg.mixed_port > 0) {
         std.debug.print("Starting mixed proxy on port {}\n", .{cfg.mixed_port});
@@ -117,6 +147,15 @@ fn runTui(allocator: std.mem.Allocator, cfg: *const config.Config, engine: *rule
     var tui_manager = try tui.TuiManager.init(allocator, cfg);
     defer tui_manager.deinit();
 
+    // 设置重载回调
+    tui_manager.setReloadCallback(struct {
+        fn reload() void {
+            std.debug.print("\nConfiguration reload requested\n", .{});
+            // 注意：实际重载需要重新启动程序或更复杂的逻辑
+            // 这里只是记录请求
+        }
+    }.reload);
+
     // Add some sample logs
     try tui_manager.log("zclash started");
     try tui_manager.log("Configuration loaded");
@@ -142,4 +181,11 @@ fn printHelp() !void {
     std.debug.print("  -c, --config <path>    Configuration file path\n", .{});
     std.debug.print("  --tui                  Enable TUI dashboard\n", .{});
     std.debug.print("  -h, --help             Show this help message\n\n", .{});
+    std.debug.print("TUI Controls:\n", .{});
+    std.debug.print("  j/k, ↑/↓               Navigate\n", .{});
+    std.debug.print("  Tab, h/l               Switch tabs\n", .{});
+    std.debug.print("  Enter                  Select\n", .{});
+    std.debug.print("  t                      Test latency for current group\n", .{});
+    std.debug.print("  r                      Reload configuration\n", .{});
+    std.debug.print("  q                      Quit\n", .{});
 }

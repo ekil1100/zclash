@@ -1,0 +1,117 @@
+# zclash 测试配置文件 - 完整功能演示
+port: 7890
+socks-port: 7891
+
+allow-lan: false
+mode: rule
+log-level: info
+
+external-controller: 127.0.0.1:9090
+
+# 代理节点
+proxies:
+  - name: DIRECT
+    type: direct
+
+  - name: REJECT
+    type: reject
+
+  - name: 香港-01
+    type: ss
+    server: hk01.example.com
+    port: 8388
+    cipher: aes-128-gcm
+    password: test-pass-01
+
+  - name: 香港-02
+    type: ss
+    server: hk02.example.com
+    port: 8388
+    cipher: aes-256-gcm
+    password: test-pass-02
+
+  - name: 新加坡-01
+    type: ss
+    server: sg01.example.com
+    port: 8388
+    cipher: aes-128-gcm
+    password: test-pass-03
+
+  - name: 日本-01
+    type: ss
+    server: jp01.example.com
+    port: 8388
+    cipher: chacha20-ietf-poly1305
+    password: test-pass-04
+
+  - name: 美国-01
+    type: vmess
+    server: us01.example.com
+    port: 443
+    uuid: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+    alterId: 0
+    tls: true
+    sni: us01.example.com
+
+  - name: 美国-02
+    type: vmess
+    server: us02.example.com
+    port: 443
+    uuid: b2c3d4e5-f6a7-8901-bcde-f23456789012
+    alterId: 0
+    tls: true
+
+  - name: 德国-VLESS-01
+    type: vless
+    server: de01.example.com
+    port: 443
+    uuid: c3d4e5f6-a7b8-9012-cdef-345678901234
+    tls: true
+    sni: de01.example.com
+
+# 代理组
+proxy-groups:
+  - name: PROXY
+    type: select
+    proxies:
+      - 香港-01
+      - 香港-02
+      - 新加坡-01
+      - 日本-01
+      - 美国-01
+      - 美国-02
+      - 德国-VLESS-01
+      - DIRECT
+
+  - name: Auto-Select
+    type: url-test
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+    proxies:
+      - 香港-01
+      - 香港-02
+      - 新加坡-01
+      - 日本-01
+      - 美国-01
+      - 美国-02
+
+  - name: Fallback
+    type: fallback
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+    proxies:
+      - 香港-01
+      - 新加坡-01
+      - 美国-01
+      - DIRECT
+
+# 规则
+rules:
+  - DOMAIN-SUFFIX,google.com,PROXY
+  - DOMAIN-SUFFIX,youtube.com,PROXY
+  - DOMAIN-SUFFIX,github.com,PROXY
+  - DOMAIN-KEYWORD,google,PROXY
+  - DOMAIN-SUFFIX,cn,DIRECT
+  - DOMAIN-SUFFIX,baidu.com,DIRECT
+  - GEOIP,CN,DIRECT
+  - MATCH,PROXY

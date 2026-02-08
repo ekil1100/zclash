@@ -1,0 +1,12 @@
+port: 7890
+socks-port: 7891
+
+proxies:
+  - name: DIRECT
+    type: direct
+
+rules:
+  - DOMAIN,google.com,DIRECT
+  - DOMAIN-SUFFIX,youtube.com,DIRECT
+  - IP-CIDR,192.168.0.0/16,DIRECT
+  - MATCH,DIRECT

@@ -9,6 +9,7 @@ pub const ProxyType = enum {
     ss,        // Shadowsocks
     vmess,     // VMess
     trojan,    // Trojan
+    vless,     // VLESS
 };
 
 pub const Proxy = struct {
@@ -19,7 +20,7 @@ pub const Proxy = struct {
     // Protocol-specific fields
     password: ?[]const u8 = null,
     cipher: ?[]const u8 = null,  // SS
-    uuid: ?[]const u8 = null,    // VMess/Trojan
+    uuid: ?[]const u8 = null,    // VMess/VLESS
     alter_id: u16 = 0,           // VMess
     tls: bool = false,
     skip_cert_verify: bool = false,
@@ -171,13 +172,28 @@ pub fn parse(allocator: std.mem.Allocator, content: []const u8) !Config {
 
     // 解析基础配置
     if (root.map.get("port")) |v| {
-        if (v == .integer) config.port = @intCast(v.integer);
+        if (v == .integer) {
+            const port = v.integer;
+            if (port > 0 and port <= 65535) {
+                config.port = @intCast(port);
+            }
+        }
     }
     if (root.map.get("socks-port")) |v| {
-        if (v == .integer) config.socks_port = @intCast(v.integer);
+        if (v == .integer) {
+            const port = v.integer;
+            if (port > 0 and port <= 65535) {
+                config.socks_port = @intCast(port);
+            }
+        }
     }
     if (root.map.get("mixed-port")) |v| {
-        if (v == .integer) config.mixed_port = @intCast(v.integer);
+        if (v == .integer) {
+            const port = v.integer;
+            if (port > 0 and port <= 65535) {
+                config.mixed_port = @intCast(port);
+            }
+        }
     }
     if (root.map.get("allow-lan")) |v| {
         if (v == .boolean) config.allow_lan = v.boolean;
@@ -249,20 +265,29 @@ pub fn parse(allocator: std.mem.Allocator, content: []const u8) !Config {
 fn parseProxy(allocator: std.mem.Allocator, map: std.StringHashMap(yaml.YamlValue)) !Proxy {
     const name = map.get("name") orelse return error.MissingProxyName;
     const proxy_type = map.get("type") orelse return error.MissingProxyType;
-    const server = map.get("server") orelse return error.MissingProxyServer;
-    const port = map.get("port") orelse return error.MissingProxyPort;
 
-    if (name != .string or proxy_type != .string or server != .string or port != .integer) {
+    if (name != .string or proxy_type != .string) {
         return error.InvalidProxyFormat;
     }
 
     const ptype = parseProxyType(proxy_type.string) orelse return error.UnknownProxyType;
 
+    // DIRECT 和 REJECT 不需要 server 和 port
+    const needs_server = ptype != .direct and ptype != .reject;
+
     var proxy = Proxy{
         .name = try allocator.dupe(u8, name.string),
         .proxy_type = ptype,
-        .server = try allocator.dupe(u8, server.string),
-        .port = @intCast(port.integer),
+        .server = if (needs_server) blk: {
+            const server = map.get("server") orelse return error.MissingProxyServer;
+            if (server != .string) return error.InvalidProxyFormat;
+            break :blk try allocator.dupe(u8, server.string);
+        } else "",
+        .port = if (needs_server) blk: {
+            const port = map.get("port") orelse return error.MissingProxyPort;
+            if (port != .integer) return error.InvalidProxyFormat;
+            break :blk @intCast(port.integer);
+        } else 0,
     };
 
     // 协议特定字段
@@ -301,6 +326,11 @@ fn parseProxy(allocator: std.mem.Allocator, map: std.StringHashMap(yaml.YamlValu
                 }
             }
         }
+    }
+
+    // VLESS 必填字段校验
+    if (ptype == .vless and (proxy.uuid == null or proxy.uuid.?.len == 0)) {
+        return error.MissingProxyUuid;
     }
 
     return proxy;
@@ -395,6 +425,7 @@ fn parseProxyType(s: []const u8) ?ProxyType {
     if (std.mem.eql(u8, s, "ss")) return .ss;
     if (std.mem.eql(u8, s, "vmess")) return .vmess;
     if (std.mem.eql(u8, s, "trojan")) return .trojan;
+    if (std.mem.eql(u8, s, "vless")) return .vless;
     return null;
 }
 

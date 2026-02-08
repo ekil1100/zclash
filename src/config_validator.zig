@@ -1,0 +1,451 @@
+const std = @import("std");
+const Config = @import("config.zig").Config;
+const ProxyType = @import("config.zig").ProxyType;
+const RuleType = @import("config.zig").RuleType;
+
+/// 校验错误类型
+pub const ValidationError = struct {
+    message: []const u8,
+    
+    pub fn format(self: ValidationError, allocator: std.mem.Allocator) ![]const u8 {
+        return try allocator.dupe(u8, self.message);
+    }
+};
+
+/// 校验结果
+pub const ValidationResult = struct {
+    errors: std.ArrayList(ValidationError),
+    warnings: std.ArrayList(ValidationError),
+    allocator: std.mem.Allocator,
+    
+    pub fn init(allocator: std.mem.Allocator) ValidationResult {
+        var result: ValidationResult = undefined;
+        result.allocator = allocator;
+        result.errors = std.ArrayList(ValidationError).empty;
+        result.warnings = std.ArrayList(ValidationError).empty;
+        return result;
+    }
+    
+    pub fn deinit(self: *ValidationResult) void {
+        for (self.errors.items) |err| {
+            self.allocator.free(err.message);
+        }
+        for (self.warnings.items) |warn| {
+            self.allocator.free(warn.message);
+        }
+        self.errors.deinit(self.allocator);
+        self.warnings.deinit(self.allocator);
+    }
+    
+    pub fn isValid(self: *const ValidationResult) bool {
+        return self.errors.items.len == 0;
+    }
+    
+    fn addError(self: *ValidationResult, comptime fmt: []const u8, args: anytype) !void {
+        const msg = try std.fmt.allocPrint(self.allocator, fmt, args);
+        try self.errors.append(self.allocator, .{ .message = msg });
+    }
+    
+    fn addWarning(self: *ValidationResult, comptime fmt: []const u8, args: anytype) !void {
+        const msg = try std.fmt.allocPrint(self.allocator, fmt, args);
+        try self.warnings.append(self.allocator, .{ .message = msg });
+    }
+};
+
+/// 校验配置
+pub fn validate(allocator: std.mem.Allocator, config: *const Config) !ValidationResult {
+    var result = ValidationResult.init(allocator);
+    errdefer result.deinit();
+    
+    // 校验基础配置
+    try validateBasicConfig(config, &result);
+    
+    // 校验代理节点
+    try validateProxies(allocator, config, &result);
+    
+    // 校验代理组
+    try validateProxyGroups(allocator, config, &result);
+    
+    // 校验规则
+    try validateRules(allocator, config, &result);
+    
+    // 校验引用关系
+    try validateReferences(allocator, config, &result);
+    
+    return result;
+}
+
+/// 校验基础配置
+fn validateBasicConfig(config: *const Config, result: *ValidationResult) !void {
+    // 校验端口
+    if (config.port > 0 and !isValidPort(config.port)) {
+        try result.addError("Invalid HTTP port: {d} (must be 1-65535)", .{config.port});
+    }
+    if (config.socks_port > 0 and !isValidPort(config.socks_port)) {
+        try result.addError( "Invalid SOCKS port: {d} (must be 1-65535)", .{config.socks_port});
+    }
+    if (config.mixed_port > 0 and !isValidPort(config.mixed_port)) {
+        try result.addError( "Invalid mixed port: {d} (must be 1-65535)", .{config.mixed_port});
+    }
+    
+    // 检查端口冲突
+    if (config.port > 0 and config.port == config.socks_port) {
+        try result.addError( "HTTP port ({d}) and SOCKS port ({d}) cannot be the same", .{config.port, config.socks_port});
+    }
+    if (config.port > 0 and config.port == config.mixed_port) {
+        try result.addError( "HTTP port ({d}) and mixed port ({d}) cannot be the same", .{config.port, config.mixed_port});
+    }
+    if (config.socks_port > 0 and config.socks_port == config.mixed_port) {
+        try result.addError( "SOCKS port ({d}) and mixed port ({d}) cannot be the same", .{config.socks_port, config.mixed_port});
+    }
+    
+    // 检查模式
+    if (!std.mem.eql(u8, config.mode, "rule") and 
+        !std.mem.eql(u8, config.mode, "global") and 
+        !std.mem.eql(u8, config.mode, "direct")) {
+        try result.addError( "Invalid mode: '{s}' (must be 'rule', 'global', or 'direct')", .{config.mode});
+    }
+    
+    // 检查日志级别
+    if (!std.mem.eql(u8, config.log_level, "debug") and 
+        !std.mem.eql(u8, config.log_level, "info") and 
+        !std.mem.eql(u8, config.log_level, "warning") and
+        !std.mem.eql(u8, config.log_level, "error") and
+        !std.mem.eql(u8, config.log_level, "silent")) {
+        try result.addWarning( "Unknown log level: '{s}'", .{config.log_level});
+    }
+    
+    // 检查是否至少有一个监听端口
+    if (config.port == 0 and config.socks_port == 0 and config.mixed_port == 0) {
+        try result.addError( "At least one port (port, socks-port, or mixed-port) must be configured", .{});
+    }
+}
+
+/// 校验代理节点
+fn validateProxies(allocator: std.mem.Allocator, config: *const Config, result: *ValidationResult) !void {
+    var name_set = std.StringHashMap(void).init(allocator);
+    defer name_set.deinit();
+    
+    for (config.proxies.items, 0..) |proxy, i| {
+        // 检查名称是否为空
+        if (proxy.name.len == 0) {
+            try result.addError( "Proxy #{d}: name cannot be empty", .{i + 1});
+            continue;
+        }
+        
+        // 检查名称是否重复
+        if (name_set.contains(proxy.name)) {
+            try result.addError( "Duplicate proxy name: '{s}'", .{proxy.name});
+        } else {
+            try name_set.put(proxy.name, {});
+        }
+        
+        // 根据代理类型校验
+        switch (proxy.proxy_type) {
+            .direct, .reject => {
+                // 不需要额外校验
+            },
+            .http => {
+                if (proxy.server.len == 0) {
+                    try result.addError( "HTTP proxy '{s}': server cannot be empty", .{proxy.name});
+                }
+                if (!isValidPort(proxy.port)) {
+                    try result.addError( "HTTP proxy '{s}': invalid port {d}", .{proxy.name, proxy.port});
+                }
+            },
+            .socks5 => {
+                if (proxy.server.len == 0) {
+                    try result.addError( "SOCKS5 proxy '{s}': server cannot be empty", .{proxy.name});
+                }
+                if (!isValidPort(proxy.port)) {
+                    try result.addError( "SOCKS5 proxy '{s}': invalid port {d}", .{proxy.name, proxy.port});
+                }
+            },
+            .ss => {
+                if (proxy.server.len == 0) {
+                    try result.addError( "Shadowsocks proxy '{s}': server cannot be empty", .{proxy.name});
+                }
+                if (!isValidPort(proxy.port)) {
+                    try result.addError( "Shadowsocks proxy '{s}': invalid port {d}", .{proxy.name, proxy.port});
+                }
+                if (proxy.password == null or proxy.password.?.len == 0) {
+                    try result.addError( "Shadowsocks proxy '{s}': password is required", .{proxy.name});
+                }
+                if (proxy.cipher == null or proxy.cipher.?.len == 0) {
+                    try result.addError( "Shadowsocks proxy '{s}': cipher is required", .{proxy.name});
+                } else {
+                    // 检查加密方式
+                    const valid_ciphers = [_][]const u8{
+                        "aes-128-gcm", "aes-192-gcm", "aes-256-gcm",
+                        "aes-128-cfb", "aes-192-cfb", "aes-256-cfb",
+                        "chacha20-ietf-poly1305", "chacha20-poly1305",
+                        "rc4-md5", "none"
+                    };
+                    var valid = false;
+                    for (valid_ciphers) |cipher| {
+                        if (std.mem.eql(u8, proxy.cipher.?, cipher)) {
+                            valid = true;
+                            break;
+                        }
+                    }
+                    if (!valid) {
+                        try result.addWarning( "Shadowsocks proxy '{s}': unknown cipher '{s}'", .{proxy.name, proxy.cipher.?});
+                    }
+                }
+            },
+            .vmess => {
+                if (proxy.server.len == 0) {
+                    try result.addError( "VMess proxy '{s}': server cannot be empty", .{proxy.name});
+                }
+                if (!isValidPort(proxy.port)) {
+                    try result.addError( "VMess proxy '{s}': invalid port {d}", .{proxy.name, proxy.port});
+                }
+                if (proxy.uuid == null or proxy.uuid.?.len == 0) {
+                    try result.addError( "VMess proxy '{s}': uuid is required", .{proxy.name});
+                } else if (!isValidUUID(proxy.uuid.?)) {
+                    try result.addError( "VMess proxy '{s}': invalid uuid format", .{proxy.name});
+                }
+            },
+            .trojan => {
+                if (proxy.server.len == 0) {
+                    try result.addError( "Trojan proxy '{s}': server cannot be empty", .{proxy.name});
+                }
+                if (!isValidPort(proxy.port)) {
+                    try result.addError( "Trojan proxy '{s}': invalid port {d}", .{proxy.name, proxy.port});
+                }
+                if (proxy.password == null or proxy.password.?.len == 0) {
+                    try result.addError( "Trojan proxy '{s}': password is required", .{proxy.name});
+                }
+            },
+            .vless => {
+                if (proxy.server.len == 0) {
+                    try result.addError( "VLESS proxy '{s}': server cannot be empty", .{proxy.name});
+                }
+                if (!isValidPort(proxy.port)) {
+                    try result.addError( "VLESS proxy '{s}': invalid port {d}", .{proxy.name, proxy.port});
+                }
+                if (proxy.uuid == null or proxy.uuid.?.len == 0) {
+                    try result.addError( "VLESS proxy '{s}': uuid is required", .{proxy.name});
+                } else if (!isValidUUID(proxy.uuid.?)) {
+                    try result.addError( "VLESS proxy '{s}': invalid uuid format", .{proxy.name});
+                }
+            },
+        }
+    }
+}
+
+/// 校验代理组
+fn validateProxyGroups(allocator: std.mem.Allocator, config: *const Config, result: *ValidationResult) !void {
+    var name_set = std.StringHashMap(void).init(allocator);
+    defer name_set.deinit();
+    
+    for (config.proxy_groups.items, 0..) |group, i| {
+        // 检查名称是否为空
+        if (group.name.len == 0) {
+            try result.addError( "Proxy group #{d}: name cannot be empty", .{i + 1});
+            continue;
+        }
+        
+        // 检查名称是否重复
+        if (name_set.contains(group.name)) {
+            try result.addError( "Duplicate proxy group name: '{s}'", .{group.name});
+        } else {
+            try name_set.put(group.name, {});
+        }
+        
+        // 检查节点列表
+        if (group.proxies.items.len == 0) {
+            try result.addError( "Proxy group '{s}': proxy list cannot be empty", .{group.name});
+        }
+        
+        // url-test 和 fallback 需要 URL
+        if (group.group_type == .url_test or group.group_type == .fallback) {
+            if (group.url == null or group.url.?.len == 0) {
+                try result.addError( "Proxy group '{s}' ({s}): url is required", .{group.name, @tagName(group.group_type)});
+            } else if (!isValidURL(group.url.?)) {
+                try result.addWarning( "Proxy group '{s}': url '{s}' may be invalid", .{group.name, group.url.?});
+            }
+        }
+    }
+}
+
+/// 校验规则
+fn validateRules(allocator: std.mem.Allocator, config: *const Config, result: *ValidationResult) !void {
+    _ = allocator;
+    for (config.rules.items, 0..) |rule, i| {
+        // 检查 payload
+        if (rule.payload.len == 0 and rule.rule_type != .final) {
+            try result.addError( "Rule #{d}: payload cannot be empty", .{i + 1});
+        }
+        
+        // 根据规则类型校验 payload
+        switch (rule.rule_type) {
+            .ip_cidr, .ip_cidr6, .src_ip_cidr => {
+                if (!isValidCIDR(rule.payload)) {
+                    try result.addError( "Rule #{d}: invalid CIDR format '{s}'", .{i + 1, rule.payload});
+                }
+            },
+            .dst_port, .src_port => {
+                if (!isValidPortRange(rule.payload)) {
+                    try result.addError( "Rule #{d}: invalid port range '{s}'", .{i + 1, rule.payload});
+                }
+            },
+            else => {},
+        }
+    }
+}
+
+/// 校验引用关系
+fn validateReferences(allocator: std.mem.Allocator, config: *const Config, result: *ValidationResult) !void {
+    // 收集所有代理和代理组名称
+    var all_names = std.StringHashMap(void).init(allocator);
+    defer all_names.deinit();
+    
+    for (config.proxies.items) |proxy| {
+        try all_names.put(proxy.name, {});
+    }
+    
+    for (config.proxy_groups.items) |group| {
+        try all_names.put(group.name, {});
+    }
+    
+    // 检查代理组中的引用
+    for (config.proxy_groups.items) |group| {
+        for (group.proxies.items) |proxy_name| {
+            if (!all_names.contains(proxy_name)) {
+                try result.addError( "Proxy group '{s}': references undefined proxy '{s}'", .{group.name, proxy_name});
+            }
+        }
+    }
+    
+    // 检查规则中的引用
+    for (config.rules.items, 0..) |rule, i| {
+        const target = rule.target;
+        if (!std.mem.eql(u8, target, "DIRECT") and 
+            !std.mem.eql(u8, target, "REJECT") and
+            !all_names.contains(target)) {
+            try result.addError( "Rule #{d}: references undefined target '{s}'", .{i + 1, target});
+        }
+    }
+    
+    // 检查是否有循环引用（简单检查：代理组不能引用自己）
+    for (config.proxy_groups.items) |group| {
+        for (group.proxies.items) |proxy_name| {
+            if (std.mem.eql(u8, proxy_name, group.name)) {
+                try result.addError( "Proxy group '{s}': cannot reference itself", .{group.name});
+            }
+        }
+    }
+}
+
+// ============ 辅助函数 ============
+
+fn isValidPort(port: u16) bool {
+    return port >= 1 and port <= 65535;
+}
+
+fn isValidUUID(uuid: []const u8) bool {
+    // UUID 格式: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (36 字符)
+    if (uuid.len != 36) return false;
+    
+    const expected_dashes = [_]usize{ 8, 13, 18, 23 };
+    for (expected_dashes) |pos| {
+        if (uuid[pos] != '-') return false;
+    }
+    
+    // 检查十六进制字符
+    for (uuid, 0..) |c, i| {
+        if (i == 8 or i == 13 or i == 18 or i == 23) continue;
+        if (!std.ascii.isHex(c)) return false;
+    }
+    
+    return true;
+}
+
+fn isValidCIDR(cidr: []const u8) bool {
+    // 简单检查：包含 / 且前后都有内容
+    const slash_pos = std.mem.indexOf(u8, cidr, "/");
+    if (slash_pos == null) return false;
+    
+    const ip_part = cidr[0..slash_pos.?];
+    const mask_part = cidr[slash_pos.? + 1..];
+    
+    if (ip_part.len == 0 or mask_part.len == 0) return false;
+    
+    // 检查掩码是否是数字
+    const mask = std.fmt.parseInt(u8, mask_part, 10) catch return false;
+    
+    // 检查是否是 IPv4 或 IPv6
+    if (std.mem.indexOf(u8, ip_part, ".") != null) {
+        // IPv4
+        if (mask > 32) return false;
+        // 简单检查四段 IP
+        var parts_count: u8 = 0;
+        var it = std.mem.splitScalar(u8, ip_part, '.');
+        while (it.next()) |part| {
+            if (part.len == 0) return false;
+            const num = std.fmt.parseInt(u8, part, 10) catch return false;
+            if (num > 255) return false;
+            parts_count += 1;
+        }
+        return parts_count == 4;
+    } else if (std.mem.indexOf(u8, ip_part, ":") != null) {
+        // IPv6
+        return mask <= 128;
+    }
+    
+    return false;
+}
+
+fn isValidPortRange(range: []const u8) bool {
+    // 支持格式: 80, 80-443, 80,443,8080
+    var it = std.mem.splitAny(u8, range, ",");
+    while (it.next()) |part| {
+        const trimmed = std.mem.trim(u8, part, " ");
+        if (std.mem.indexOf(u8, trimmed, "-") != null) {
+            // 范围格式
+            var range_it = std.mem.splitScalar(u8, trimmed, '-');
+            const start = range_it.next() orelse return false;
+            const end = range_it.next() orelse return false;
+            const start_port = std.fmt.parseInt(u16, start, 10) catch return false;
+            const end_port = std.fmt.parseInt(u16, end, 10) catch return false;
+            if (start_port == 0 or end_port == 0 or start_port > end_port) return false;
+        } else {
+            // 单个端口
+            const port = std.fmt.parseInt(u16, trimmed, 10) catch return false;
+            if (port == 0) return false;
+        }
+    }
+    return true;
+}
+
+fn isValidURL(url: []const u8) bool {
+    // 简单检查：以 http:// 或 https:// 开头
+    return std.mem.startsWith(u8, url, "http://") or 
+           std.mem.startsWith(u8, url, "https://");
+}
+
+/// 打印校验结果
+pub fn printResult(result: *const ValidationResult) void {
+    if (result.errors.items.len > 0) {
+        std.debug.print("\n=== Configuration Errors ===\n", .{});
+        for (result.errors.items, 1..) |err, i| {
+            std.debug.print("  [{d}] {s}\n", .{ i, err.message });
+        }
+    }
+
+    if (result.warnings.items.len > 0) {
+        std.debug.print("\n=== Configuration Warnings ===\n", .{});
+        for (result.warnings.items, 1..) |warn, i| {
+            std.debug.print("  [{d}] {s}\n", .{ i, warn.message });
+        }
+    }
+
+    if (result.isValid() and result.warnings.items.len == 0) {
+        std.debug.print("\n✓ Configuration is valid\n", .{});
+    } else if (result.isValid()) {
+        std.debug.print("\n✓ Configuration is valid (with warnings)\n", .{});
+    } else {
+        std.debug.print("\n✗ Configuration is invalid\n", .{});
+    }
+}

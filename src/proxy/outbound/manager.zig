@@ -6,6 +6,7 @@ const ProxyType = @import("../../config.zig").ProxyType;
 const ss = @import("shadowsocks.zig");
 const vmess = @import("../../protocol/vmess.zig");
 const trojan = @import("../../protocol/trojan.zig");
+const vless = @import("../../protocol/vless.zig");
 
 /// 代理流包装器
 pub const ProxyStream = struct {
@@ -56,6 +57,7 @@ pub const OutboundManager = struct {
     ss_clients: std.StringHashMap(*ss.ShadowsocksClient),
     vmess_clients: std.StringHashMap(*vmess.Client),
     trojan_clients: std.StringHashMap(*trojan.Client),
+    vless_clients: std.StringHashMap(*vless.Client),
 
     pub fn init(allocator: std.mem.Allocator, config: *const Config) !OutboundManager {
         var manager = OutboundManager{
@@ -64,6 +66,7 @@ pub const OutboundManager = struct {
             .ss_clients = std.StringHashMap(*ss.ShadowsocksClient).init(allocator),
             .vmess_clients = std.StringHashMap(*vmess.Client).init(allocator),
             .trojan_clients = std.StringHashMap(*trojan.Client).init(allocator),
+            .vless_clients = std.StringHashMap(*vless.Client).init(allocator),
         };
 
         // 预初始化代理客户端
@@ -101,6 +104,15 @@ pub const OutboundManager = struct {
                     });
                     try manager.trojan_clients.put(proxy.name, client);
                 },
+                .vless => {
+                    const client = try allocator.create(vless.Client);
+                    client.* = try vless.Client.init(allocator, .{
+                        .id = proxy.uuid orelse return error.MissingUuid,
+                        .address = proxy.server,
+                        .port = proxy.port,
+                    });
+                    try manager.vless_clients.put(proxy.name, client);
+                },
                 else => {},
             }
         }
@@ -127,6 +139,12 @@ pub const OutboundManager = struct {
             self.allocator.destroy(client.*);
         }
         self.trojan_clients.deinit();
+
+        var vless_iter = self.vless_clients.valueIterator();
+        while (vless_iter.next()) |client| {
+            self.allocator.destroy(client.*);
+        }
+        self.vless_clients.deinit();
     }
 
     /// 根据代理名称建立连接（返回原始 stream，加密由调用方处理）
@@ -157,6 +175,10 @@ pub const OutboundManager = struct {
             },
             .trojan => {
                 const client = self.trojan_clients.get(proxy_name) orelse return error.ClientNotFound;
+                return try client.connect(target, port);
+            },
+            .vless => {
+                const client = self.vless_clients.get(proxy_name) orelse return error.ClientNotFound;
                 return try client.connect(target, port);
             },
             else => {

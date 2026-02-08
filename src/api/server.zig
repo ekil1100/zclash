@@ -103,6 +103,7 @@ pub const ApiServer = struct {
                 .ss => "Shadowsocks",
                 .vmess => "Vmess",
                 .trojan => "Trojan",
+                .vless => "Vless",
             };
 
             try json.writer(self.allocator).print(

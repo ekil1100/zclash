@@ -7,11 +7,29 @@ const log = std.log.scoped(.rule_engine);
 
 /// 规则匹配上下文
 pub const MatchContext = struct {
-    host: []const u8,
-    port: u16,
-    is_domain: bool,
+    target_host: []const u8,
+    target_port: u16 = 0,
+    is_domain: bool = true,
     process_name: ?[]const u8 = null,
     source_ip: ?[]const u8 = null,
+    source_port: ?u16 = null,
+};
+
+/// GeoIP 条目
+const GeoIpEntry = struct {
+    cidr: IpCidr,
+    country_code: []const u8,
+};
+
+/// 端口范围
+const PortRange = struct {
+    start: u16,
+    end: u16,
+    target: []const u8,
+
+    fn contains(self: PortRange, port: u16) bool {
+        return port >= self.start and port <= self.end;
+    }
 };
 
 /// RuleEngine matches requests against rules and returns the target proxy
@@ -19,10 +37,25 @@ pub const Engine = struct {
     allocator: std.mem.Allocator,
     rules: *const std.ArrayList(Rule),
     dns_client: ?dns.DnsClient,
+    
+    // Domain rules
     domain_set: std.StringHashMap(void),
     domain_suffix_trie: TrieNode,
     domain_keywords: std.ArrayList([]const u8),
+    
+    // IP rules  
     ip_cidrs: std.ArrayList(IpCidr),
+    ip_cidr6s: std.ArrayList(IpCidr6),
+    src_ip_cidrs: std.ArrayList(IpCidr),
+    geoip_entries: std.ArrayList(GeoIpEntry),
+    geoip_enabled: bool,
+    
+    // Port rules
+    dst_port_ranges: std.ArrayList(PortRange),
+    src_port_ranges: std.ArrayList(PortRange),
+    
+    // Process rules
+    process_names: std.StringHashMap(void),
 
     pub fn init(allocator: std.mem.Allocator, rules: *const std.ArrayList(Rule)) !Engine {
         return try initWithDns(allocator, rules, null);
@@ -40,6 +73,13 @@ pub const Engine = struct {
             },
             .domain_keywords = std.ArrayList([]const u8).empty,
             .ip_cidrs = std.ArrayList(IpCidr).empty,
+            .ip_cidr6s = std.ArrayList(IpCidr6).empty,
+            .src_ip_cidrs = std.ArrayList(IpCidr).empty,
+            .geoip_entries = std.ArrayList(GeoIpEntry).empty,
+            .geoip_enabled = false,
+            .dst_port_ranges = std.ArrayList(PortRange).empty,
+            .src_port_ranges = std.ArrayList(PortRange).empty,
+            .process_names = std.StringHashMap(void).init(allocator),
         };
 
         // Preprocess rules for fast matching
@@ -58,7 +98,31 @@ pub const Engine = struct {
                     const cidr = try parseCidr(rule.payload);
                     try engine.ip_cidrs.append(allocator, cidr);
                 },
-                else => {},
+                .ip_cidr6 => {
+                    const cidr6 = try parseCidr6(rule.payload);
+                    try engine.ip_cidr6s.append(allocator, cidr6);
+                },
+                .src_ip_cidr => {
+                    const cidr = try parseCidr(rule.payload);
+                    try engine.src_ip_cidrs.append(allocator, cidr);
+                },
+                .geoip => {
+                    // GeoIP 条目格式: GEOIP,CN,DIRECT
+                    // payload 是国家代码，需要在运行时查询
+                    engine.geoip_enabled = true;
+                },
+                .dst_port => {
+                    const range = try parsePortRange(rule.payload, rule.target);
+                    try engine.dst_port_ranges.append(allocator, range);
+                },
+                .src_port => {
+                    const range = try parsePortRange(rule.payload, rule.target);
+                    try engine.src_port_ranges.append(allocator, range);
+                },
+                .process_name => {
+                    try engine.process_names.put(rule.payload, {});
+                },
+                .final => {},
             }
         }
 
@@ -73,67 +137,150 @@ pub const Engine = struct {
         self.domain_suffix_trie.deinit(self.allocator);
         self.domain_keywords.deinit(self.allocator);
         self.ip_cidrs.deinit(self.allocator);
+        self.ip_cidr6s.deinit(self.allocator);
+        self.src_ip_cidrs.deinit(self.allocator);
+        self.geoip_entries.deinit(self.allocator);
+        self.dst_port_ranges.deinit(self.allocator);
+        self.src_port_ranges.deinit(self.allocator);
+        self.process_names.deinit();
     }
 
     /// Match a request and return the target proxy name
-    /// 这是简化版，直接传入 host 和是否为域名
+
+    /// 简化版 match，兼容旧代码 (host, is_domain)
     pub fn match(self: *Engine, host: []const u8, is_domain: bool) ?[]const u8 {
-        // Check domain rules first (if it's a domain)
-        if (is_domain) {
-            // 1. Exact domain match
+        return self.matchCtx(.{
+            .target_host = host,
+            .is_domain = is_domain,
+        });
+    }
+
+    pub fn matchCtx(self: *Engine, ctx: MatchContext) ?[]const u8 {
+        // 1. PROCESS-NAME (最高优先级之一)
+        if (ctx.process_name) |proc| {
+            if (self.process_names.contains(proc)) {
+                return self.findRuleTarget(.process_name, proc);
+            }
+        }
+
+        // 2. SRC-IP-CIDR (如果提供了源 IP)
+        if (ctx.source_ip) |src_ip| {
+            if (self.matchSrcIpCidr(src_ip)) |target| {
+                return target;
+            }
+        }
+
+        // 3. SRC-PORT (如果提供了源端口)
+        if (ctx.source_port) |src_port| {
+            for (self.src_port_ranges.items) |range| {
+                if (range.contains(src_port)) {
+                    return range.target;
+                }
+            }
+        }
+
+        // 4. DST-PORT (目标端口)
+        if (ctx.target_port > 0) {
+            for (self.dst_port_ranges.items) |range| {
+                if (range.contains(ctx.target_port)) {
+                    return range.target;
+                }
+            }
+        }
+
+        // 5. DOMAIN rules (如果是域名)
+        if (ctx.is_domain) {
+            const host = ctx.target_host;
+
+            // 5.1 DOMAIN - 精确匹配
             if (self.domain_set.contains(host)) {
                 return self.findRuleTarget(.domain, host);
             }
 
-            // 2. Domain suffix match
+            // 5.2 DOMAIN-SUFFIX - 后缀匹配
             if (self.matchDomainSuffix(host)) {
                 const suffix = self.findMatchingSuffix(host) orelse host;
                 return self.findRuleTarget(.domain_suffix, suffix);
             }
 
-            // 3. Domain keyword match
+            // 5.3 DOMAIN-KEYWORD - 关键词匹配
             for (self.domain_keywords.items) |keyword| {
                 if (std.mem.indexOf(u8, host, keyword) != null) {
                     return self.findRuleTarget(.domain_keyword, keyword);
                 }
             }
 
-            // Try to resolve and check IP rules (if DNS available and not no-resolve)
+            // 5.4 GEOIP (需要 DNS 解析)
+            // 检查是否有 no-resolve 标记的规则优先
+            for (self.rules.items) |rule| {
+                if (rule.rule_type == .geoip and !rule.no_resolve) {
+                    // 需要解析后检查
+                }
+            }
+
+            // 5.5 IP-CIDR (DNS 解析后检查，除非 no-resolve)
             if (self.dns_client) |*client| {
-                const addresses = client.resolve(host) catch |err| {
-                    std.debug.print("DNS resolve failed: {}\n", .{err});
-                    return self.findRuleTarget(.final, "");
+                const addresses = client.resolve(host) catch {
+                    // DNS 失败，继续检查 no-resolve 规则
+                    return self.matchNoResolveRules(ctx);
                 };
                 defer self.allocator.free(addresses);
 
                 for (addresses) |addr| {
-                    const ip_str = std.fmt.allocPrint(self.allocator, "{d}.{d}.{d}.{d}", .{
-                        (addr.in.sa.addr >> 0) & 0xFF,
-                        (addr.in.sa.addr >> 8) & 0xFF,
-                        (addr.in.sa.addr >> 16) & 0xFF,
-                        (addr.in.sa.addr >> 24) & 0xFF,
-                    }) catch continue;
-                    defer self.allocator.free(ip_str);
+                    // IPv4
+                    if (addr.any.family == std.posix.AF.INET) {
+                        const ip = addr.in.sa.addr;
+                        
+                        // GEOIP 检查
+                        if (self.geoip_enabled) {
+                            if (self.matchGeoIp(ip)) |country| {
+                                if (self.findRuleTarget(.geoip, country)) |target| {
+                                    return target;
+                                }
+                            }
+                        }
 
-                    // Check IP-CIDR rules
-                    for (self.ip_cidrs.items) |cidr| {
-                        if (cidr.contains(addr.in.sa.addr)) {
-                            return self.findRuleTarget(.ip_cidr, cidr.original);
+                        // IP-CIDR 检查
+                        for (self.ip_cidrs.items) |cidr| {
+                            if (cidr.contains(ip)) {
+                                return self.findRuleTarget(.ip_cidr, cidr.original);
+                            }
+                        }
+                    }
+                    // IPv6
+                    else if (addr.any.family == std.posix.AF.INET6) {
+                        // TODO: IPv6 GEOIP and CIDR6 matching
+                    }
+                }
+            } else {
+                // 没有 DNS 客户端，只检查 no-resolve 规则
+                return self.matchNoResolveRules(ctx);
+            }
+        } else {
+            // 6. 直接是 IP 地址
+            if (std.net.Address.parseIp4(ctx.target_host, 0)) |addr| {
+                const ip = addr.in.sa.addr;
+
+                // GEOIP
+                if (self.geoip_enabled) {
+                    if (self.matchGeoIp(ip)) |country| {
+                        if (self.findRuleTarget(.geoip, country)) |target| {
+                            return target;
                         }
                     }
                 }
-            }
-        } else {
-            // IP-based rules
-            const addr = std.net.Address.parseIp4(host, 0) catch {
-                return self.findRuleTarget(.final, "");
-            };
-            const ip = addr.in.sa.addr;
 
-            for (self.ip_cidrs.items) |cidr| {
-                if (cidr.contains(ip)) {
-                    return self.findRuleTarget(.ip_cidr, cidr.original);
+                // IP-CIDR
+                for (self.ip_cidrs.items) |cidr| {
+                    if (cidr.contains(ip)) {
+                        return self.findRuleTarget(.ip_cidr, cidr.original);
+                    }
                 }
+            } else |_| {
+                // IPv6?
+                if (std.net.Address.parseIp6(ctx.target_host, 0)) |_| {
+                    // TODO: IPv6 matching
+                } else |_| {}
             }
         }
 
@@ -141,13 +288,64 @@ pub const Engine = struct {
         return self.findRuleTarget(.final, "");
     }
 
-    fn findRuleTarget(self: *const Engine, rule_type: RuleType, payload: []const u8) ?[]const u8 {
+    /// 只匹配标记了 no-resolve 的规则
+    fn matchNoResolveRules(self: *Engine, ctx: MatchContext) ?[]const u8 {
         for (self.rules.items) |rule| {
-            if (rule.rule_type == rule_type and std.mem.eql(u8, rule.payload, payload)) {
-                return rule.target;
+            if (!rule.no_resolve) continue;
+            
+            switch (rule.rule_type) {
+                .domain => {
+                    if (std.mem.eql(u8, rule.payload, ctx.target_host)) {
+                        return rule.target;
+                    }
+                },
+                .domain_suffix => {
+                    if (std.mem.endsWith(u8, ctx.target_host, rule.payload)) {
+                        return rule.target;
+                    }
+                },
+                .domain_keyword => {
+                    if (std.mem.indexOf(u8, ctx.target_host, rule.payload) != null) {
+                        return rule.target;
+                    }
+                },
+                .geoip => {
+                    // no-resolve 的 GEOIP 规则不匹配（因为没有 IP）
+                },
+                else => {},
             }
         }
-        // For final rule, find the first one
+        return null;
+    }
+
+    fn matchSrcIpCidr(self: *Engine, src_ip: []const u8) ?[]const u8 {
+        if (std.net.Address.parseIp4(src_ip, 0)) |addr| {
+            const ip = addr.in.sa.addr;
+            for (self.src_ip_cidrs.items) |cidr| {
+                if (cidr.contains(ip)) {
+                    return self.findRuleTarget(.src_ip_cidr, cidr.original);
+                }
+            }
+        } else |_| {}
+        return null;
+    }
+
+    fn matchGeoIp(self: *Engine, ip: u32) ?[]const u8 {
+        _ = self;
+        _ = ip;
+        // TODO: 实现 GeoIP 数据库查询
+        // 简化实现：返回空，表示未匹配
+        return null;
+    }
+
+    fn findRuleTarget(self: *const Engine, rule_type: RuleType, payload: []const u8) ?[]const u8 {
+        for (self.rules.items) |rule| {
+            if (rule.rule_type == rule_type) {
+                if (rule_type == .final or std.mem.eql(u8, rule.payload, payload)) {
+                    return rule.target;
+                }
+            }
+        }
         if (rule_type == .final) {
             for (self.rules.items) |rule| {
                 if (rule.rule_type == .final) {
@@ -158,8 +356,9 @@ pub const Engine = struct {
         return null;
     }
 
+    // ============ Domain Suffix Trie ============
+    
     fn addDomainSuffix(self: *Engine, suffix: []const u8) !void {
-        // Insert reversed suffix into trie
         var node = &self.domain_suffix_trie;
         var i: usize = suffix.len;
         while (i > 0) {
@@ -210,6 +409,8 @@ pub const Engine = struct {
     }
 };
 
+// ============ Data Structures ============
+
 const TrieNode = struct {
     children: std.AutoHashMap(u8, *TrieNode),
     is_end: bool,
@@ -224,6 +425,7 @@ const TrieNode = struct {
     }
 };
 
+// IPv4 CIDR
 const IpCidr = struct {
     prefix: u32,
     mask: u32,
@@ -233,6 +435,31 @@ const IpCidr = struct {
         return (ip & self.mask) == self.prefix;
     }
 };
+
+// IPv6 CIDR
+const IpCidr6 = struct {
+    prefix: [16]u8,
+    prefix_len: u8,
+    original: []const u8,
+
+    fn contains(self: IpCidr6, ip: [16]u8) bool {
+        const full_bytes = self.prefix_len / 8;
+        const remaining_bits = self.prefix_len % 8;
+        
+        for (0..full_bytes) |i| {
+            if (ip[i] != self.prefix[i]) return false;
+        }
+        
+        if (remaining_bits > 0 and full_bytes < 16) {
+            const mask: u8 = @as(u8, 0xFF) << @intCast(8 - remaining_bits);
+            if ((ip[full_bytes] & mask) != (self.prefix[full_bytes] & mask)) return false;
+        }
+        
+        return true;
+    }
+};
+
+// ============ Parsing Functions ============
 
 fn parseCidr(s: []const u8) !IpCidr {
     const slash_pos = std.mem.indexOf(u8, s, "/");
@@ -254,3 +481,67 @@ fn parseCidr(s: []const u8) !IpCidr {
         .original = s,
     };
 }
+
+fn parseCidr6(s: []const u8) !IpCidr6 {
+    const slash_pos = std.mem.indexOf(u8, s, "/");
+    if (slash_pos == null) return error.InvalidCidr;
+
+    const ip_str = s[0..slash_pos.?];
+    const prefix_len = try std.fmt.parseInt(u8, s[slash_pos.? + 1 ..], 10);
+
+    if (prefix_len > 128) return error.InvalidPrefix;
+
+    const addr = try std.net.Address.parseIp6(ip_str, 0);
+    
+    var prefix: [16]u8 = undefined;
+    @memcpy(&prefix, &addr.in6.sa.addr);
+
+    // Apply mask to prefix
+    const full_bytes = prefix_len / 8;
+    const remaining_bits = prefix_len % 8;
+    
+    if (remaining_bits > 0 and full_bytes < 16) {
+        const mask: u8 = @as(u8, 0xFF) << @intCast(8 - remaining_bits);
+        prefix[full_bytes] &= mask;
+    }
+    
+    for (full_bytes + 1..16) |i| {
+        prefix[i] = 0;
+    }
+
+    return IpCidr6{
+        .prefix = prefix,
+        .prefix_len = prefix_len,
+        .original = s,
+    };
+}
+
+fn parsePortRange(payload: []const u8, target: []const u8) !PortRange {
+    // 支持格式: "80", "80-443", "8080,8081" (取第一个)
+    if (std.mem.indexOf(u8, payload, ",")) |comma| {
+        // 多端口，取第一个
+        const first = payload[0..comma];
+        return try parsePortRange(first, target);
+    }
+    
+    if (std.mem.indexOf(u8, payload, "-")) |dash| {
+        // 范围
+        const start = try std.fmt.parseInt(u16, payload[0..dash], 10);
+        const end = try std.fmt.parseInt(u16, payload[dash + 1 ..], 10);
+        return PortRange{
+            .start = start,
+            .end = end,
+            .target = target,
+        };
+    }
+    
+    // 单个端口
+    const port = try std.fmt.parseInt(u16, payload, 10);
+    return PortRange{
+        .start = port,
+        .end = port,
+        .target = target,
+    };
+}
+
+// ============ Simplified Match Interface ============
