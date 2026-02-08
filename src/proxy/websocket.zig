@@ -2,6 +2,47 @@ const std = @import("std");
 const net = std.net;
 const crypto = std.crypto;
 const base64 = std.base64;
+const TlsStream = @import("tls.zig").TlsStream;
+
+/// 通用流接口（支持普通 TCP 和 TLS）
+pub const Stream = union(enum) {
+    plain: net.Stream,
+    tls: TlsStream,
+
+    pub fn read(self: Stream, buf: []u8) !usize {
+        return switch (self) {
+            .plain => |s| try s.read(buf),
+            .tls => |*s| try s.read(buf),
+        };
+    }
+
+    pub fn readAll(self: Stream, buf: []u8) !void {
+        var total_read: usize = 0;
+        while (total_read < buf.len) {
+            const n = try self.read(buf[total_read..]);
+            if (n == 0) return error.EndOfStream;
+            total_read += n;
+        }
+    }
+
+    pub fn write(self: Stream, data: []const u8) !void {
+        switch (self) {
+            .plain => |s| try s.writeAll(data),
+            .tls => |*s| try s.write(data),
+        }
+    }
+
+    pub fn writeAll(self: Stream, data: []const u8) !void {
+        try self.write(data);
+    }
+
+    pub fn close(self: Stream) void {
+        switch (self) {
+            .plain => |s| s.close(),
+            .tls => |*s| s.close(),
+        }
+    }
+};
 
 /// WebSocket 配置
 pub const WsConfig = struct {
@@ -13,11 +54,11 @@ pub const WsConfig = struct {
 /// WebSocket 客户端
 pub const WebSocket = struct {
     allocator: std.mem.Allocator,
-    stream: net.Stream,
+    stream: Stream,
     connected: bool,
     mask_key: [4]u8,
 
-    pub fn init(allocator: std.mem.Allocator, stream: net.Stream) WebSocket {
+    pub fn init(allocator: std.mem.Allocator, stream: Stream) WebSocket {
         return .{
             .allocator = allocator,
             .stream = stream,
@@ -196,14 +237,22 @@ pub const WebSocket = struct {
 };
 
 /// WebSocket + TLS 连接
-pub fn connectWs(allocator: std.mem.Allocator, host: []const u8, port: u16, path: []const u8, use_tls: bool) !WebSocket {
-    _ = use_tls; // TODO: Implement TLS wrapper
-
+pub fn connectWs(allocator: std.mem.Allocator, host: []const u8, port: u16, path: []const u8, use_tls: bool, ws_host: ?[]const u8) !WebSocket {
     const stream = try net.tcpConnectToHost(allocator, host, port);
     errdefer stream.close();
 
-    var ws = WebSocket.init(allocator, stream);
-    try ws.connect(host, port, path, null);
+    var ws: WebSocket = undefined;
+
+    if (use_tls) {
+        // TLS 连接
+        var tls_stream = try TlsStream.init(allocator, stream, ws_host orelse host);
+        ws = WebSocket.init(allocator, .{ .tls = tls_stream });
+    } else {
+        // 普通 TCP 连接
+        ws = WebSocket.init(allocator, .{ .plain = stream });
+    }
+
+    try ws.connect(host, port, path, ws_host);
     return ws;
 }
 
