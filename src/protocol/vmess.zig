@@ -32,11 +32,11 @@ pub const Security = enum(u8) {
 
 /// VMess 配置
 pub const Config = struct {
-    id: []const u8,          // UUID
-    address: []const u8,     // 服务器地址
-    port: u16,               // 服务器端口
+    id: []const u8, // UUID
+    address: []const u8, // 服务器地址
+    port: u16, // 服务器端口
     security: Security = .auto,
-    alter_id: u16 = 0,       // AlterID (已废弃，保持为0)
+    alter_id: u16 = 0, // AlterID (已废弃，保持为0)
 };
 
 /// VMess 客户端
@@ -44,6 +44,11 @@ pub const Client = struct {
     allocator: std.mem.Allocator,
     config: Config,
     uuid: [16]u8,
+    security: Security,
+    request_key: [16]u8,
+    request_iv: [16]u8,
+    response_key: [16]u8,
+    response_iv: [16]u8,
 
     pub fn init(allocator: std.mem.Allocator, config: Config) !Client {
         // 解析 UUID
@@ -54,6 +59,11 @@ pub const Client = struct {
             .allocator = allocator,
             .config = config,
             .uuid = uuid,
+            .security = .none,
+            .request_key = undefined,
+            .request_iv = undefined,
+            .response_key = undefined,
+            .response_iv = undefined,
         };
     }
 
@@ -72,15 +82,14 @@ pub const Client = struct {
     /// VMess 握手
     fn handshake(self: *Client, stream: *net.Stream, target_host: []const u8, target_port: u16) !void {
         // 生成请求密钥和 IV
-        var request_key: [16]u8 = undefined;
-        var request_iv: [16]u8 = undefined;
-        crypto.random.bytes(&request_key);
-        crypto.random.bytes(&request_iv);
+        crypto.random.bytes(&self.request_key);
+        crypto.random.bytes(&self.request_iv);
 
         // 生成响应密钥和 IV (基于请求密钥/IV)
-        var response_key: [16]u8 = undefined;
-        var response_iv: [16]u8 = undefined;
-        deriveResponseKeyIv(&request_key, &request_iv, &response_key, &response_iv);
+        deriveResponseKeyIv(&self.request_key, &self.request_iv, &self.response_key, &self.response_iv);
+
+        // 选择加密方式
+        self.security = self.selectSecurity();
 
         // 构建请求头
         var header = std.ArrayList(u8).empty;
@@ -92,7 +101,7 @@ pub const Client = struct {
         // UUID (16 bytes)
         try header.appendSlice(self.allocator, &self.uuid);
 
-        // Timestamp (8 bytes, big endian)
+        // Timestamp (8 bytes, big endian) - VMess 使用 UTC 时间的秒数
         const timestamp = @as(u64, @intCast(std.time.timestamp()));
         const ts_bytes = std.mem.toBytes(timestamp);
         try header.appendSlice(self.allocator, &ts_bytes);
@@ -108,29 +117,27 @@ pub const Client = struct {
         try self.encodeAddress(&header, target_host);
 
         // Security type
-        const security = self.selectSecurity();
-        try header.append(self.allocator, @intFromEnum(security));
+        try header.append(self.allocator, @intFromEnum(self.security));
 
         // Reserved byte
         try header.append(self.allocator, 0x00);
 
-        // Generate command key and IV
+        // Generate command key and IV (用于加密 header)
         var cmd_key: [16]u8 = undefined;
         var cmd_iv: [16]u8 = undefined;
-        deriveCommandKeyIv(&request_key, &request_iv, &cmd_key, &cmd_iv);
+        deriveCommandKeyIv(&self.request_key, &self.request_iv, &cmd_key, &cmd_iv);
 
-        // Encrypt header
-        const encrypted_header = try self.encryptHeader(header.items, &cmd_key, &cmd_iv);
+        // 加密 header
+        const encrypted_header = try self.encryptAead(header.items, &cmd_key, &cmd_iv);
         defer self.allocator.free(encrypted_header);
 
-        // Build authentication header (16 bytes)
+        // Build authentication header (16 bytes random)
         var auth: [16]u8 = undefined;
         crypto.random.bytes(&auth);
 
         // Send: auth(16) + encrypted_length(2) + encrypted_header
-        // For simplicity, we use no encryption for length (legacy mode)
         const header_len = @as(u16, @intCast(encrypted_header.len));
-        
+
         try stream.writeAll(&auth);
         try stream.writeAll(&[_]u8{
             @intCast(header_len >> 8),
@@ -174,57 +181,218 @@ pub const Client = struct {
         };
     }
 
-    /// 加密请求头 (使用 AES-128-CFB)
-    fn encryptHeader(self: *Client, data: []const u8, key: *[16]u8, iv: *[16]u8) ![]u8 {
-        // For simplicity, use AES-128-CFB (VMess legacy)
-        // In production, should use proper AEAD
-        const encrypted = try self.allocator.alloc(u8, data.len);
-        
-        // Simple XOR for now (placeholder - should use proper AES-CFB)
-        var xor_key: [16]u8 = undefined;
-        for (0..16) |i| {
-            xor_key[i] = key[i] ^ iv[i];
+    /// AEAD 加密 (AES-128-GCM 或 ChaCha20-Poly1305)
+    fn encryptAead(self: *Client, plaintext: []const u8, key: *[16]u8, nonce: *[16]u8) ![]u8 {
+        const overhead: usize = switch (self.security) {
+            .aes_128_gcm => 16, // GCM tag length
+            .chacha20_poly1305 => 16, // Poly1305 tag length
+            .none => return self.allocator.dupe(u8, plaintext),
+            else => 16,
+        };
+
+        const ciphertext = try self.allocator.alloc(u8, plaintext.len + overhead);
+        errdefer self.allocator.free(ciphertext);
+
+        switch (self.security) {
+            .aes_128_gcm => {
+                // Use first 12 bytes of nonce for GCM
+                var iv: [12]u8 = undefined;
+                @memcpy(&iv, nonce[0..12]);
+
+                const Aes128Gcm = crypto.aead.aes_gcm.Aes128Gcm;
+                Aes128Gcm.encrypt(
+                    ciphertext[0..plaintext.len],
+                    ciphertext[plaintext.len..][0..16],
+                    plaintext,
+                    &[_]u8{}, // no additional data
+                    iv,
+                    key.*,
+                );
+            },
+            .chacha20_poly1305 => {
+                // Derive 32-byte key from 16-byte VMess key using HKDF-SHA256
+                var derived_key: [32]u8 = undefined;
+                const h = crypto.auth.hmac.sha2.HmacSha256;
+                h.create(&derived_key, key, "vmess-chacha20-key");
+
+                // Use first 12 bytes of nonce for ChaCha20-Poly1305
+                var iv: [12]u8 = undefined;
+                @memcpy(&iv, nonce[0..12]);
+
+                const ChaCha20Poly1305 = crypto.aead.chacha_poly.ChaCha20Poly1305;
+                ChaCha20Poly1305.encrypt(
+                    ciphertext[0..plaintext.len],
+                    ciphertext[plaintext.len..][0..16],
+                    plaintext,
+                    &[_]u8{}, // no additional data
+                    iv,
+                    derived_key,
+                );
+            },
+            .none => @memcpy(ciphertext, plaintext),
+            else => {
+                // Default to AES-128-GCM
+                var iv: [12]u8 = undefined;
+                @memcpy(&iv, nonce[0..12]);
+
+                const Aes128Gcm = crypto.aead.aes_gcm.Aes128Gcm;
+                Aes128Gcm.encrypt(
+                    ciphertext[0..plaintext.len],
+                    ciphertext[plaintext.len..][0..16],
+                    plaintext[0..plaintext.len],
+                    &[_]u8{},
+                    iv,
+                    key.*,
+                );
+            },
         }
-        
-        for (data, 0..) |byte, i| {
-            encrypted[i] = byte ^ xor_key[i % 16];
+
+        return ciphertext;
+    }
+
+    /// AEAD 解密
+    fn decryptAead(self: *Client, ciphertext: []const u8, key: *[16]u8, nonce: *[16]u8) ![]u8 {
+        if (ciphertext.len < 16) return error.InvalidCiphertext;
+
+        const overhead: usize = switch (self.security) {
+            .aes_128_gcm, .chacha20_poly1305 => 16,
+            .none => return self.allocator.dupe(u8, ciphertext),
+            else => 16,
+        };
+
+        const plaintext_len = ciphertext.len - overhead;
+        const plaintext = try self.allocator.alloc(u8, plaintext_len);
+        errdefer self.allocator.free(plaintext);
+
+        switch (self.security) {
+            .aes_128_gcm => {
+                var iv: [12]u8 = undefined;
+                @memcpy(&iv, nonce[0..12]);
+
+                const Aes128Gcm = crypto.aead.aes_gcm.Aes128Gcm;
+                try Aes128Gcm.decrypt(
+                    plaintext,
+                    ciphertext[0..plaintext_len],
+                    ciphertext[plaintext_len..][0..16],
+                    &[_]u8{},
+                    iv,
+                    key.*,
+                );
+            },
+            .chacha20_poly1305 => {
+                // Derive 32-byte key from 16-byte VMess key using HKDF-SHA256
+                var derived_key: [32]u8 = undefined;
+                const h = crypto.auth.hmac.sha2.HmacSha256;
+                h.create(&derived_key, key, "vmess-chacha20-key");
+
+                var iv: [12]u8 = undefined;
+                @memcpy(&iv, nonce[0..12]);
+
+                const ChaCha20Poly1305 = crypto.aead.chacha_poly.ChaCha20Poly1305;
+                try ChaCha20Poly1305.decrypt(
+                    plaintext,
+                    ciphertext[0..plaintext_len],
+                    ciphertext[plaintext_len..][0..16],
+                    &[_]u8{},
+                    iv,
+                    derived_key,
+                );
+            },
+            .none => @memcpy(plaintext, ciphertext),
+            else => {
+                var iv: [12]u8 = undefined;
+                @memcpy(&iv, nonce[0..12]);
+
+                const Aes128Gcm = crypto.aead.aes_gcm.Aes128Gcm;
+                try Aes128Gcm.decrypt(
+                    plaintext,
+                    ciphertext[0..plaintext_len],
+                    ciphertext[plaintext_len..][0..16],
+                    &[_]u8{},
+                    iv,
+                    key.*,
+                );
+            },
         }
-        
-        return encrypted;
+
+        return plaintext;
     }
 
     /// 发送数据 (加密)
     pub fn send(self: *Client, stream: *net.Stream, data: []const u8) !void {
-        _ = self;
-        // TODO: Implement proper encryption based on security type
-        try stream.writeAll(data);
+        // VMess 使用长度 + 加密数据的格式
+        // 长度本身也是加密的
+
+        // 使用 request_key/request_iv 生成数据加密密钥
+        var data_key: [16]u8 = undefined;
+        var data_iv: [16]u8 = undefined;
+        deriveDataKeyIv(&self.request_key, &self.request_iv, &data_key, &data_iv);
+
+        // 加密数据
+        const encrypted_data = try self.encryptAead(data, &data_key, &data_iv);
+        defer self.allocator.free(encrypted_data);
+
+        // 发送: encrypted_length(2) + encrypted_data
+        const len_bytes = std.mem.toBytes(@as(u16, @intCast(encrypted_data.len)));
+        try stream.writeAll(&len_bytes);
+        try stream.writeAll(encrypted_data);
     }
 
     /// 接收数据 (解密)
     pub fn recv(self: *Client, stream: *net.Stream, buf: []u8) !usize {
-        _ = self;
-        // TODO: Implement proper decryption
-        return try stream.read(buf);
+        // 使用 response_key/response_iv 生成数据解密密钥
+        var data_key: [16]u8 = undefined;
+        var data_iv: [16]u8 = undefined;
+        deriveDataKeyIv(&self.response_key, &self.response_iv, &data_key, &data_iv);
+
+        // 读取长度 (2 bytes, 加密)
+        var len_buf: [2]u8 = undefined;
+        _ = try stream.readAll(&len_buf);
+
+        // 解密长度 (简化处理：如果加密方式是 none，直接使用)
+        const data_len = switch (self.security) {
+            .none => std.mem.readInt(u16, &len_buf, .big),
+            else => blk: {
+                // 解密长度
+                const decrypted = try self.decryptAead(&len_buf, &data_key, &data_iv);
+                defer self.allocator.free(decrypted);
+                break :blk std.mem.readInt(u16, decrypted[0..2], .big);
+            },
+        };
+
+        if (data_len > buf.len) return error.BufferTooSmall;
+
+        // 读取加密数据
+        const encrypted_buf = try self.allocator.alloc(u8, data_len);
+        defer self.allocator.free(encrypted_buf);
+        _ = try stream.readAll(encrypted_buf);
+
+        // 解密数据
+        const decrypted = try self.decryptAead(encrypted_buf, &data_key, &data_iv);
+        defer self.allocator.free(decrypted);
+
+        @memcpy(buf[0..decrypted.len], decrypted);
+        return decrypted.len;
     }
 };
 
 /// 解析 UUID 字符串 (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
 fn parseUuid(str: []const u8, out: *[16]u8) !void {
     if (str.len != 36) return error.InvalidUuid;
-    
+
     var idx: usize = 0;
     var out_idx: usize = 0;
-    
+
     while (idx < str.len and out_idx < 16) {
         if (str[idx] == '-') {
             idx += 1;
             continue;
         }
-        
+
         const high = try hexDigit(str[idx]);
         const low = try hexDigit(str[idx + 1]);
         out[out_idx] = (high << 4) | low;
-        
+
         idx += 2;
         out_idx += 1;
     }
@@ -244,7 +412,7 @@ fn parseIpv4(str: []const u8, out: *[4]u8) bool {
     var parts: [4]u8 = undefined;
     var part_idx: usize = 0;
     var current: u8 = 0;
-    
+
     for (str) |c| {
         if (c == '.') {
             if (part_idx >= 4) return false;
@@ -258,10 +426,10 @@ fn parseIpv4(str: []const u8, out: *[4]u8) bool {
             return false;
         }
     }
-    
+
     if (part_idx != 3) return false;
     parts[3] = current;
-    
+
     @memcpy(out, &parts);
     return true;
 }
@@ -359,6 +527,16 @@ fn deriveCommandKeyIv(req_key: *[16]u8, req_iv: *[16]u8, cmd_key: *[16]u8, cmd_i
     for (0..16) |i| {
         cmd_key[i] = req_key[i] ^ 0xA5;
         cmd_iv[i] = req_iv[i] ^ 0xA5;
+    }
+}
+
+/// 派生数据密钥和 IV
+fn deriveDataKeyIv(base_key: *[16]u8, base_iv: *[16]u8, data_key: *[16]u8, data_iv: *[16]u8) void {
+    // VMess data key/IV derivation
+    // Use different constant from command derivation
+    for (0..16) |i| {
+        data_key[i] = base_key[i] ^ 0x96;
+        data_iv[i] = base_iv[i] ^ 0x69;
     }
 }
 

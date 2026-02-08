@@ -2,6 +2,7 @@ const std = @import("std");
 const Rule = @import("../config.zig").Rule;
 const RuleType = @import("../config.zig").RuleType;
 const dns = @import("../dns.zig");
+const geoip = @import("../geoip.zig");
 
 const log = std.log.scoped(.rule_engine);
 
@@ -259,7 +260,8 @@ pub const Engine = struct {
                             }
                         }
 
-                        // TODO: IPv6 GEOIP (needs IPv6 GeoIP database)
+                        // TODO: IPv6 GEOIP (needs full GeoIP database support)
+                        // For now, fallback to no match
                     }
                 }
             } else {
@@ -299,7 +301,7 @@ pub const Engine = struct {
                         }
                     }
 
-                    // TODO: IPv6 GEOIP (needs IPv6 GeoIP database)
+                    // TODO: IPv6 GEOIP (needs full GeoIP database support)
                 } else |_| {}
             }
         }
@@ -352,10 +354,7 @@ pub const Engine = struct {
 
     fn matchGeoIp(self: *Engine, ip: u32) ?[]const u8 {
         _ = self;
-        _ = ip;
-        // TODO: 实现 GeoIP 数据库查询
-        // 简化实现：返回空，表示未匹配
-        return null;
+        return geoip.SimpleGeoIp.lookup(ip);
     }
 
     fn findRuleTarget(self: *const Engine, rule_type: RuleType, payload: []const u8) ?[]const u8 {
