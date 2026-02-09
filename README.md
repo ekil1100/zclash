@@ -193,7 +193,7 @@ curl -x socks5://127.0.0.1:7891 http://httpbin.org/ip
 | 命令 | 说明 |
 |------|------|
 | `zclash config list` / `ls` | 列出所有已下载的配置 |
-| `zclash config download <url>` | 从 URL 下载配置（使用时间戳命名） |
+| `zclash config download <url>` | 从 URL 下载配置（使用域名作为文件名） |
 | `zclash config download <url> -n <name>` | 下载并指定名称 |
 | `zclash config download <url> -n <name> -d` | 下载并设为默认 |
 | `zclash config use <configname>` | 切换到指定配置 |
@@ -201,7 +201,11 @@ curl -x socks5://127.0.0.1:7891 http://httpbin.org/ip
 ### 配置管理示例
 
 ```bash
-# 下载订阅配置
+# 下载订阅配置（默认使用域名作为文件名）
+zclash config download https://example.com/subscribe.yaml
+# 保存为: ~/.config/zclash/example.com.yaml
+
+# 下载并指定自定义名称
 zclash config download https://example.com/subscribe.yaml -n mysub
 
 # 下载并设为默认（创建 config.yaml 符号链接）
@@ -210,12 +214,12 @@ zclash config download https://example.com/subscribe.yaml -n mysub -d
 # 查看所有配置
 zclash config list
 # 输出：
-#   config_1234567890.yaml
+#   example.com.yaml
 #   mysub.yaml
 # * mysub.yaml (active)
 
 # 切换配置
-zclash config use config_1234567890.yaml
+zclash config use example.com.yaml
 ```
 
 ---
