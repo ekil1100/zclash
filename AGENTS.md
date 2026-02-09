@@ -349,3 +349,13 @@ User Command
 - **终端**: 自研 TUI (基于 ANSI escape codes)
 - **网络**: 异步 I/O, 基于事件循环
 - **内存**: 手动管理, GPA (General Purpose Allocator)
+
+### 5. Proxy Agent
+- **文件**: `proxy_cli.zig`, `main.zig` (proxy subcommand)
+- **职责**: 代理组和节点管理
+- **命令**:
+  - `zclash proxy list` / `ls`: 列出所有代理组和节点
+  - `zclash proxy select`: 显示代理选择界面或选择指定代理
+- **关键函数**:
+  - `listProxies()`: 列出代理组和节点
+  - `selectProxy()`: 选择代理
