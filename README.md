@@ -208,6 +208,34 @@ curl -x socks5://127.0.0.1:7891 http://httpbin.org/ip
 | `zclash proxy select -g <group>` | 为指定组选择代理 |
 | `zclash proxy select -g <group> -p <proxy>` | 选择指定组的指定代理 |
 
+### 网络测试
+
+| 命令 | 说明 |
+|------|------|
+| `zclash test` | 测试网络连接性（显示IP/地区和延迟） |
+
+### 网络测试示例
+
+```bash
+# 测试网络连接性
+zclash test
+
+# 输出示例：
+# Network Connectivity Test
+# ------------------------------------------------------------
+# Testing via HTTP Proxy (127.0.0.1:7890):
+#   Current IP/Location: 203.0.113.45 (Tokyo, Tokyo, Japan)
+#
+#   Latency Test:
+#   --------------------------------------------------
+#   Google       🟢 45ms
+#   YouTube      🟢 52ms
+#   Netflix      🟢 120ms
+#   OpenAI       🟡 180ms
+#   GitHub       🟢 38ms
+#   Cloudflare   🟢 25ms
+```
+
 ### 配置管理示例
 
 ```bash
