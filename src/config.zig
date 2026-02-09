@@ -513,14 +513,53 @@ pub fn getDefaultConfigDir(allocator: std.mem.Allocator) !?[]const u8 {
     return try std.fs.path.join(allocator, &.{ home, ".config/zclash" });
 }
 
+/// 从 URL 提取域名
+fn extractDomainFromUrl(allocator: std.mem.Allocator, url: []const u8) !?[]const u8 {
+    const uri = std.Uri.parse(url) catch return null;
+
+    const host_component = uri.host orelse return null;
+
+    // 获取 host 字符串
+    const host = switch (host_component) {
+        .raw => |s| s,
+        .percent_encoded => |s| s,
+    };
+
+    if (host.len == 0) return null;
+
+    // 分配内存复制 host
+    var host_copy = try allocator.alloc(u8, host.len);
+    @memcpy(host_copy, host);
+
+    // 移除端口号（如果有）
+    if (std.mem.indexOfScalar(u8, host_copy, ':')) |colon_pos| {
+        host_copy = try allocator.realloc(host_copy, colon_pos);
+        host_copy[colon_pos] = 0;
+        host_copy = host_copy[0..colon_pos];
+    }
+
+    return host_copy;
+}
+
+/// 从 URL 生成配置文件名（使用域名）
+fn generateConfigFilenameFromUrl(allocator: std.mem.Allocator, url: []const u8) ![]const u8 {
+    // 尝试提取域名
+    if (try extractDomainFromUrl(allocator, url)) |domain| {
+        return domain;
+    }
+    
+    // 如果提取失败，回退到时间戳
+    return try generateConfigFilename(allocator);
+}
+
 /// 生成基于时间戳的配置文件名
 fn generateConfigFilename(allocator: std.mem.Allocator) ![]const u8 {
     const timestamp = std.time.timestamp();
-    return std.fmt.allocPrint(allocator, "config_{d}.yaml", .{timestamp});
+    return std.fmt.allocPrint(allocator, "config_{d}", .{timestamp});
 }
 
 /// 下载配置文件从 URL 并保存到默认位置
-/// name: 可选的自定义文件名，为 null 则使用时间戳
+/// name: 可选的自定义文件名，为 null 则从 URL 提取域名作为文件名
 /// 返回: 实际使用的文件名（需要调用者释放内存），出错返回 null
 pub fn downloadConfig(allocator: std.mem.Allocator, url: []const u8, name: ?[]const u8) !?[]const u8 {
     var client = std.http.Client{ .allocator = allocator };
@@ -559,11 +598,11 @@ pub fn downloadConfig(allocator: std.mem.Allocator, url: []const u8, name: ?[]co
         }
     };
 
-    // 确定文件名：使用提供的名字或生成时间戳
+    // 确定文件名：使用提供的名字或从 URL 生成
     const filename = if (name) |n|
         try allocator.dupe(u8, n)
     else
-        try generateConfigFilename(allocator);
+        try generateConfigFilenameFromUrl(allocator, url);
 
     // 确保文件名以 .yaml 结尾
     const final_filename = if (std.mem.endsWith(u8, filename, ".yaml"))
