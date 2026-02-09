@@ -9,6 +9,7 @@ const outbound = @import("proxy/outbound/manager.zig");
 const api = @import("api/server.zig");
 const tui = @import("tui.zig");
 const daemon = @import("daemon.zig");
+const proxy_cli = @import("proxy_cli.zig");
 
 // 全局配置路径，用于重载
 var g_config_path: ?[]const u8 = null;
@@ -200,6 +201,75 @@ pub fn main() !void {
         return;
     }
 
+    // 处理 proxy 子命令
+    if (std.mem.eql(u8, cmd, "proxy")) {
+        if (args.len < 3) {
+            try printProxyHelp();
+            return;
+        }
+
+        const subcmd = args[2];
+
+        if (std.mem.eql(u8, subcmd, "list") or std.mem.eql(u8, subcmd, "ls")) {
+            // 解析 -c 参数
+            var config_path: ?[]const u8 = null;
+            var i: usize = 3;
+            while (i < args.len) : (i += 1) {
+                if (std.mem.eql(u8, args[i], "-c")) {
+                    if (i + 1 < args.len) {
+                        config_path = args[i + 1];
+                        i += 1;
+                    }
+                }
+            }
+
+            // 加载配置
+            var cfg = try loadAndValidateConfig(allocator, config_path);
+            defer cfg.deinit();
+
+            try proxy_cli.listProxies(allocator, &cfg);
+            return;
+        }
+
+        if (std.mem.eql(u8, subcmd, "select")) {
+            var group_name: ?[]const u8 = null;
+            var proxy_name: ?[]const u8 = null;
+            var config_path: ?[]const u8 = null;
+
+            var i: usize = 3;
+            while (i < args.len) : (i += 1) {
+                if (std.mem.eql(u8, args[i], "-g")) {
+                    if (i + 1 < args.len) {
+                        group_name = args[i + 1];
+                        i += 1;
+                    }
+                } else if (std.mem.eql(u8, args[i], "-p")) {
+                    if (i + 1 < args.len) {
+                        proxy_name = args[i + 1];
+                        i += 1;
+                    }
+                } else if (std.mem.eql(u8, args[i], "-c")) {
+                    if (i + 1 < args.len) {
+                        config_path = args[i + 1];
+                        i += 1;
+                    }
+                }
+            }
+
+            // 加载配置（需要可变引用）
+            var cfg = try loadAndValidateConfig(allocator, config_path);
+            defer cfg.deinit();
+
+            try proxy_cli.selectProxy(allocator, &cfg, group_name, proxy_name);
+            return;
+        }
+
+        // 未知子命令
+        std.debug.print("Unknown proxy subcommand: {s}\n", .{subcmd});
+        try printProxyHelp();
+        return;
+    }
+
     // 未知命令
     std.debug.print("Unknown command: {s}\n", .{cmd});
     try printHelp();
@@ -350,6 +420,7 @@ fn printHelp() !void {
     std.debug.print("    status                  Show proxy status\n", .{});
     std.debug.print("    log [-n <lines>]        View logs\n", .{});
     std.debug.print("    config <subcmd>         Manage configurations\n", .{});
+    std.debug.print("    proxy <subcmd>          Manage proxies\n", .{});
     std.debug.print("\n", .{});
     std.debug.print("CONFIG COMMANDS:\n", .{});
     std.debug.print("    zclash config list                  List all available configs\n", .{});
@@ -359,6 +430,13 @@ fn printHelp() !void {
     std.debug.print("                            -d          Set as default after download\n", .{});
     std.debug.print("    zclash config use <configname>     Switch to specified config\n", .{});
     std.debug.print("\n", .{});
+    std.debug.print("PROXY COMMANDS:\n", .{});
+    std.debug.print("    zclash proxy list                   List all proxy groups and nodes\n", .{});
+    std.debug.print("    zclash proxy ls                     Alias for list\n", .{});
+    std.debug.print("    zclash proxy select                 Show proxy selection UI\n", .{});
+    std.debug.print("    zclash proxy select -g <group>      Select proxy for specific group\n", .{});
+    std.debug.print("    zclash proxy select -g <group>      Select specific proxy\n", .{});
+    std.debug.print("              -p <proxy>\n", .{});
     std.debug.print("EXAMPLES:\n", .{});
     std.debug.print("    # Start proxy in background\n", .{});
     std.debug.print("    zclash start\n", .{});
@@ -408,5 +486,24 @@ fn printConfigHelp() !void {
     std.debug.print("    zclash config download https://example.com/config.yaml -n myconfig -d\n", .{});
     std.debug.print("    zclash config list\n", .{});
     std.debug.print("    zclash config use myconfig.yaml\n", .{});
+    std.debug.print("\n", .{});
+}
+
+fn printProxyHelp() !void {
+    std.debug.print("\n", .{});
+    std.debug.print("zclash proxy - Manage proxies\n", .{});
+    std.debug.print("\n", .{});
+    std.debug.print("USAGE:\n", .{});
+    std.debug.print("    zclash proxy list                   List all proxy groups and nodes\n", .{});
+    std.debug.print("    zclash proxy ls                     Alias for list\n", .{});
+    std.debug.print("    zclash proxy select                 Show proxy selection UI\n", .{});
+    std.debug.print("    zclash proxy select -g <group>      Select proxy for specific group\n", .{});
+    std.debug.print("    zclash proxy select -g <group>      Select specific proxy\n", .{});
+    std.debug.print("              -p <proxy>\n", .{});
+    std.debug.print("\n", .{});
+    std.debug.print("EXAMPLES:\n", .{});
+    std.debug.print("    zclash proxy list\n", .{});
+    std.debug.print("    zclash proxy select                 # Show selection UI\n", .{});
+    std.debug.print("    zclash proxy select -g Proxy -p HK  # Select HK in Proxy group\n", .{});
     std.debug.print("\n", .{});
 }

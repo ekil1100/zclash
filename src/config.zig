@@ -471,7 +471,7 @@ fn getDefaultConfigPath(allocator: std.mem.Allocator) !?[]const u8 {
     }
 
     // 检查当前目录的 config.yaml
-    std.fs.accessAbsolute("config.yaml", .{}) catch return null;
+    std.fs.cwd().access("config.yaml", .{}) catch return null;
     return try allocator.dupe(u8, "config.yaml");
 }
 
