@@ -8,6 +8,7 @@ const rule_engine = @import("rule/engine.zig");
 const outbound = @import("proxy/outbound/manager.zig");
 const api = @import("api/server.zig");
 const tui = @import("tui.zig");
+const daemon = @import("daemon.zig");
 
 // 全局配置路径，用于重载
 var g_config_path: ?[]const u8 = null;
@@ -24,28 +25,188 @@ pub fn main() !void {
     }
     const allocator = gpa.allocator();
 
-    std.debug.print("zclash v0.1.0\n", .{});
-
     // Parse command line args
     const args = try std.process.argsAlloc(allocator);
     defer std.process.argsFree(allocator, args);
 
-    var config_path: ?[]const u8 = null;
-    var use_tui = false;
-    var i: usize = 1;
-    while (i < args.len) : (i += 1) {
-        if (std.mem.eql(u8, args[i], "-c") or std.mem.eql(u8, args[i], "--config")) {
-            if (i + 1 < args.len) {
-                config_path = args[i + 1];
-                i += 1;
+    // 检查是否有子命令
+    if (args.len < 2) {
+        // 无参数，显示帮助
+        try printHelp();
+        return;
+    }
+
+    const cmd = args[1];
+
+    // 处理 daemon 运行模式（内部使用）
+    if (std.mem.eql(u8, cmd, "--daemon-run")) {
+        var config_path: ?[]const u8 = null;
+        var i: usize = 2;
+        while (i < args.len) : (i += 1) {
+            if (std.mem.eql(u8, args[i], "-c")) {
+                if (i + 1 < args.len) {
+                    config_path = args[i + 1];
+                    i += 1;
+                }
             }
-        } else if (std.mem.eql(u8, args[i], "--tui")) {
-            use_tui = true;
-        } else if (std.mem.eql(u8, args[i], "-h") or std.mem.eql(u8, args[i], "--help")) {
-            try printHelp();
+        }
+        // 在 daemon 模式下运行代理（无 TUI）
+        try runProxy(allocator, config_path, false);
+        return;
+    }
+
+    // 处理 help
+    if (std.mem.eql(u8, cmd, "-h") or std.mem.eql(u8, cmd, "--help") or std.mem.eql(u8, cmd, "help")) {
+        try printHelp();
+        return;
+    }
+
+    // 处理 tui 命令
+    if (std.mem.eql(u8, cmd, "tui")) {
+        try runProxy(allocator, null, true);
+        return;
+    }
+
+    // 处理 start 命令
+    if (std.mem.eql(u8, cmd, "start")) {
+        var config_path: ?[]const u8 = null;
+        var i: usize = 2;
+        while (i < args.len) : (i += 1) {
+            if (std.mem.eql(u8, args[i], "-c")) {
+                if (i + 1 < args.len) {
+                    config_path = args[i + 1];
+                    i += 1;
+                }
+            }
+        }
+        // 后台启动
+        try daemon.startDaemon(allocator, config_path);
+        return;
+    }
+
+    // 处理 stop 命令
+    if (std.mem.eql(u8, cmd, "stop")) {
+        try daemon.stopDaemon(allocator);
+        return;
+    }
+
+    // 处理 restart 命令
+    if (std.mem.eql(u8, cmd, "restart")) {
+        var config_path: ?[]const u8 = null;
+        var i: usize = 2;
+        while (i < args.len) : (i += 1) {
+            if (std.mem.eql(u8, args[i], "-c")) {
+                if (i + 1 < args.len) {
+                    config_path = args[i + 1];
+                    i += 1;
+                }
+            }
+        }
+        // 先停止
+        daemon.stopDaemon(allocator) catch {};
+        // 再启动
+        try daemon.startDaemon(allocator, config_path);
+        return;
+    }
+
+    // 处理 status 命令
+    if (std.mem.eql(u8, cmd, "status")) {
+        try daemon.getStatus(allocator);
+        return;
+    }
+
+    // 处理 log 命令
+    if (std.mem.eql(u8, cmd, "log")) {
+        var lines: ?usize = null;
+        var follow = true; // 默认持续刷新
+        var i: usize = 2;
+        while (i < args.len) : (i += 1) {
+            if (std.mem.eql(u8, args[i], "-n")) {
+                if (i + 1 < args.len) {
+                    lines = std.fmt.parseInt(usize, args[i + 1], 10) catch 50;
+                    i += 1;
+                }
+            } else if (std.mem.eql(u8, args[i], "-f")) {
+                follow = true;
+            } else if (std.mem.eql(u8, args[i], "--no-follow")) {
+                follow = false;
+            }
+        }
+        // 如果没有指定 -n，默认显示 50 行
+        if (lines == null and !follow) {
+            lines = 50;
+        }
+        try daemon.viewLog(allocator, lines, follow);
+        return;
+    }
+
+    // 处理 config 子命令
+    if (std.mem.eql(u8, cmd, "config")) {
+        if (args.len < 3) {
+            try printConfigHelp();
             return;
         }
+        
+        const subcmd = args[2];
+        
+        if (std.mem.eql(u8, subcmd, "list") or std.mem.eql(u8, subcmd, "ls")) {
+            try config.listConfigs(allocator);
+            return;
+        }
+        
+        if (std.mem.eql(u8, subcmd, "use")) {
+            if (args.len < 4) {
+                std.debug.print("Usage: zclash config use <configname>\n", .{});
+                return;
+            }
+            try config.switchConfig(allocator, args[3]);
+            return;
+        }
+        
+        if (std.mem.eql(u8, subcmd, "download")) {
+            if (args.len < 4) {
+                std.debug.print("Usage: zclash config download <url> [-n <name>] [-d]\n", .{});
+                return;
+            }
+            
+            const url = args[3];
+            var download_name: ?[]const u8 = null;
+            var set_default = false;
+            
+            var i: usize = 4;
+            while (i < args.len) : (i += 1) {
+                if (std.mem.eql(u8, args[i], "-n")) {
+                    if (i + 1 < args.len) {
+                        download_name = args[i + 1];
+                        i += 1;
+                    }
+                } else if (std.mem.eql(u8, args[i], "-d")) {
+                    set_default = true;
+                }
+            }
+            
+            const filename = try config.downloadConfig(allocator, url, download_name);
+            defer if (filename) |f| allocator.free(f);
+            
+            if (set_default and filename != null) {
+                try config.switchConfig(allocator, filename.?);
+            }
+            return;
+        }
+        
+        // 未知子命令
+        std.debug.print("Unknown config subcommand: {s}\n", .{subcmd});
+        try printConfigHelp();
+        return;
     }
+
+    // 未知命令
+    std.debug.print("Unknown command: {s}\n", .{cmd});
+    try printHelp();
+}
+
+fn runProxy(allocator: std.mem.Allocator, config_path: ?[]const u8, use_tui: bool) !void {
+    std.debug.print("zclash v0.1.0\n", .{});
 
     // 保存配置路径用于重载
     if (config_path) |path| {
@@ -151,8 +312,6 @@ fn runTui(allocator: std.mem.Allocator, cfg: *const config.Config, engine: *rule
     tui_manager.setReloadCallback(struct {
         fn reload() void {
             std.debug.print("\nConfiguration reload requested\n", .{});
-            // 注意：实际重载需要重新启动程序或更复杂的逻辑
-            // 这里只是记录请求
         }
     }.reload);
 
@@ -176,16 +335,78 @@ fn apiThreadFn(allocator: std.mem.Allocator, cfg: *const config.Config, engine: 
 }
 
 fn printHelp() !void {
-    std.debug.print("Usage: zclash [options]\n\n", .{});
-    std.debug.print("Options:\n", .{});
-    std.debug.print("  -c, --config <path>    Configuration file path\n", .{});
-    std.debug.print("  --tui                  Enable TUI dashboard\n", .{});
-    std.debug.print("  -h, --help             Show this help message\n\n", .{});
-    std.debug.print("TUI Controls:\n", .{});
-    std.debug.print("  j/k, ↑/↓               Navigate\n", .{});
-    std.debug.print("  Tab, h/l               Switch tabs\n", .{});
-    std.debug.print("  Enter                  Select\n", .{});
-    std.debug.print("  t                      Test latency for current group\n", .{});
-    std.debug.print("  r                      Reload configuration\n", .{});
-    std.debug.print("  q                      Quit\n", .{});
+    std.debug.print("\n", .{});
+    std.debug.print("zclash v0.1.0 - A high-performance proxy tool in Zig\n", .{});
+    std.debug.print("\n", .{});
+    std.debug.print("USAGE:\n", .{});
+    std.debug.print("    zclash <command> [options]\n", .{});
+    std.debug.print("\n", .{});
+    std.debug.print("COMMANDS:\n", .{});
+    std.debug.print("    help                    Show this help message\n", .{});
+    std.debug.print("    tui                     Start TUI dashboard\n", .{});
+    std.debug.print("    start [-c <config>]     Start proxy in background\n", .{});
+    std.debug.print("    stop                    Stop proxy\n", .{});
+    std.debug.print("    restart [-c <config>]   Restart proxy\n", .{});
+    std.debug.print("    status                  Show proxy status\n", .{});
+    std.debug.print("    log [-n <lines>]        View logs\n", .{});
+    std.debug.print("    config <subcmd>         Manage configurations\n", .{});
+    std.debug.print("\n", .{});
+    std.debug.print("CONFIG COMMANDS:\n", .{});
+    std.debug.print("    zclash config list                  List all available configs\n", .{});
+    std.debug.print("    zclash config ls                    Alias for list\n", .{});
+    std.debug.print("    zclash config download <url>        Download config from URL\n", .{});
+    std.debug.print("                            -n <name>   Config filename (default: timestamp)\n", .{});
+    std.debug.print("                            -d          Set as default after download\n", .{});
+    std.debug.print("    zclash config use <configname>     Switch to specified config\n", .{});
+    std.debug.print("\n", .{});
+    std.debug.print("EXAMPLES:\n", .{});
+    std.debug.print("    # Start proxy in background\n", .{});
+    std.debug.print("    zclash start\n", .{});
+    std.debug.print("\n", .{});
+    std.debug.print("    # Start with specific config\n", .{});
+    std.debug.print("    zclash start -c /path/to/config.yaml\n", .{});
+    std.debug.print("\n", .{});
+    std.debug.print("    # Start TUI\n", .{});
+    std.debug.print("    zclash tui\n", .{});
+    std.debug.print("\n", .{});
+    std.debug.print("    # Check status\n", .{});
+    std.debug.print("    zclash status\n", .{});
+    std.debug.print("\n", .{});
+    std.debug.print("    # View logs (default: last 50 lines, auto-refresh)\n", .{});
+    std.debug.print("    zclash log\n", .{});
+    std.debug.print("    zclash log -n 100              # Show last 100 lines\n", .{});
+    std.debug.print("    zclash log --no-follow         # Show last 50 lines without refresh\n", .{});
+    std.debug.print("\n", .{});
+    std.debug.print("    # Download a config\n", .{});
+    std.debug.print("    zclash config download https://example.com/config.yaml\n", .{});
+    std.debug.print("\n", .{});
+    std.debug.print("    # Download and set as default\n", .{});
+    std.debug.print("    zclash config download https://example.com/config.yaml -n myconfig -d\n", .{});
+    std.debug.print("\n", .{});
+    std.debug.print("    # List all configs\n", .{});
+    std.debug.print("    zclash config list\n", .{});
+    std.debug.print("\n", .{});
+    std.debug.print("    # Switch config\n", .{});
+    std.debug.print("    zclash config use myconfig.yaml\n", .{});
+    std.debug.print("\n", .{});
+}
+
+fn printConfigHelp() !void {
+    std.debug.print("\n", .{});
+    std.debug.print("zclash config - Manage configurations\n", .{});
+    std.debug.print("\n", .{});
+    std.debug.print("USAGE:\n", .{});
+    std.debug.print("    zclash config list                  List all available configs\n", .{});
+    std.debug.print("    zclash config ls                    Alias for list\n", .{});
+    std.debug.print("    zclash config download <url>        Download config from URL\n", .{});
+    std.debug.print("                            -n <name>   Config filename (default: timestamp)\n", .{});
+    std.debug.print("                            -d          Set as default after download\n", .{});
+    std.debug.print("    zclash config use <configname>     Switch to specified config\n", .{});
+    std.debug.print("\n", .{});
+    std.debug.print("EXAMPLES:\n", .{});
+    std.debug.print("    zclash config download https://example.com/config.yaml\n", .{});
+    std.debug.print("    zclash config download https://example.com/config.yaml -n myconfig -d\n", .{});
+    std.debug.print("    zclash config list\n", .{});
+    std.debug.print("    zclash config use myconfig.yaml\n", .{});
+    std.debug.print("\n", .{});
 }
