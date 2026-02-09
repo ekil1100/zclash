@@ -52,15 +52,32 @@ const ProxyType = enum {
 fn testViaProxy(allocator: std.mem.Allocator, port: u16, proxy_type: ProxyType) !void {
     _ = proxy_type;
 
-    // 首先获取出口 IP
-    std.debug.print("  Current IP: ", .{});
-    const ip_info = try getIpInfo(allocator, port);
-    defer if (ip_info) |info| allocator.free(info);
+    // 获取出口 IP 和地区信息
+    std.debug.print("  Current IP/Location: ", .{});
+    const ip_geo = try getIpGeoInfo(allocator);
+    defer if (ip_geo) |info| {
+        allocator.free(info.ip);
+        if (info.city) |c| allocator.free(c);
+        if (info.region) |r| allocator.free(r);
+        if (info.country) |c| allocator.free(c);
+        allocator.destroy(info);
+    };
 
-    if (ip_info) |info| {
-        std.debug.print("{s}\n", .{info});
+    if (ip_geo) |info| {
+        std.debug.print("{s}", .{info.ip});
+        if (info.city) |city| {
+            std.debug.print(" ({s}", .{city});
+            if (info.region) |region| {
+                std.debug.print(", {s}", .{region});
+            }
+            if (info.country) |country| {
+                std.debug.print(", {s}", .{country});
+            }
+            std.debug.print(")", .{});
+        }
+        std.debug.print("\n", .{});
     } else {
-        std.debug.print("Failed to get IP\n", .{});
+        std.debug.print("Failed to get IP/Location\n", .{});
     }
 
     std.debug.print("\n  Latency Test:\n", .{});
@@ -81,16 +98,20 @@ fn testViaProxy(allocator: std.mem.Allocator, port: u16, proxy_type: ProxyType) 
     }
 }
 
-/// 获取出口 IP 信息
-fn getIpInfo(allocator: std.mem.Allocator, proxy_port: u16) !?[]const u8 {
+/// IP 地理信息
+const IpGeoInfo = struct {
+    ip: []const u8,
+    city: ?[]const u8,
+    region: ?[]const u8,
+    country: ?[]const u8,
+};
+
+/// 获取出口 IP 和地理位置信息
+fn getIpGeoInfo(allocator: std.mem.Allocator) !?*IpGeoInfo {
     var client = std.http.Client{ .allocator = allocator };
     defer client.deinit();
 
-    // 构建代理 URL
-    const proxy_url = try std.fmt.allocPrint(allocator, "http://127.0.0.1:{d}", .{proxy_port});
-    defer allocator.free(proxy_url);
-
-    // 使用 httpbin.org/ip 获取出口 IP
+    // 使用 ipapi.co/json 获取 IP 和地理位置
     var response_body = std.ArrayList(u8).empty;
     defer response_body.deinit(allocator);
 
@@ -98,7 +119,7 @@ fn getIpInfo(allocator: std.mem.Allocator, proxy_port: u16) !?[]const u8 {
     var adapter = response_body.writer(allocator).adaptToNewApi(&writer_buffer);
 
     const result = client.fetch(.{
-        .location = .{ .url = "http://httpbin.org/ip" },
+        .location = .{ .url = "http://ipapi.co/json/" },
         .method = .GET,
         .response_writer = &adapter.new_interface,
     }) catch |err| {
@@ -110,19 +131,55 @@ fn getIpInfo(allocator: std.mem.Allocator, proxy_port: u16) !?[]const u8 {
         return null;
     }
 
-    // 解析返回的 JSON {"origin": "xxx.xxx.xxx.xxx"}
+    // 解析 JSON 响应
     const body = response_body.items;
-    const prefix = "{\"origin\": \"";
-    const suffix = "\"}";
 
-    if (std.mem.startsWith(u8, body, prefix) and std.mem.endsWith(u8, body, suffix)) {
-        const ip_start = prefix.len;
-        const ip_end = body.len - suffix.len;
-        const ip = body[ip_start..ip_end];
-        return try allocator.dupe(u8, ip);
+    var info = try allocator.create(IpGeoInfo);
+    info.city = null;
+    info.region = null;
+    info.country = null;
+
+    // 简单解析 IP
+    if (extractJsonField(allocator, body, "ip")) |ip| {
+        info.ip = ip;
+    } else {
+        allocator.destroy(info);
+        return null;
     }
 
-    return try allocator.dupe(u8, body);
+    // 解析城市
+    if (extractJsonField(allocator, body, "city")) |city| {
+        info.city = city;
+    }
+
+    // 解析地区/省份
+    if (extractJsonField(allocator, body, "region")) |region| {
+        info.region = region;
+    }
+
+    // 解析国家
+    if (extractJsonField(allocator, body, "country_name")) |country| {
+        info.country = country;
+    }
+
+    return info;
+}
+
+/// 从 JSON 中提取字段值（简单实现）
+fn extractJsonField(allocator: std.mem.Allocator, json: []const u8, field: []const u8) ?[]const u8 {
+    // 查找字段: "field": "value"
+    const pattern = std.fmt.allocPrint(allocator, "\"{s}\": \"", .{field}) catch return null;
+    defer allocator.free(pattern);
+
+    if (std.mem.indexOf(u8, json, pattern)) |start| {
+        const value_start = start + pattern.len;
+        if (std.mem.indexOfScalar(u8, json[value_start..], '"')) |end| {
+            const value = json[value_start .. value_start + end];
+            return allocator.dupe(u8, value) catch return null;
+        }
+    }
+
+    return null;
 }
 
 /// 测试 URL 延迟
