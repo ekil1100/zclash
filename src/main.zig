@@ -273,29 +273,12 @@ pub fn main() !void {
 
     // 处理 test 命令
     if (std.mem.eql(u8, cmd, "test")) {
-        var config_path: ?[]const u8 = null;
-        var proxy_name: ?[]const u8 = null;
-
-        var i: usize = 2;
-        while (i < args.len) : (i += 1) {
-            if (std.mem.eql(u8, args[i], "-c")) {
-                if (i + 1 < args.len) {
-                    config_path = args[i + 1];
-                    i += 1;
-                }
-            } else if (std.mem.eql(u8, args[i], "-p")) {
-                if (i + 1 < args.len) {
-                    proxy_name = args[i + 1];
-                    i += 1;
-                }
-            }
-        }
-
-        // 加载配置
-        var cfg = try loadAndValidateConfig(allocator, config_path);
+        // test 命令直接使用默认配置，不需要 -c 参数
+        // 加载默认配置
+        var cfg = try loadAndValidateConfig(allocator, null);
         defer cfg.deinit();
 
-        try test_cli.testProxy(allocator, &cfg, proxy_name);
+        try test_cli.testProxy(allocator, &cfg, null);
         return;
     }
 
@@ -450,8 +433,7 @@ fn printHelp() !void {
     std.debug.print("    log [-n <lines>]        View logs\n", .{});
     std.debug.print("    config <subcmd>         Manage configurations\n", .{});
     std.debug.print("    proxy <subcmd>          Manage proxies\n", .{});
-    std.debug.print("    test [-c <config>]      Test proxy connection\n", .{});
-    std.debug.print("         [-p <proxy>]       Test specific proxy node\n", .{});
+    std.debug.print("    test                    Test network connectivity\n", .{});
     std.debug.print("\n", .{});
     std.debug.print("CONFIG COMMANDS:\n", .{});
     std.debug.print("    zclash config list                  List all available configs\n", .{});
