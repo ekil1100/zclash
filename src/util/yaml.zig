@@ -189,6 +189,14 @@ const Parser = struct {
             while (self.pos < self.source.len and
                    (self.source[self.pos] == ' ' or self.source[self.pos] == '\t')) self.pos += 1;
 
+            // Check for inline map format: {key: value, ...}
+            if (self.pos < self.source.len and self.source[self.pos] == '{') {
+                const item = try self.parseInlineMap();
+                try arr.append(self.allocator, item);
+                self.skipLine();
+                continue;
+            }
+
             // Check if this is a map item or scalar
             // A map item has "key: value" format, not just contains ':'
             const is_map = blk: {
@@ -224,6 +232,104 @@ const Parser = struct {
         }
 
         return YamlValue{ .array = arr };
+    }
+
+    fn parseInlineMap(self: *Parser) anyerror!YamlValue {
+        var m = std.StringHashMap(YamlValue).init(self.allocator);
+        
+        // Expect '{' at current position
+        if (self.pos >= self.source.len or self.source[self.pos] != '{') {
+            return YamlValue{ .map = m };
+        }
+        self.pos += 1; // skip '{'
+        
+        while (self.pos < self.source.len) {
+            // Skip whitespace
+            while (self.pos < self.source.len and 
+                   (self.source[self.pos] == ' ' or self.source[self.pos] == '\t')) {
+                self.pos += 1;
+            }
+            
+            // Check for end of map
+            if (self.pos < self.source.len and self.source[self.pos] == '}') {
+                self.pos += 1;
+                break;
+            }
+            
+            // Parse key
+            const key_start = self.pos;
+            while (self.pos < self.source.len and 
+                   self.source[self.pos] != ':' and 
+                   self.source[self.pos] != '}' and
+                   self.source[self.pos] != '\n') {
+                self.pos += 1;
+            }
+            
+            if (self.pos >= self.source.len or self.source[self.pos] != ':') {
+                break; // malformed
+            }
+            
+            var key = std.mem.trim(u8, self.source[key_start..self.pos], " \t");
+            // Remove quotes if present
+            if (key.len >= 2 and ((key[0] == '"' and key[key.len-1] == '"') or
+                                  (key[0] == '\'' and key[key.len-1] == '\''))) {
+                key = key[1..key.len-1];
+            }
+            const key_copy = try self.allocator.dupe(u8, key);
+            
+            self.pos += 1; // skip ':'
+            
+            // Skip whitespace after colon
+            while (self.pos < self.source.len and 
+                   (self.source[self.pos] == ' ' or self.source[self.pos] == '\t')) {
+                self.pos += 1;
+            }
+            
+            // Parse value
+            const val_start = self.pos;
+            var brace_depth: usize = 0;
+            while (self.pos < self.source.len) {
+                const c = self.source[self.pos];
+                if (c == '{') {
+                    brace_depth += 1;
+                } else if (c == '}') {
+                    if (brace_depth == 0) break;
+                    brace_depth -= 1;
+                } else if (c == ',' and brace_depth == 0) {
+                    break;
+                } else if (c == '\n') {
+                    break;
+                }
+                self.pos += 1;
+            }
+            
+            var val_str = std.mem.trim(u8, self.source[val_start..self.pos], " \t");
+            // Remove quotes if present
+            if (val_str.len >= 2 and ((val_str[0] == '"' and val_str[val_str.len-1] == '"') or
+                                      (val_str[0] == '\'' and val_str[val_str.len-1] == '\''))) {
+                val_str = val_str[1..val_str.len-1];
+            }
+            
+            const val = try self.parseInlineValue(val_str);
+            try m.put(key_copy, val);
+            
+            // Skip comma if present
+            if (self.pos < self.source.len and self.source[self.pos] == ',') {
+                self.pos += 1;
+            }
+        }
+        
+        return YamlValue{ .map = m };
+    }
+    
+    fn parseInlineValue(self: *Parser, str: []const u8) anyerror!YamlValue {
+        if (str.len == 0) return .null;
+        if (std.mem.eql(u8, str, "true")) return .{ .boolean = true };
+        if (std.mem.eql(u8, str, "false")) return .{ .boolean = false };
+        if (std.fmt.parseInt(i64, str, 10)) |n| {
+            return .{ .integer = n };
+        } else |_| {}
+        return .{ .string = try self.allocator.dupe(u8, str) };
     }
 
     fn parseValue(self: *Parser, base: usize) anyerror!YamlValue {
