@@ -198,6 +198,16 @@ curl -x socks5://127.0.0.1:7891 http://httpbin.org/ip
 | `zclash config download <url> -n <name> -d` | 下载并设为默认 |
 | `zclash config use <configname>` | 切换到指定配置 |
 
+### 代理管理
+
+| 命令 | 说明 |
+|------|------|
+| `zclash proxy list` / `ls` | 列出所有代理组和节点 |
+| `zclash proxy list -c <path>` | 指定配置列出代理 |
+| `zclash proxy select` | 显示代理选择界面 |
+| `zclash proxy select -g <group>` | 为指定组选择代理 |
+| `zclash proxy select -g <group> -p <proxy>` | 选择指定组的指定代理 |
+
 ### 配置管理示例
 
 ```bash
