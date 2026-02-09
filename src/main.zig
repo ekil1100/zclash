@@ -10,6 +10,7 @@ const api = @import("api/server.zig");
 const tui = @import("tui.zig");
 const daemon = @import("daemon.zig");
 const proxy_cli = @import("proxy_cli.zig");
+const test_cli = @import("test_cli.zig");
 
 // 全局配置路径，用于重载
 var g_config_path: ?[]const u8 = null;
@@ -270,6 +271,34 @@ pub fn main() !void {
         return;
     }
 
+    // 处理 test 命令
+    if (std.mem.eql(u8, cmd, "test")) {
+        var config_path: ?[]const u8 = null;
+        var proxy_name: ?[]const u8 = null;
+
+        var i: usize = 2;
+        while (i < args.len) : (i += 1) {
+            if (std.mem.eql(u8, args[i], "-c")) {
+                if (i + 1 < args.len) {
+                    config_path = args[i + 1];
+                    i += 1;
+                }
+            } else if (std.mem.eql(u8, args[i], "-p")) {
+                if (i + 1 < args.len) {
+                    proxy_name = args[i + 1];
+                    i += 1;
+                }
+            }
+        }
+
+        // 加载配置
+        var cfg = try loadAndValidateConfig(allocator, config_path);
+        defer cfg.deinit();
+
+        try test_cli.testProxy(allocator, &cfg, proxy_name);
+        return;
+    }
+
     // 未知命令
     std.debug.print("Unknown command: {s}\n", .{cmd});
     try printHelp();
@@ -421,6 +450,8 @@ fn printHelp() !void {
     std.debug.print("    log [-n <lines>]        View logs\n", .{});
     std.debug.print("    config <subcmd>         Manage configurations\n", .{});
     std.debug.print("    proxy <subcmd>          Manage proxies\n", .{});
+    std.debug.print("    test [-c <config>]      Test proxy connection\n", .{});
+    std.debug.print("         [-p <proxy>]       Test specific proxy node\n", .{});
     std.debug.print("\n", .{});
     std.debug.print("CONFIG COMMANDS:\n", .{});
     std.debug.print("    zclash config list                  List all available configs\n", .{});
