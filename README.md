@@ -94,20 +94,58 @@ cd zclash
 zig build
 ```
 
+### CLI 使用
+
+```bash
+# 查看帮助
+zclash help
+
+# 启动 TUI（前台交互模式）
+zclash tui
+
+# 后台启动代理服务
+zclash start
+zclash start -c config.yaml
+
+# 服务管理
+zclash status    # 查看状态
+zclash stop      # 停止服务
+zclash restart   # 重启服务
+zclash log       # 查看日志（默认 tail -f 50行）
+
+# 配置管理
+zclash config list                              # 列出所有配置
+zclash config download <url> -n <name> -d       # 下载配置并设为默认
+zclash config use <configname>                  # 切换配置
+```
+
+### 配置自动发现
+
+zclash 会按以下顺序查找配置文件：
+
+1. `~/.config/zclash/config.yaml`（通过 `zclash config use` 设置的当前配置）
+2. `~/.zclash/config.yaml`
+3. `./config.yaml`（当前目录）
+
+如果都找不到，使用内置默认配置。
+
 ### 运行
 
 ```bash
-# 使用默认配置
-./zig-out/bin/zclash
+# 使用默认配置启动 TUI
+./zig-out/bin/zclash tui
 
-# 指定配置文件
-./zig-out/bin/zclash -c config.yaml
+# 指定配置文件启动 TUI
+./zig-out/bin/zclash tui -c config.yaml
 
-# 启用 TUI 界面（推荐）
-./zig-out/bin/zclash -c config.yaml --tui
+# 后台启动代理服务
+./zig-out/bin/zclash start
+
+# 指定配置后台启动
+./zig-out/bin/zclash start -c config.yaml
 
 # 查看帮助
-./zig-out/bin/zclash -h
+./zig-out/bin/zclash help
 ```
 
 ### 测试代理
@@ -126,9 +164,65 @@ curl -x socks5://127.0.0.1:7891 http://httpbin.org/ip
 
 ---
 
+## CLI 命令参考
+
+### 基础命令
+
+| 命令 | 说明 |
+|------|------|
+| `zclash help` | 显示帮助信息 |
+| `zclash tui` | 启动 TUI 交互界面 |
+| `zclash tui -c <path>` | 指定配置启动 TUI |
+
+### 服务管理
+
+| 命令 | 说明 |
+|------|------|
+| `zclash start` | 后台启动代理服务 |
+| `zclash start -c <path>` | 指定配置启动 |
+| `zclash stop` | 停止代理服务 |
+| `zclash restart` | 重启代理服务 |
+| `zclash restart -c <path>` | 指定配置重启 |
+| `zclash status` | 查看服务状态 |
+| `zclash log` | 查看日志（默认最后 50 行，持续刷新） |
+| `zclash log -n 100` | 显示最后 100 行 |
+| `zclash log --no-follow` | 显示后不持续刷新 |
+
+### 配置管理
+
+| 命令 | 说明 |
+|------|------|
+| `zclash config list` / `ls` | 列出所有已下载的配置 |
+| `zclash config download <url>` | 从 URL 下载配置（使用时间戳命名） |
+| `zclash config download <url> -n <name>` | 下载并指定名称 |
+| `zclash config download <url> -n <name> -d` | 下载并设为默认 |
+| `zclash config use <configname>` | 切换到指定配置 |
+
+### 配置管理示例
+
+```bash
+# 下载订阅配置
+zclash config download https://example.com/subscribe.yaml -n mysub
+
+# 下载并设为默认（创建 config.yaml 符号链接）
+zclash config download https://example.com/subscribe.yaml -n mysub -d
+
+# 查看所有配置
+zclash config list
+# 输出：
+#   config_1234567890.yaml
+#   mysub.yaml
+# * mysub.yaml (active)
+
+# 切换配置
+zclash config use config_1234567890.yaml
+```
+
+---
+
 ## TUI 界面
 
-使用 `--tui` 参数启用交互式终端界面。
+使用 `zclash tui` 命令启用交互式终端界面。
 
 ### 界面预览
 
@@ -456,6 +550,7 @@ zclash/
 │   ├── main.zig              # 程序入口
 │   ├── config.zig            # 配置解析
 │   ├── config_validator.zig  # 配置校验
+│   ├── daemon.zig            # 守护进程管理
 │   ├── tui.zig               # TUI 界面
 │   ├── dns/                  # DNS 客户端
 │   │   ├── client.zig
@@ -497,14 +592,23 @@ zig build test
 # 1) 构建
 zig build
 
-# 2) 启动（使用一个最小可用配置，例如 DIRECT）
-./zig-out/bin/zclash -c config.yaml
+# 2) 测试配置管理
+./zig-out/bin/zclash config list
+./zig-out/bin/zclash config download https://example.com/config.yaml -n test -d
 
-# 3) 另开终端验证本地代理端口（示例：HTTP 7890）
+# 3) 启动 TUI（前台测试）
+./zig-out/bin/zclash tui
+
+# 或后台启动
+./zig-out/bin/zclash start
+./zig-out/bin/zclash status
+./zig-out/bin/zclash log
+
+# 4) 另开终端验证本地代理端口（示例：HTTP 7890）
 curl -x http://127.0.0.1:7890 http://httpbin.org/ip
 
-# 4) （可选）VLESS 解析验证：使用包含 type: vless 的配置启动
-#    预期：配置可被读取并可建立基础 VLESS TCP 出站连接
+# 5) 停止服务
+./zig-out/bin/zclash stop
 ```
 
 ### 调试模式
