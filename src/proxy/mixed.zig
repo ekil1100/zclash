@@ -4,8 +4,9 @@ const Engine = @import("../rule/engine.zig").Engine;
 const OutboundManager = @import("outbound/manager.zig").OutboundManager;
 
 /// 混合端口（HTTP + SOCKS5）
-pub fn start(allocator: std.mem.Allocator, port: u16, engine: *Engine, manager: *OutboundManager) !void {
-    const address = try net.Address.parseIp4("0.0.0.0", port);
+pub fn start(allocator: std.mem.Allocator, bind_address: []const u8, port: u16, engine: *Engine, manager: *OutboundManager) !void {
+    const listen_ip = if (std.mem.eql(u8, bind_address, "*")) "0.0.0.0" else bind_address;
+    const address = try net.Address.parseIp4(listen_ip, port);
     var server = try address.listen(.{
         .reuse_address = true,
     });
@@ -52,14 +53,71 @@ fn handleConnection(allocator: std.mem.Allocator, conn: net.Server.Connection, e
 
 fn handleSocks5(allocator: std.mem.Allocator, conn: net.Server.Connection, first_byte: u8, engine: *Engine, manager: *OutboundManager) !void {
     _ = allocator;
-    _ = first_byte;
-    // SOCKS5 实现 - 简化版，完整实现需要更多代码
-    // 这里暂时关闭连接，提示使用专用 SOCKS5 端口
-    std.debug.print("[Mixed] SOCKS5 on mixed port not fully implemented yet, use port 7891\n", .{});
-    _ = try conn.stream.write("HTTP/1.1 400 Bad Request\r\n\r\n");
-    conn.stream.close();
-    _ = engine;
-    _ = manager;
+
+    var buf: [256]u8 = undefined;
+    const n = try conn.stream.read(&buf);
+    if (n < 2) return error.InvalidGreeting;
+
+    const num_methods = buf[0];
+    if (n < 1 + num_methods) return error.InvalidGreeting;
+
+    var found_no_auth = false;
+    for (0..num_methods) |i| {
+        if (buf[1 + i] == 0x00) {
+            found_no_auth = true;
+            break;
+        }
+    }
+    if (!found_no_auth) {
+        try conn.stream.writeAll(&.{ first_byte, 0xFF });
+        conn.stream.close();
+        return;
+    }
+
+    try conn.stream.writeAll(&.{ first_byte, 0x00 });
+
+    const req_n = try conn.stream.read(&buf);
+    if (req_n < 7) return error.InvalidRequest;
+    if (buf[0] != 0x05) return error.InvalidVersion;
+    if (buf[1] != 0x01) return error.CommandNotSupported;
+
+    const atyp = buf[3];
+    var target_port: u16 = 0;
+    var host_buf: [256]u8 = undefined;
+    const target_host: []const u8 = switch (atyp) {
+        0x01 => blk: { // IPv4
+            if (req_n < 10) return error.InvalidRequest;
+            target_port = (@as(u16, buf[8]) << 8) | buf[9];
+            break :blk try std.fmt.bufPrint(&host_buf, "{}.{}.{}.{}", .{ buf[4], buf[5], buf[6], buf[7] });
+        },
+        0x03 => blk: { // Domain
+            const domain_len = buf[4];
+            if (req_n < 5 + domain_len + 2) return error.InvalidRequest;
+            target_port = (@as(u16, buf[5 + domain_len]) << 8) | buf[5 + domain_len + 1];
+            break :blk buf[5 .. 5 + domain_len];
+        },
+        else => {
+            try conn.stream.writeAll(&.{ 0x05, 0x08, 0x00, 0x01, 0, 0, 0, 0, 0, 0 });
+            conn.stream.close();
+            return;
+        },
+    };
+
+    const proxy_name = engine.matchCtx(.{
+        .target_host = target_host,
+        .target_port = target_port,
+        .is_domain = atyp == 0x03,
+    }) orelse "DIRECT";
+
+    var target_stream = manager.connect(proxy_name, target_host, target_port) catch {
+        try conn.stream.writeAll(&.{ 0x05, 0x05, 0x00, 0x01, 0, 0, 0, 0, 0, 0 });
+        conn.stream.close();
+        return;
+    };
+    defer target_stream.close();
+
+    try conn.stream.writeAll(&.{ 0x05, 0x00, 0x00, 0x01, 0, 0, 0, 0, 0, 0 });
+    try relay(conn.stream, target_stream);
 }
 
 fn handleHttp(allocator: std.mem.Allocator, conn: net.Server.Connection, first_byte: u8, engine: *Engine, manager: *OutboundManager) !void {
@@ -181,15 +239,38 @@ fn extractHost(request: []const u8) ![]const u8 {
 }
 
 fn relay(client_stream: net.Stream, target_stream: net.Stream) !void {
-    // 简化的双向转发
-    var buf: [4096]u8 = undefined;
+    var poll_fds = [_]std.posix.pollfd{
+        .{ .fd = client_stream.handle, .events = std.posix.POLL.IN, .revents = 0 },
+        .{ .fd = target_stream.handle, .events = std.posix.POLL.IN, .revents = 0 },
+    };
 
-    // 客户端 -> 目标
+    var buf: [8192]u8 = undefined;
+
     while (true) {
-        const n = client_stream.read(&buf) catch break;
-        if (n == 0) break;
-        _ = target_stream.write(buf[0..n]) catch break;
-    }
+        _ = try std.posix.poll(&poll_fds, -1);
 
-    client_stream.close();
+        if (poll_fds[0].revents & std.posix.POLL.IN != 0) {
+            const n = try std.posix.read(client_stream.handle, &buf);
+            if (n == 0) break;
+            var written: usize = 0;
+            while (written < n) {
+                written += try std.posix.write(target_stream.handle, buf[written..n]);
+            }
+        }
+
+        if (poll_fds[1].revents & std.posix.POLL.IN != 0) {
+            const n = try std.posix.read(target_stream.handle, &buf);
+            if (n == 0) break;
+            var written: usize = 0;
+            while (written < n) {
+                written += try std.posix.write(client_stream.handle, buf[written..n]);
+            }
+        }
+
+        if ((poll_fds[0].revents & (std.posix.POLL.ERR | std.posix.POLL.HUP)) != 0 or
+            (poll_fds[1].revents & (std.posix.POLL.ERR | std.posix.POLL.HUP)) != 0)
+        {
+            break;
+        }
+    }
 }

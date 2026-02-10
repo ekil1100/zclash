@@ -78,8 +78,16 @@ const Parser = struct {
             if (c == '\n' or c == '#') break;
             self.pos += 1;
         }
-        const str = std.mem.trim(u8, self.source[s..self.pos], " \t");
+
+        var str = std.mem.trim(u8, self.source[s..self.pos], " \t");
         if (str.len == 0) return .null;
+
+        // Remove matching quotes for quoted scalars
+        if (str.len >= 2 and ((str[0] == '"' and str[str.len - 1] == '"') or
+            (str[0] == '\'' and str[str.len - 1] == '\''))) {
+            str = str[1 .. str.len - 1];
+        }
+
         if (std.mem.eql(u8, str, "true")) return .{ .boolean = true };
         if (std.mem.eql(u8, str, "false")) return .{ .boolean = false };
         if (std.fmt.parseInt(i64, str, 10)) |n| {
@@ -88,7 +96,7 @@ const Parser = struct {
         return .{ .string = try self.allocator.dupe(u8, str) };
     }
 
-    fn parseMap(self: *Parser, base: usize) anyerror!YamlValue {
+    fn parseMap(self: *Parser, base: usize, allow_deeper_keys: bool) anyerror!YamlValue {
         var m = std.StringHashMap(YamlValue).init(self.allocator);
         var first = true;
 
@@ -108,6 +116,10 @@ const Parser = struct {
                 }
             } else {
                 if (indent < base) {
+                    self.pos = line_start;
+                    break;
+                }
+                if (!allow_deeper_keys and indent > base) {
                     self.pos = line_start;
                     break;
                 }
@@ -197,36 +209,57 @@ const Parser = struct {
                 continue;
             }
 
-            // Check if this is a map item or scalar
-            // A map item has "key: value" format, not just contains ':'
+            // Check if this is a map item or scalar.
+            // Important: ':' inside quoted strings (e.g. "Traffic: 49GB")
+            // must NOT be treated as key/value separator.
             const is_map = blk: {
                 const saved = self.pos;
                 defer self.pos = saved;
-                // Try to find ': ' or ':\n' pattern
+
+                var in_single = false;
+                var in_double = false;
+
                 while (self.pos < self.source.len) {
-                    if (self.source[self.pos] == ':') {
-                        // Check if ':' is followed by space or newline (map separator)
-                        // or end of line (key with empty value)
+                    const ch = self.source[self.pos];
+
+                    if (ch == '\n' or ch == '\r') break;
+
+                    if (ch == '\'' and !in_double) {
+                        in_single = !in_single;
+                        self.pos += 1;
+                        continue;
+                    }
+                    if (ch == '"' and !in_single) {
+                        in_double = !in_double;
+                        self.pos += 1;
+                        continue;
+                    }
+
+                    if (!in_single and !in_double and ch == ':') {
                         const next = self.pos + 1;
-                        if (next >= self.source.len or 
-                            self.source[next] == ' ' or 
+                        if (next >= self.source.len or
+                            self.source[next] == ' ' or
                             self.source[next] == '\t' or
                             self.source[next] == '\n' or
                             self.source[next] == '\r') {
                             break :blk true;
                         }
                     }
-                    if (self.source[self.pos] == '\n') break;
+
                     self.pos += 1;
                 }
+
                 break :blk false;
             };
 
-            const item = if (is_map)
-                try self.parseMap(base)
-            else
-                try self.parseScalar();
+            if (is_map) {
+                const item = try self.parseMap(base, true);
+                try arr.append(self.allocator, item);
+                // parseMap() already positions at the next unread line
+                continue;
+            }
 
+            const item = try self.parseScalar();
             try arr.append(self.allocator, item);
             self.skipLine();
         }
@@ -288,18 +321,35 @@ const Parser = struct {
             // Parse value
             const val_start = self.pos;
             var brace_depth: usize = 0;
+            var in_single_quote = false;
+            var in_double_quote = false;
             while (self.pos < self.source.len) {
                 const c = self.source[self.pos];
-                if (c == '{') {
-                    brace_depth += 1;
-                } else if (c == '}') {
-                    if (brace_depth == 0) break;
-                    brace_depth -= 1;
-                } else if (c == ',' and brace_depth == 0) {
-                    break;
-                } else if (c == '\n') {
-                    break;
+
+                if (!in_double_quote and c == '\'') {
+                    in_single_quote = !in_single_quote;
+                    self.pos += 1;
+                    continue;
                 }
+                if (!in_single_quote and c == '"') {
+                    in_double_quote = !in_double_quote;
+                    self.pos += 1;
+                    continue;
+                }
+
+                if (!in_single_quote and !in_double_quote) {
+                    if (c == '{') {
+                        brace_depth += 1;
+                    } else if (c == '}') {
+                        if (brace_depth == 0) break;
+                        brace_depth -= 1;
+                    } else if (c == ',' and brace_depth == 0) {
+                        break;
+                    } else if (c == '\n') {
+                        break;
+                    }
+                }
+
                 self.pos += 1;
             }
             
@@ -359,7 +409,7 @@ const Parser = struct {
             if (self.source[content_pos] == '-') return self.parseArray(base);
 
             self.pos = content_pos;
-            if (self.peekKey()) return self.parseMap(base);
+            if (self.peekKey()) return self.parseMap(base, false);
             return self.parseScalar();
         }
         return .null;

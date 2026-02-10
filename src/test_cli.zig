@@ -50,11 +50,15 @@ const ProxyType = enum {
 
 /// 通过代理测试连接
 fn testViaProxy(allocator: std.mem.Allocator, port: u16, proxy_type: ProxyType) !void {
-    _ = proxy_type;
+    const proxy_url = switch (proxy_type) {
+        .http => try std.fmt.allocPrint(allocator, "http://127.0.0.1:{d}", .{port}),
+        .socks5 => try std.fmt.allocPrint(allocator, "socks5://127.0.0.1:{d}", .{port}),
+    };
+    defer allocator.free(proxy_url);
 
     // 获取出口 IP 和地区信息
     std.debug.print("  Current IP/Location: ", .{});
-    const ip_geo = try getIpGeoInfo(allocator);
+    const ip_geo = try getIpGeoInfo(allocator, proxy_url);
     defer if (ip_geo) |info| {
         allocator.free(info.ip);
         if (info.city) |c| allocator.free(c);
@@ -87,7 +91,7 @@ fn testViaProxy(allocator: std.mem.Allocator, port: u16, proxy_type: ProxyType) 
     for (TEST_TARGETS[1..]) |target| { // 跳过第一个（IP 已经测过）
         std.debug.print("  {s:12} ", .{target.name});
 
-        const latency = try testUrlLatency(allocator, target.url, port);
+        const latency = try testUrlLatency(allocator, target.url, proxy_url);
 
         if (latency) |ms| {
             const color = if (ms < 100) "🟢" else if (ms < 300) "🟡" else "🔴";
@@ -107,32 +111,11 @@ const IpGeoInfo = struct {
 };
 
 /// 获取出口 IP 和地理位置信息
-fn getIpGeoInfo(allocator: std.mem.Allocator) !?*IpGeoInfo {
-    var client = std.http.Client{ .allocator = allocator };
-    defer client.deinit();
+fn getIpGeoInfo(allocator: std.mem.Allocator, proxy_url: []const u8) !?*IpGeoInfo {
+    const output = runCurl(allocator, proxy_url, "http://ipapi.co/json/", false) catch return null;
+    defer allocator.free(output);
 
-    // 使用 ipapi.co/json 获取 IP 和地理位置
-    var response_body = std.ArrayList(u8).empty;
-    defer response_body.deinit(allocator);
-
-    var writer_buffer: [8192]u8 = undefined;
-    var adapter = response_body.writer(allocator).adaptToNewApi(&writer_buffer);
-
-    const result = client.fetch(.{
-        .location = .{ .url = "http://ipapi.co/json/" },
-        .method = .GET,
-        .response_writer = &adapter.new_interface,
-    }) catch |err| {
-        std.debug.print("({s}) ", .{@errorName(err)});
-        return null;
-    };
-
-    if (result.status != .ok) {
-        return null;
-    }
-
-    // 解析 JSON 响应
-    const body = response_body.items;
+    const body = output;
 
     var info = try allocator.create(IpGeoInfo);
     info.city = null;
@@ -183,35 +166,35 @@ fn extractJsonField(allocator: std.mem.Allocator, json: []const u8, field: []con
 }
 
 /// 测试 URL 延迟
-fn testUrlLatency(allocator: std.mem.Allocator, url: []const u8, _proxy_port: u16) !?u64 {
-    _ = _proxy_port;
-    var client = std.http.Client{ .allocator = allocator };
-    defer client.deinit();
-
-    // 记录开始时间
+fn testUrlLatency(allocator: std.mem.Allocator, url: []const u8, proxy_url: []const u8) !?u64 {
     const start_time = std.time.milliTimestamp();
-
-    // 使用较小的超时进行测试
-    var response_body = std.ArrayList(u8).empty;
-    defer response_body.deinit(allocator);
-
-    var writer_buffer: [1024]u8 = undefined;
-    var adapter = response_body.writer(allocator).adaptToNewApi(&writer_buffer);
-
-    const result = client.fetch(.{
-        .location = .{ .url = url },
-        .method = .GET,
-        .response_writer = &adapter.new_interface,
-    }) catch {
-        return null;
-    };
-
+    const out = runCurl(allocator, proxy_url, url, true) catch return null;
+    allocator.free(out);
     const end_time = std.time.milliTimestamp();
+    return @intCast(end_time - start_time);
+}
 
-    // 只要收到响应（包括 204 No Content）就算成功
-    if (result.status == .ok or result.status == .no_content or @intFromEnum(result.status) < 400) {
-        return @intCast(end_time - start_time);
+fn runCurl(allocator: std.mem.Allocator, proxy_url: []const u8, url: []const u8, ignore_body: bool) ![]u8 {
+    var args = std.ArrayList([]const u8).empty;
+    defer args.deinit(allocator);
+
+    try args.appendSlice(allocator, &.{ "curl", "--silent", "--show-error", "--max-time", "6", "-x", proxy_url });
+    if (ignore_body) {
+        try args.appendSlice(allocator, &.{ "--output", "/dev/null" });
+    }
+    try args.append(allocator, url);
+
+    const result = try std.process.Child.run(.{
+        .allocator = allocator,
+        .argv = args.items,
+    });
+    defer allocator.free(result.stderr);
+    errdefer allocator.free(result.stdout);
+
+    if (result.term != .Exited or result.term.Exited != 0) {
+        allocator.free(result.stdout);
+        return error.CurlFailed;
     }
 
-    return null;
+    return result.stdout;
 }

@@ -28,8 +28,9 @@ const Reply = struct {
     const AddressNotSupported: u8 = 0x08;
 };
 
-pub fn start(allocator: std.mem.Allocator, port: u16, engine: *Engine, manager: *OutboundManager) !void {
-    const address = try net.Address.parseIp4("0.0.0.0", port);
+pub fn start(allocator: std.mem.Allocator, bind_address: []const u8, port: u16, engine: *Engine, manager: *OutboundManager) !void {
+    const listen_ip = if (std.mem.eql(u8, bind_address, "*")) "0.0.0.0" else bind_address;
+    const address = try net.Address.parseIp4(listen_ip, port);
     var server = try address.listen(.{
         .reuse_address = true,
     });

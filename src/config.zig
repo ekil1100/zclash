@@ -6,10 +6,10 @@ pub const ProxyType = enum {
     reject,
     http,
     socks5,
-    ss,        // Shadowsocks
-    vmess,     // VMess
-    trojan,    // Trojan
-    vless,     // VLESS
+    ss, // Shadowsocks
+    vmess, // VMess
+    trojan, // Trojan
+    vless, // VLESS
 };
 
 pub const Proxy = struct {
@@ -19,15 +19,20 @@ pub const Proxy = struct {
     port: u16,
     // Protocol-specific fields
     password: ?[]const u8 = null,
-    cipher: ?[]const u8 = null,  // SS
-    uuid: ?[]const u8 = null,    // VMess/VLESS
-    alter_id: u16 = 0,           // VMess
+    cipher: ?[]const u8 = null, // SS
+    uuid: ?[]const u8 = null, // VMess/VLESS
+    alter_id: u16 = 0, // VMess
     tls: bool = false,
     skip_cert_verify: bool = false,
     sni: ?[]const u8 = null,
-    ws: bool = false,            // WebSocket
+    ws: bool = false, // WebSocket
     ws_path: ?[]const u8 = null,
     ws_host: ?[]const u8 = null,
+    // Obfs plugin for Shadowsocks
+    plugin: ?[]const u8 = null,
+    plugin_opts: ?[]const u8 = null,
+    obfs_mode: ?[]const u8 = null, // http or tls
+    obfs_host: ?[]const u8 = null, // host header for obfs
 
     pub fn deinit(self: *Proxy, allocator: std.mem.Allocator) void {
         allocator.free(self.name);
@@ -38,6 +43,10 @@ pub const Proxy = struct {
         if (self.sni) |s| allocator.free(s);
         if (self.ws_path) |p| allocator.free(p);
         if (self.ws_host) |h| allocator.free(h);
+        if (self.plugin) |p| allocator.free(p);
+        if (self.plugin_opts) |p| allocator.free(p);
+        if (self.obfs_mode) |m| allocator.free(m);
+        if (self.obfs_host) |h| allocator.free(h);
     }
 };
 
@@ -52,13 +61,13 @@ pub const RuleType = enum {
     dst_port,
     src_port,
     process_name,
-    final,  // MATCH
+    final, // MATCH
 };
 
 pub const Rule = struct {
     rule_type: RuleType,
     payload: []const u8,
-    target: []const u8,  // Proxy name or DIRECT/REJECT
+    target: []const u8, // Proxy name or DIRECT/REJECT
     no_resolve: bool = false,
 
     pub fn deinit(self: *Rule, allocator: std.mem.Allocator) void {
@@ -96,7 +105,7 @@ pub const ProxyGroup = struct {
 
 pub const Config = struct {
     allocator: std.mem.Allocator,
-    port: u16 = 7890,
+    port: u16 = 7899,
     socks_port: u16 = 7891,
     mixed_port: u16 = 0,
     redir_port: u16 = 0,
@@ -109,7 +118,7 @@ pub const Config = struct {
     external_controller: ?[]const u8 = null,
     external_ui: ?[]const u8 = null,
     secret: ?[]const u8 = null,
-    
+
     proxies: std.ArrayList(Proxy),
     proxy_groups: std.ArrayList(ProxyGroup),
     rules: std.ArrayList(Rule),
@@ -198,6 +207,12 @@ pub fn parse(allocator: std.mem.Allocator, content: []const u8) !Config {
     if (root.map.get("allow-lan")) |v| {
         if (v == .boolean) config.allow_lan = v.boolean;
     }
+    if (root.map.get("bind-address")) |v| {
+        if (v == .string) {
+            allocator.free(config.bind_address);
+            config.bind_address = try allocator.dupe(u8, v.string);
+        }
+    }
     if (root.map.get("mode")) |v| {
         if (v == .string) {
             allocator.free(config.mode);
@@ -219,8 +234,14 @@ pub fn parse(allocator: std.mem.Allocator, content: []const u8) !Config {
         if (proxies == .array) {
             for (proxies.array.items) |*item| {
                 if (item.* == .map) {
-                    const proxy = try parseProxy(allocator, item.map);
-                    try config.proxies.append(allocator, proxy);
+                    // 检查是否是代理组类型（select, url-test等）
+                    if (isProxyGroupType(item.map)) {
+                        const group = try parseProxyGroup(allocator, item.map);
+                        try config.proxy_groups.append(allocator, group);
+                    } else {
+                        const proxy = try parseProxy(allocator, item.map);
+                        try config.proxies.append(allocator, proxy);
+                    }
                 }
             }
         }
@@ -333,6 +354,27 @@ fn parseProxy(allocator: std.mem.Allocator, map: std.StringHashMap(yaml.YamlValu
         return error.MissingProxyUuid;
     }
 
+    // Obfs plugin for Shadowsocks
+    if (map.get("plugin")) |v| {
+        if (v == .string) {
+            proxy.plugin = try allocator.dupe(u8, v.string);
+            // Parse simple-obfs mode
+            if (std.mem.eql(u8, v.string, "obfs")) {
+                // Check for plugin-opts
+                if (map.get("plugin-opts")) |opts| {
+                    if (opts == .map) {
+                        if (opts.map.get("mode")) |mode| {
+                            if (mode == .string) proxy.obfs_mode = try allocator.dupe(u8, mode.string);
+                        }
+                        if (opts.map.get("host")) |host| {
+                            if (host == .string) proxy.obfs_host = try allocator.dupe(u8, host.string);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     return proxy;
 }
 
@@ -438,6 +480,16 @@ fn parseGroupType(s: []const u8) ?ProxyGroupType {
     return null;
 }
 
+/// 检查一个 YAML map 是否是代理组类型
+fn isProxyGroupType(map: std.StringHashMap(yaml.YamlValue)) bool {
+    if (map.get("type")) |type_val| {
+        if (type_val == .string) {
+            return parseGroupType(type_val.string) != null;
+        }
+    }
+    return false;
+}
+
 fn parseRuleType(s: []const u8) ?RuleType {
     if (std.mem.eql(u8, s, "DOMAIN")) return .domain;
     if (std.mem.eql(u8, s, "DOMAIN-SUFFIX")) return .domain_suffix;
@@ -486,8 +538,8 @@ pub fn loadDefault(allocator: std.mem.Allocator) !Config {
 
     // 使用内置默认配置
     std.debug.print("No config file found, using built-in defaults\n", .{});
-    const yaml_config = 
-        \\port: 7890
+    const yaml_config =
+        \\port: 7899
         \\socks-port: 7891
         \\mode: rule
         \\log-level: info
@@ -547,7 +599,7 @@ fn generateConfigFilenameFromUrl(allocator: std.mem.Allocator, url: []const u8) 
     if (try extractDomainFromUrl(allocator, url)) |domain| {
         return domain;
     }
-    
+
     // 如果提取失败，回退到时间戳
     return try generateConfigFilename(allocator);
 }
@@ -647,11 +699,11 @@ pub fn listConfigs(allocator: std.mem.Allocator) !void {
     // 检查是否存在 config.yaml (active config)
     const active_path = try std.fs.path.join(allocator, &.{ config_dir, "config.yaml" });
     defer allocator.free(active_path);
-    
+
     const has_active = if (std.fs.accessAbsolute(active_path, .{})) |_| true else |_| false;
     var active_target_buf: [std.fs.max_path_bytes]u8 = undefined;
     var active_target: ?[]const u8 = null;
-    
+
     // 如果 config.yaml 是符号链接，读取目标
     if (has_active) {
         active_target = std.fs.readLinkAbsolute(active_path, &active_target_buf) catch null;
@@ -671,7 +723,7 @@ pub fn listConfigs(allocator: std.mem.Allocator) !void {
                 }
                 break :blk false;
             };
-            
+
             if (is_active) {
                 std.debug.print("  * {s} (active)\n", .{entry.name});
             } else {
@@ -739,8 +791,8 @@ pub fn switchConfig(allocator: std.mem.Allocator, filename: []const u8) !void {
 
 test "config parsing" {
     const allocator = std.testing.allocator;
-    
-    const yaml_config = 
+
+    const yaml_config =
         \\port: 1080
         \\proxies:
         \\  - name: Proxy1
@@ -753,10 +805,10 @@ test "config parsing" {
         \\  - DOMAIN,google.com,Proxy1
         \\  - MATCH,DIRECT
     ;
-    
+
     var config = try parse(allocator, yaml_config);
     defer config.deinit();
-    
+
     try std.testing.expectEqual(@as(u16, 1080), config.port);
     try std.testing.expectEqual(@as(usize, 1), config.proxies.items.len);
     try std.testing.expectEqual(@as(usize, 2), config.rules.items.len);

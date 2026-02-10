@@ -3,8 +3,9 @@ const net = std.net;
 const Engine = @import("../rule/engine.zig").Engine;
 const OutboundManager = @import("outbound/manager.zig").OutboundManager;
 
-pub fn start(allocator: std.mem.Allocator, port: u16, engine: *Engine, manager: *OutboundManager) !void {
-    const address = try net.Address.parseIp4("0.0.0.0", port);
+pub fn start(allocator: std.mem.Allocator, bind_address: []const u8, port: u16, engine: *Engine, manager: *OutboundManager) !void {
+    const listen_ip = if (std.mem.eql(u8, bind_address, "*")) "0.0.0.0" else bind_address;
+    const address = try net.Address.parseIp4(listen_ip, port);
     var server = try address.listen(.{
         .reuse_address = true,
     });
@@ -14,7 +15,7 @@ pub fn start(allocator: std.mem.Allocator, port: u16, engine: *Engine, manager: 
 
     while (true) {
         const conn = try server.accept();
-        
+
         handleConnection(allocator, conn, engine, manager) catch |err| {
             std.debug.print("Connection error: {}\n", .{err});
             conn.stream.close();
@@ -30,10 +31,10 @@ fn handleConnection(_: std.mem.Allocator, conn: net.Server.Connection, engine: *
     if (n == 0) return;
 
     const request = buf[0..n];
-    
+
     const method_end = std.mem.indexOf(u8, request, " ");
     if (method_end == null) return error.InvalidRequest;
-    
+
     const method = request[0..method_end.?];
 
     if (std.mem.eql(u8, method, "CONNECT")) {
@@ -48,13 +49,13 @@ fn handleConnect(conn: net.Server.Connection, request: []const u8, engine: *Engi
     var part_iter = parts;
     _ = part_iter.next();
     const target = part_iter.next();
-    
+
     if (target == null) return error.InvalidRequest;
-    
+
     const host_port = target.?;
     const colon_pos = std.mem.lastIndexOf(u8, host_port, ":");
     if (colon_pos == null) return error.InvalidHost;
-    
+
     const host = host_port[0..colon_pos.?];
     const port_str = host_port[colon_pos.? + 1 ..];
     const port = try std.fmt.parseInt(u16, port_str, 10);
@@ -78,7 +79,7 @@ fn handleConnect(conn: net.Server.Connection, request: []const u8, engine: *Engi
 fn handleHttp(conn: net.Server.Connection, request: []const u8, engine: *Engine, manager: *OutboundManager) !void {
     const host = try extractHost(request);
     const uri = try extractUri(request);
-    
+
     std.debug.print("[HTTP] {s} {s} (Host: {s})\n", .{ request[0..std.mem.indexOf(u8, request, " ").?], uri, host });
 
     const proxy_name = engine.match(host, true) orelse "DIRECT";
