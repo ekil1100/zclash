@@ -25,20 +25,20 @@
 - 备注：已完成初版矩阵与分级标注，待与 gap-analysis 做最终对齐。
 
 ### P0-2 标准测试场景与样例集
-- 状态：DOING
+- 状态：DONE
 - 优先级：P0
 - 负责人：Lan
 - 输出：`docs/benchmark/scenarios.md`, `testdata/`
 - 验收标准（Acceptance Criteria）：
-  - [ ] 覆盖启动、规则、切换、DNS、并发、长稳 6 类场景
-  - [ ] 每类场景都包含输入、验证点、输出指标
-  - [ ] `testdata/` 中至少落地最小配置与规则样例
+  - [x] 覆盖启动、规则、切换、DNS、并发、长稳 6 类场景
+  - [x] 每类场景都包含输入、验证点、输出指标
+  - [x] `testdata/` 中至少落地最小配置与规则样例
 - 子任务：
-  - [ ] 准备最小可运行配置样例（单节点、多节点、代理组）
-  - [ ] 准备规则样例（domain/ip-cidr/geo 类）
+  - [x] 准备最小可运行配置样例（单节点、多节点、代理组）
+  - [x] 准备规则样例（domain/ip-cidr/geo 类）
   - [x] 准备压力场景（高并发、多规则、DNS 抖动）
-  - [ ] 固化输入数据与期望输出
-- 备注：`scenarios.md` 初版已完成，待补 testdata 实体文件。
+  - [x] 固化输入数据与期望输出
+- 备注：已落地 `testdata/config/minimal.yaml`、`testdata/config/multi-proxy.yaml`、`testdata/rules/rule-matrix.yaml`。
 
 ### P0-3 北极星指标定义
 - 状态：DOING
@@ -183,3 +183,4 @@
 - 2026-02-11 03:31（GMT+8）新增 `docs/roadmap/gap-analysis.md` 初稿；P0-4 更新为 DOING。
 - 2026-02-11 03:32（GMT+8）为 P0-1~P0-4 补齐 Acceptance Criteria，并同步子任务完成度与备注。
 - 2026-02-11 04:00（GMT+8）完成 P0-1 收尾：`baseline.md` 增加 必补/增强/可延后 + P0/P1/P2 分级标注；P0-1 最后子项勾选完成。
+- 2026-02-11 04:09（GMT+8）完成 P0-2：落地 `testdata` 样例（minimal/multi-proxy/rule-matrix），P0-2 状态更新为 DONE。
