@@ -131,6 +131,60 @@ pub fn listProxiesJson(allocator: std.mem.Allocator, cfg: *const config.Config) 
 }
 
 /// 选择代理节点（用于 select 类型的组）
+pub fn selectProxyJson(allocator: std.mem.Allocator, cfg: *config.Config, group_name: ?[]const u8, proxy_name: ?[]const u8) !void {
+    var target_group: ?*config.ProxyGroup = null;
+
+    if (group_name) |gn| {
+        for (cfg.proxy_groups.items) |*group| {
+            if (std.mem.eql(u8, group.name, gn)) {
+                target_group = group;
+                break;
+            }
+        }
+        if (target_group == null) return error.GroupNotFound;
+    } else {
+        for (cfg.proxy_groups.items) |*group| {
+            if (group.group_type == .select) {
+                target_group = group;
+                break;
+            }
+        }
+        if (target_group == null) return error.NoSelectGroup;
+    }
+
+    const group = target_group.?;
+
+    if (proxy_name) |pn| {
+        var found = false;
+        for (group.proxies.items) |p| {
+            if (std.mem.eql(u8, p, pn)) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) return error.ProxyNotFound;
+
+        std.debug.print("{{\"ok\":true,\"data\":{{\"action\":\"proxy_select\",\"group\":\"{s}\",\"proxy\":\"{s}\",\"state\":\"selected\"}}}}\n", .{ group.name, pn });
+        return;
+    }
+
+    var out = std.ArrayList(u8).empty;
+    defer out.deinit(allocator);
+    try out.appendSlice(allocator, "{\"ok\":true,\"data\":{\"action\":\"proxy_select\",\"group\":\"");
+    try out.appendSlice(allocator, group.name);
+    try out.appendSlice(allocator, "\",\"choices\":[");
+
+    for (group.proxies.items, 0..) |name, i| {
+        if (i > 0) try out.appendSlice(allocator, ",");
+        try out.appendSlice(allocator, "\"");
+        try out.appendSlice(allocator, name);
+        try out.appendSlice(allocator, "\"");
+    }
+
+    try out.appendSlice(allocator, "]}}\n");
+    std.debug.print("{s}", .{out.items});
+}
+
 pub fn selectProxy(allocator: std.mem.Allocator, cfg: *config.Config, group_name: ?[]const u8, proxy_name: ?[]const u8) !void {
     _ = allocator;
     

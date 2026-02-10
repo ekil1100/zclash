@@ -87,21 +87,21 @@
 - 备注：已补“实现映射清单”（代码位置+实现状态+缺口）与最小实现序列 A/B/C；已落地 A+B+C 首批（服务控制命令 + `proxy list --json`，并补 `proxy` 路径部分错误结构），可复现验证已补齐。
 
 ### P1-2 Profile/Proxy/Diag 命令完善
-- 状态：DOING
+- 状态：DONE
 - 优先级：P1
 - 输出：CLI 子命令实现 + 文档
 - 验收标准（Acceptance Criteria / DoD）：
-  - [ ] `profile list/use/import/validate` 四子命令具备输入/输出/错误结构定义
-  - [ ] 至少 `profile list/use` 落地 `--json` 输出
-  - [ ] 错误输出统一 `code/message/hint`
-  - [ ] 提供至少 1 条可复现验证命令
+  - [x] `profile list/use/import/validate` 四子命令具备输入/输出/错误结构定义
+  - [x] 至少 `profile list/use` 落地 `--json` 输出
+  - [x] 错误输出统一 `code/message/hint`
+  - [x] 提供至少 1 条可复现验证命令
 - 子任务：
   - [x] 文档补齐 `profile list/use/import/validate` 规范（`docs/cli/spec.md`）
   - [x] 实现 `profile list/use`（含 `--json`）
   - [x] 实现 `profile import/validate`（含 `--json`）
-  - [ ] `proxy list/select/test` 补齐剩余 `--json` 路径
-  - [ ] `diag doctor` 补齐 `--json` 输出
-- 备注：已按最小顺序完成 list/use 与 import/validate；下一步补 proxy/diag 余下 JSON 路径。
+  - [x] `proxy list/select/test` 补齐剩余 `--json` 路径
+  - [x] `diag doctor` 补齐 `--json` 输出
+- 备注：P1-2 已完成（profile/proxy/diag 关键 JSON 路径落地并可复现验证）。
 
 ---
 
@@ -203,3 +203,4 @@
 - 2026-02-11 05:48（GMT+8）启动 P1-2 子任务 1：在 `docs/cli/spec.md` 补齐 profile 四子命令规范；`TASKS.md` 同步 P1-2 DoD 与最小实现顺序（先 list/use，再 import/validate）。
 - 2026-02-11 06:00（GMT+8）完成 P1-2 子任务 A：落地 `profile list/use`（含 `--json`）与结构化错误输出，补充可复现验证命令。
 - 2026-02-11 06:12（GMT+8）完成 P1-2 子任务 B：落地 `profile import/validate`（含 `--json`）与结构化错误输出，补充可复现验证命令。
+- 2026-02-11 06:24（GMT+8）完成 P1-2 子任务 C：补齐 `proxy list/select/test` 与 `diag doctor` 的 `--json` 输出路径，P1-2 状态更新为 DONE。

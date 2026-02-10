@@ -18,8 +18,38 @@ pub const DoctorData = struct {
     port_count: usize,
 };
 
+pub fn runDoctorJson(allocator: std.mem.Allocator, config_path: ?[]const u8) !void {
+    const data = try collectDoctorData(allocator, config_path);
+
+    var out = std.ArrayList(u8).empty;
+    defer out.deinit(allocator);
+
+    try out.writer(allocator).print("{{\"ok\":true,\"data\":{{\"action\":\"doctor\",\"config_ok\":{s},\"config_source\":\"{s}\",\"daemon_running\":{s},\"daemon_pid\":", .{
+        if (data.config_ok) "true" else "false",
+        data.config_source,
+        if (data.daemon_running) "true" else "false",
+    });
+
+    if (data.daemon_pid) |pid| {
+        try out.writer(allocator).print("{d}", .{pid});
+    } else {
+        try out.appendSlice(allocator, "null");
+    }
+
+    try out.appendSlice(allocator, ",\"ports\":[");
+    var i: usize = 0;
+    while (i < data.port_count) : (i += 1) {
+        if (i > 0) try out.appendSlice(allocator, ",");
+        const p = data.ports[i];
+        try out.writer(allocator).print("{{\"label\":\"{s}\",\"port\":{d},\"listening\":{s}}}", .{ p.label, p.port, if (p.listening) "true" else "false" });
+    }
+    try out.appendSlice(allocator, "]}}\n");
+
+    std.debug.print("{s}", .{out.items});
+}
+
 pub fn runDoctor(allocator: std.mem.Allocator, config_path: ?[]const u8) !void {
-    var data = try collectDoctorData(allocator, config_path);
+    const data = try collectDoctorData(allocator, config_path);
     const report = try formatDoctorReport(allocator, &data);
     defer allocator.free(report);
     std.debug.print("{s}", .{report});

@@ -171,6 +171,9 @@
 - `zig run src/main.zig -- status --json` 输出：`{"ok":true,"data":{"action":"status","state":"stopped"}}`
 - `zig run src/main.zig -- stop --json` 输出：`{"ok":true,"data":{"action":"stop","state":"stopped","detail":"already_stopped"}}`
 - `zig run src/main.zig -- proxy list -c testdata/config/minimal.yaml --json` 输出：`{"ok":true,"data":{"groups":[...]}}`
+- `zig run src/main.zig -- proxy select -g PROXY --json -c testdata/config/minimal.yaml` 输出：`{"ok":true,"data":{"action":"proxy_select",...}}`
+- `zig run src/main.zig -- proxy test -c testdata/config/minimal.yaml --json` 输出：`{"ok":true,"data":{"action":"proxy_test",...}}`
+- `zig run src/main.zig -- diag doctor -c testdata/config/minimal.yaml --json` 输出：`{"ok":true,"data":{"action":"doctor",...}}`
 
 ---
 

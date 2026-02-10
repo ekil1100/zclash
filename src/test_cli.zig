@@ -41,6 +41,37 @@ const CurlResult = union(enum) {
 };
 
 /// 网络连接性测试
+pub fn testProxyJson(allocator: std.mem.Allocator, cfg: *const config.Config, proxy_name: ?[]const u8) !void {
+    _ = proxy_name;
+    const effective = selectEffectivePorts(cfg);
+
+    var out = std.ArrayList(u8).empty;
+    defer out.deinit(allocator);
+
+    try out.appendSlice(allocator, "{\"ok\":true,\"data\":{\"action\":\"proxy_test\",\"ports\":[");
+
+    var first = true;
+    if (effective.mixed) |p| {
+        const listening = try isLocalPortListening(allocator, p);
+        try out.writer(allocator).print("{{\"label\":\"mixed\",\"port\":{d},\"listening\":{s}}}", .{ p, if (listening) "true" else "false" });
+        first = false;
+    }
+    if (effective.http) |p| {
+        if (!first) try out.appendSlice(allocator, ",");
+        const listening = try isLocalPortListening(allocator, p);
+        try out.writer(allocator).print("{{\"label\":\"http\",\"port\":{d},\"listening\":{s}}}", .{ p, if (listening) "true" else "false" });
+        first = false;
+    }
+    if (effective.socks) |p| {
+        if (!first) try out.appendSlice(allocator, ",");
+        const listening = try isLocalPortListening(allocator, p);
+        try out.writer(allocator).print("{{\"label\":\"socks\",\"port\":{d},\"listening\":{s}}}", .{ p, if (listening) "true" else "false" });
+    }
+
+    try out.appendSlice(allocator, "]}}\n");
+    std.debug.print("{s}", .{out.items});
+}
+
 pub fn testProxy(allocator: std.mem.Allocator, cfg: *const config.Config, proxy_name: ?[]const u8) !void {
     _ = proxy_name;
 

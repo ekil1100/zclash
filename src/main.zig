@@ -385,10 +385,49 @@ pub fn main() !void {
             }
 
             // 加载配置（需要可变引用）
-            var cfg = try loadAndValidateConfig(allocator, config_path, !json_output);
+            var cfg = loadAndValidateConfig(allocator, config_path, !json_output) catch |err| {
+                printCliError(json_output, "PROXY_CONFIG_LOAD_FAILED", "failed to load/validate config for proxy select", "check config path and retry with `-c <config>`");
+                return err;
+            };
             defer cfg.deinit();
 
-            try proxy_cli.selectProxy(allocator, &cfg, group_name, proxy_name);
+            if (json_output) {
+                proxy_cli.selectProxyJson(allocator, &cfg, group_name, proxy_name) catch |err| {
+                    switch (err) {
+                        error.GroupNotFound => printCliError(true, "PROXY_GROUP_NOT_FOUND", "proxy group not found", "run `zclash proxy list --json` to inspect groups"),
+                        error.ProxyNotFound => printCliError(true, "PROXY_NOT_FOUND", "proxy not found in group", "run `zclash proxy select -g <group> --json` to inspect choices"),
+                        error.NoSelectGroup => printCliError(true, "PROXY_SELECT_GROUP_MISSING", "no select-type proxy group found", "check profile proxy-groups config"),
+                        else => printCliError(true, "PROXY_SELECT_FAILED", "failed to select proxy", "retry with valid group/proxy arguments"),
+                    }
+                    return;
+                };
+            } else {
+                try proxy_cli.selectProxy(allocator, &cfg, group_name, proxy_name);
+            }
+            return;
+        }
+
+        if (std.mem.eql(u8, subcmd, "test")) {
+            var config_path: ?[]const u8 = null;
+            var i: usize = 3;
+            while (i < args.len) : (i += 1) {
+                if (std.mem.eql(u8, args[i], "-c") and i + 1 < args.len) {
+                    config_path = args[i + 1];
+                    i += 1;
+                }
+            }
+
+            var cfg = loadAndValidateConfig(allocator, config_path, !json_output) catch |err| {
+                printCliError(json_output, "PROXY_CONFIG_LOAD_FAILED", "failed to load/validate config for proxy test", "check config path and retry with `-c <config>`");
+                return err;
+            };
+            defer cfg.deinit();
+
+            if (json_output) {
+                try test_cli.testProxyJson(allocator, &cfg, null);
+            } else {
+                try test_cli.testProxy(allocator, &cfg, null);
+            }
             return;
         }
 
@@ -416,7 +455,32 @@ pub fn main() !void {
     // 处理 doctor 命令
     if (std.mem.eql(u8, cmd, "doctor")) {
         const config_path = parseConfigPathArg(args, 2);
-        try doctor_cli.runDoctor(allocator, config_path);
+        if (json_output) {
+            doctor_cli.runDoctorJson(allocator, config_path) catch |err| {
+                printCliError(true, "DIAG_DOCTOR_FAILED", "failed to run doctor diagnostics", "check config and retry `zclash doctor --json`");
+                return err;
+            };
+        } else {
+            try doctor_cli.runDoctor(allocator, config_path);
+        }
+        return;
+    }
+
+    // 处理 diag 子命令（doctor 别名）
+    if (std.mem.eql(u8, cmd, "diag")) {
+        if (args.len < 3 or !std.mem.eql(u8, args[2], "doctor")) {
+            printCliError(json_output, "DIAG_SUBCOMMAND_UNKNOWN", "unknown diag subcommand", "use `zclash diag doctor [-c <config>] [--json]`");
+            return;
+        }
+        const config_path = parseConfigPathArg(args, 3);
+        if (json_output) {
+            doctor_cli.runDoctorJson(allocator, config_path) catch |err| {
+                printCliError(true, "DIAG_DOCTOR_FAILED", "failed to run doctor diagnostics", "check config and retry `zclash diag doctor --json`");
+                return err;
+            };
+        } else {
+            try doctor_cli.runDoctor(allocator, config_path);
+        }
         return;
     }
 
