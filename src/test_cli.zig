@@ -22,22 +22,37 @@ pub fn testProxy(allocator: std.mem.Allocator, cfg: *const config.Config, proxy_
     std.debug.print("Network Connectivity Test\n", .{});
     std.debug.print("{s:-^60}\n", .{""});
 
+    // mixed-port 开启时，按 Clash 语义应仅测试 mixed 端口
+    if (cfg.mixed_port > 0) {
+        std.debug.print("\nTesting via Mixed Proxy (127.0.0.1:{d}):\n", .{cfg.mixed_port});
+        if (try isLocalPortListening(allocator, cfg.mixed_port)) {
+            try testViaProxy(allocator, cfg.mixed_port, .http);
+        } else {
+            std.debug.print("  Proxy not listening on 127.0.0.1:{d}. Start zclash first (zclash start -c <config>).\n", .{cfg.mixed_port});
+        }
+
+        std.debug.print("\n", .{});
+        return;
+    }
+
     // 测试 HTTP 代理
     if (cfg.port > 0) {
         std.debug.print("\nTesting via HTTP Proxy (127.0.0.1:{d}):\n", .{cfg.port});
-        try testViaProxy(allocator, cfg.port, .http);
+        if (try isLocalPortListening(allocator, cfg.port)) {
+            try testViaProxy(allocator, cfg.port, .http);
+        } else {
+            std.debug.print("  Proxy not listening on 127.0.0.1:{d}. Start zclash first (zclash start -c <config>).\n", .{cfg.port});
+        }
     }
 
     // 测试 SOCKS5 代理
     if (cfg.socks_port > 0) {
         std.debug.print("\nTesting via SOCKS5 Proxy (127.0.0.1:{d}):\n", .{cfg.socks_port});
-        try testViaProxy(allocator, cfg.socks_port, .socks5);
-    }
-
-    // 测试混合端口
-    if (cfg.mixed_port > 0) {
-        std.debug.print("\nTesting via Mixed Proxy (127.0.0.1:{d}):\n", .{cfg.mixed_port});
-        try testViaProxy(allocator, cfg.mixed_port, .http);
+        if (try isLocalPortListening(allocator, cfg.socks_port)) {
+            try testViaProxy(allocator, cfg.socks_port, .socks5);
+        } else {
+            std.debug.print("  Proxy not listening on 127.0.0.1:{d}. Start zclash first (zclash start -c <config>).\n", .{cfg.socks_port});
+        }
     }
 
     std.debug.print("\n", .{});
@@ -47,6 +62,12 @@ const ProxyType = enum {
     http,
     socks5,
 };
+
+fn isLocalPortListening(allocator: std.mem.Allocator, port: u16) !bool {
+    const stream = std.net.tcpConnectToHost(allocator, "127.0.0.1", port) catch return false;
+    stream.close();
+    return true;
+}
 
 /// 通过代理测试连接
 fn testViaProxy(allocator: std.mem.Allocator, port: u16, proxy_type: ProxyType) !void {
