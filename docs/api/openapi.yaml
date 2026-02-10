@@ -78,6 +78,24 @@ x-error-code-dictionary:
       - AUTH_PERMISSION_DENIED
       - AUTH_TOKEN_MISSING
       - AUTH_TOKEN_INVALID
+    resource_path:
+      - PROFILE_LIST_FAILED
+      - PROFILE_SUBCOMMAND_MISSING
+      - PROFILE_SUBCOMMAND_UNKNOWN
+      - PROFILE_NAME_REQUIRED
+      - PROFILE_NOT_FOUND
+      - PROFILE_USE_FAILED
+      - PROFILE_SOURCE_REQUIRED
+      - PROFILE_IMPORT_FAILED
+      - PROFILE_VALIDATE_FAILED
+      - PROXY_CONFIG_LOAD_FAILED
+      - PROXY_GROUP_NOT_FOUND
+      - PROXY_NOT_FOUND
+      - PROXY_SELECT_GROUP_MISSING
+      - PROXY_SELECT_FAILED
+      - PROXY_SUBCOMMAND_UNKNOWN
+      - DIAG_DOCTOR_FAILED
+      - DIAG_SUBCOMMAND_UNKNOWN
 
 paths:
   /v1/runtime:
@@ -556,6 +574,23 @@ components:
                 - AUTH_PERMISSION_DENIED
                 - AUTH_TOKEN_MISSING
                 - AUTH_TOKEN_INVALID
+                - PROFILE_LIST_FAILED
+                - PROFILE_SUBCOMMAND_MISSING
+                - PROFILE_SUBCOMMAND_UNKNOWN
+                - PROFILE_NAME_REQUIRED
+                - PROFILE_NOT_FOUND
+                - PROFILE_USE_FAILED
+                - PROFILE_SOURCE_REQUIRED
+                - PROFILE_IMPORT_FAILED
+                - PROFILE_VALIDATE_FAILED
+                - PROXY_CONFIG_LOAD_FAILED
+                - PROXY_GROUP_NOT_FOUND
+                - PROXY_NOT_FOUND
+                - PROXY_SELECT_GROUP_MISSING
+                - PROXY_SELECT_FAILED
+                - PROXY_SUBCOMMAND_UNKNOWN
+                - DIAG_DOCTOR_FAILED
+                - DIAG_SUBCOMMAND_UNKNOWN
             message:
               type: string
             hint:

@@ -77,6 +77,30 @@
 | `AUTH_TOKEN_MISSING` | auth token is missing | provide valid token in request |
 | `AUTH_TOKEN_INVALID` | auth token is invalid | refresh token and retry |
 
+## F. 资源路径对齐类（PROFILE_ / PROXY_ / DIAG_）
+
+> 用于 profile/proxy/diag 资源路径的参数与流程错误，确保实现路径与字典一致。
+
+| code | message 示例 | hint 示例 |
+|---|---|---|
+| `PROFILE_LIST_FAILED` | failed to list profiles | ensure config directory exists and is readable |
+| `PROFILE_SUBCOMMAND_MISSING` | profile subcommand is required | use `zclash profile list|use|import|validate` |
+| `PROFILE_SUBCOMMAND_UNKNOWN` | unknown profile subcommand | use `zclash profile list|use|import|validate` |
+| `PROFILE_NAME_REQUIRED` | profile name is required | use `zclash profile use <name>` |
+| `PROFILE_NOT_FOUND` | profile not found | run `zclash profile list` and confirm profile name |
+| `PROFILE_USE_FAILED` | failed to switch profile | verify file permission and retry |
+| `PROFILE_SOURCE_REQUIRED` | profile import source is required | use `zclash profile import <url_or_path> [-n name]` |
+| `PROFILE_IMPORT_FAILED` | failed to import profile | check source url/path and retry |
+| `PROFILE_VALIDATE_FAILED` | failed to validate profile | run `zclash profile validate <name_or_path>` |
+| `PROXY_CONFIG_LOAD_FAILED` | failed to load config for proxy action | verify `-c` path and config validity |
+| `PROXY_GROUP_NOT_FOUND` | proxy group not found | run `zclash proxy list --json` to inspect groups |
+| `PROXY_NOT_FOUND` | proxy not found in group | run `zclash proxy select -g <group> --json` |
+| `PROXY_SELECT_GROUP_MISSING` | no select-type proxy group found | check proxy-group type in profile |
+| `PROXY_SELECT_FAILED` | failed to select proxy | retry with valid group/proxy arguments |
+| `PROXY_SUBCOMMAND_UNKNOWN` | unknown proxy subcommand | use `zclash proxy list|select|test` |
+| `DIAG_DOCTOR_FAILED` | failed to run doctor diagnostics | retry with valid config and inspect logs |
+| `DIAG_SUBCOMMAND_UNKNOWN` | unknown diag subcommand | use `zclash diag doctor [-c <config>] [--json]` |
+
 ---
 
 ## 4) 设计原则
