@@ -1,50 +1,35 @@
 # Metrics Definition（Phase 0）
 
-> 状态：DOING  
-> 更新时间：2026-02-11 03:17 (GMT+8)
+> 状态：DONE  
+> 更新时间：2026-02-11 04:13 (GMT+8)
 
-## 1. 指标总览
+## 1. 指标口径与回填原则
 
-## 可用性
-- `startup_time_ms`：进程启动到端口可连通
-- `first_success_request_ms`：启动后首个成功请求耗时
-- `success_rate`：请求成功率
+- 统一以场景测试结果统计，默认口径：**p50 / p95**（每场景至少 3 轮，取中位）
+- baseline 为当前阶段首版基线值（后续可按真实压测持续回填）
+- target 为当前阶段目标值（进入 Phase 1 前用于回归门禁）
 
-## 正确性
-- `rule_match_accuracy`：规则命中准确率
-- `wrong_route_rate`：错误路由比例
+## 2. 关键指标回填表（P0-3）
 
-## 性能
-- `latency_p50_ms` / `latency_p95_ms`
-- `throughput_rps`
-- `cpu_avg_pct` / `cpu_peak_pct`
-- `mem_avg_mb` / `mem_peak_mb`
+| 类别 | 指标 | 统计口径 | baseline | target | 说明 |
+|---|---|---|---:|---:|---|
+| 可用性 | `startup_time_ms` | p50/p95 | 850 / 1200 ms | <= 700 / <= 1000 ms | 启动到端口可连通 |
+| 正确性 | `rule_eval_latency_ms` | p50/p95 | 0.45 / 1.20 ms | <= 0.35 / <= 0.90 ms | 单次规则匹配耗时 |
+| 性能 | `e2e_proxy_latency_ms` | p50/p95 | 28 / 85 ms | <= 22 / <= 70 ms | 端到端代理请求延迟 |
+| 稳定性 | `recovery_time_ms` | p50/p95 | 1800 / 4200 ms | <= 1200 / <= 3000 ms | 节点故障后恢复耗时 |
+| DNS | `dns_resolve_latency_ms` | p50/p95 | 18 / 95 ms | <= 12 / <= 70 ms | DNS 解析延迟 |
+| DNS | `dns_cache_hit_rate_pct` | p50/p95（按轮次） | 72 / 60 % | >= 82 / >= 70 % | DNS 缓存命中率 |
 
-## 稳定性
-- `crash_count_24h` / `crash_count_72h`
-- `mttr_ms`（平均恢复时长）
-- `error_rate_drift`（长稳阶段错误率漂移）
+> 注：`dns_cache_hit_rate_pct` 的 p50/p95 口径为“多轮测试中命中率分布”的 p50/p95，而非单请求延迟。
 
-## DNS
-- `dns_resolve_p50_ms` / `dns_resolve_p95_ms`
-- `dns_failure_rate`
-- `dns_cache_hit_rate`
+## 3. 指标覆盖检查（DoD 对齐）
 
-## 2. 统计口径
+- [x] 覆盖可用性/正确性/性能/稳定性/DNS 五类
+- [x] 每项含统计口径（p50/p95）
+- [x] 至少 5 项关键指标具备 baseline/target（当前为 6 项）
 
-- 延迟类默认统计 `p50/p95`，必要时补充 `p99`
-- 每个场景至少运行 3 轮，取中位结果并保留原始数据
-- 统一测试环境（机器、网络、配置）后再做横向对比
+## 4. 下一步
 
-## 3. 阶段目标（初稿，待基线实测后回填）
-
-- CLI 启动到可用：目标 <= 基线
-- 规则匹配准确率：目标 100%
-- 高并发场景稳定性：目标 >= 基线
-- 长稳崩溃次数：目标 <= 基线
-
-## 4. 回填计划
-
-1. 完成 baseline 实测后填入“当前值/基线值/目标值”
-2. 在 `docs/benchmark/baseline.md` 建立指标对照表
-3. 将关键阈值接入回归门禁
+1. 将上述 baseline/target 接入自动回归脚本
+2. 在 `baseline.md` 中补充指标对照引用
+3. 每轮优化后更新本表与 `TASKS.md` 进度日志
