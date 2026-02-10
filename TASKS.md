@@ -133,10 +133,10 @@
   - [ ] 关键端点集成测试覆盖高频错误码
 - 子任务：
   - [x] 错误码字典初稿（5 类 + 示例）
-  - [ ] OpenAPI 对齐错误码字典
+  - [x] OpenAPI 对齐错误码字典
   - [ ] profile/proxy/diag 路径错误码对齐
   - [ ] 关键端点集成测试
-- 备注：已完成文档初稿，下一步做 OpenAPI 与实现映射收敛。
+- 备注：已完成字典与 OpenAPI 映射收敛；下一步推进实现路径对齐与测试。
 
 ---
 
@@ -222,3 +222,4 @@
 - 2026-02-11 06:48（GMT+8）推进 P2-1 子任务 2：补齐 connections/rules/metrics 资源骨架，六类核心资源已覆盖。
 - 2026-02-11 07:00（GMT+8）完成 P2-1 子任务 3：明确 REST/WS 边界与 v1 版本策略；P2-1 状态更新为 DONE。
 - 2026-02-11 07:12（GMT+8）启动 P2-2：新增 `docs/api/error-codes.md` 初稿（5 类错误 + code/message/hint 示例），并将 P2-2 更新为 DOING。
+- 2026-02-11 07:24（GMT+8）完成 P2-2 子任务 2：将错误码字典映射到 OpenAPI（x-error-code-dictionary + ErrorResponse.code enum）。

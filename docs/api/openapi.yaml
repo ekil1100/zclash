@@ -55,6 +55,30 @@ x-versioning:
   deprecation:
     - Deprecated fields/endpoints must include sunset note and transition path
 
+x-error-code-dictionary:
+  source: ./error-codes.md
+  groups:
+    config:
+      - CONFIG_NOT_FOUND
+      - CONFIG_PARSE_FAILED
+      - CONFIG_SWITCH_FAILED
+    network:
+      - NETWORK_DNS_FAILED
+      - NETWORK_CONNECT_TIMEOUT
+      - NETWORK_PORT_IN_USE
+    provider:
+      - PROVIDER_UNREACHABLE
+      - PROVIDER_AUTH_FAILED
+      - PROVIDER_RESPONSE_INVALID
+    validation:
+      - VALIDATION_RULE_INVALID
+      - VALIDATION_PROXY_INVALID
+      - VALIDATION_PORT_CONFLICT
+    auth:
+      - AUTH_PERMISSION_DENIED
+      - AUTH_TOKEN_MISSING
+      - AUTH_TOKEN_INVALID
+
 paths:
   /v1/runtime:
     get:
@@ -515,6 +539,23 @@ components:
           properties:
             code:
               type: string
+              description: Stable machine-readable code. See x-error-code-dictionary and docs/api/error-codes.md.
+              enum:
+                - CONFIG_NOT_FOUND
+                - CONFIG_PARSE_FAILED
+                - CONFIG_SWITCH_FAILED
+                - NETWORK_DNS_FAILED
+                - NETWORK_CONNECT_TIMEOUT
+                - NETWORK_PORT_IN_USE
+                - PROVIDER_UNREACHABLE
+                - PROVIDER_AUTH_FAILED
+                - PROVIDER_RESPONSE_INVALID
+                - VALIDATION_RULE_INVALID
+                - VALIDATION_PROXY_INVALID
+                - VALIDATION_PORT_CONFLICT
+                - AUTH_PERMISSION_DENIED
+                - AUTH_TOKEN_MISSING
+                - AUTH_TOKEN_INVALID
             message:
               type: string
             hint:

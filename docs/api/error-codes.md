@@ -88,8 +88,15 @@
 
 ---
 
-## 5) 后续落地
+## 5) OpenAPI 对齐
 
-1. 在 OpenAPI 中引用统一 `ErrorResponse`。
-2. CLI/API 逐步替换零散错误文本为标准错误码。
-3. 为高频 code 增加集成测试断言（至少覆盖 profile/proxy/diag 路径）。
+- `docs/api/openapi.yaml` 中通过 `x-error-code-dictionary` 引用本字典。
+- `components.schemas.ErrorResponse.error.code` 使用统一枚举，与本文件保持一致。
+- 新增错误码时，必须同时更新：
+  1) 本字典（`docs/api/error-codes.md`）
+  2) OpenAPI 枚举（`docs/api/openapi.yaml`）
+
+## 6) 后续落地
+
+1. CLI/API 逐步替换零散错误文本为标准错误码。
+2. 为高频 code 增加集成测试断言（至少覆盖 profile/proxy/diag 路径）。
