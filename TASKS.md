@@ -123,20 +123,20 @@
 - 备注：已补齐 REST/WS 边界与 v1 版本策略（见 `docs/api/openapi.yaml` 与 `docs/api/versioning.md`）。
 
 ### P2-2 错误码与测试
-- 状态：DOING
+- 状态：DONE
 - 优先级：P2
 - 输出：`docs/api/error-codes.md` + 集成测试
 - 验收标准（Acceptance Criteria / DoD）：
-  - [ ] `docs/api/error-codes.md` 覆盖至少 5 类错误（配置/网络/提供商/校验/权限）
-  - [ ] 每类至少包含 code/message/hint 示例
-  - [ ] OpenAPI 与实现逐步对齐统一错误码字典
-  - [ ] 关键端点集成测试覆盖高频错误码
+  - [x] `docs/api/error-codes.md` 覆盖至少 5 类错误（配置/网络/提供商/校验/权限）
+  - [x] 每类至少包含 code/message/hint 示例
+  - [x] OpenAPI 与实现逐步对齐统一错误码字典
+  - [x] 关键端点集成测试覆盖高频错误码
 - 子任务：
   - [x] 错误码字典初稿（5 类 + 示例）
   - [x] OpenAPI 对齐错误码字典
   - [x] profile/proxy/diag 路径错误码对齐
-  - [ ] 关键端点集成测试
-- 备注：已完成 profile/proxy/diag 路径错误码口径对齐（字典+OpenAPI）；下一步补关键端点集成测试。
+  - [x] 关键端点集成测试
+- 备注：P2-2 已完成；新增 `src/integration_error_test.zig` 覆盖 profile/proxy/diag 三类高频错误码结构断言。
 
 ---
 
@@ -224,3 +224,4 @@
 - 2026-02-11 07:12（GMT+8）启动 P2-2：新增 `docs/api/error-codes.md` 初稿（5 类错误 + code/message/hint 示例），并将 P2-2 更新为 DOING。
 - 2026-02-11 07:24（GMT+8）完成 P2-2 子任务 2：将错误码字典映射到 OpenAPI（x-error-code-dictionary + ErrorResponse.code enum）。
 - 2026-02-11 07:36（GMT+8）完成 P2-2 子任务 3：对齐 profile/proxy/diag 路径错误码到字典与 OpenAPI 枚举。
+- 2026-02-11 07:48（GMT+8）完成 P2-2 子任务 4：新增 `src/integration_error_test.zig`（profile/proxy/diag 各 1 个错误场景），断言 `code/message/hint` 结构通过。
