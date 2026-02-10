@@ -153,6 +153,60 @@ pub fn main() !void {
         return;
     }
 
+    // 处理 profile 子命令
+    if (std.mem.eql(u8, cmd, "profile")) {
+        if (args.len < 3) {
+            if (json_output) {
+                printCliError(json_output, "PROFILE_SUBCOMMAND_MISSING", "profile subcommand is required", "use `zclash profile list|use <name>`");
+            } else {
+                std.debug.print("Usage: zclash profile list|use <name>\n", .{});
+            }
+            return;
+        }
+
+        const subcmd = args[2];
+
+        if (std.mem.eql(u8, subcmd, "list") or std.mem.eql(u8, subcmd, "ls")) {
+            if (json_output) {
+                try printProfileListJson(allocator);
+            } else {
+                try config.listConfigs(allocator);
+            }
+            return;
+        }
+
+        if (std.mem.eql(u8, subcmd, "use")) {
+            if (args.len < 4) {
+                printCliError(json_output, "PROFILE_NAME_REQUIRED", "profile name is required", "use `zclash profile use <name>`");
+                return;
+            }
+
+            const profile_name = args[3];
+            const exists = try profileExists(allocator, profile_name);
+            if (!exists) {
+                printCliError(json_output, "PROFILE_NOT_FOUND", "profile not found", "run `zclash profile list` and confirm the profile name");
+                return;
+            }
+
+            if (json_output) {
+                switchProfileSilent(allocator, profile_name) catch |err| {
+                    printCliError(json_output, "PROFILE_USE_FAILED", "failed to switch profile", "verify config directory permissions and retry");
+                    return err;
+                };
+                std.debug.print("{{\"ok\":true,\"data\":{{\"action\":\"profile_use\",\"profile\":\"{s}\",\"state\":\"active\"}}}}\n", .{profile_name});
+            } else {
+                config.switchConfig(allocator, profile_name) catch |err| {
+                    printCliError(json_output, "PROFILE_USE_FAILED", "failed to switch profile", "verify config directory permissions and retry");
+                    return err;
+                };
+            }
+            return;
+        }
+
+        printCliError(json_output, "PROFILE_SUBCOMMAND_UNKNOWN", "unknown profile subcommand", "use `zclash profile list|use <name>`");
+        return;
+    }
+
     // 处理 config 子命令
     if (std.mem.eql(u8, cmd, "config")) {
         if (args.len < 3) {
@@ -314,6 +368,99 @@ pub fn main() !void {
     // 未知命令
     std.debug.print("Unknown command: {s}\n", .{cmd});
     try printHelp();
+}
+
+fn switchProfileSilent(allocator: std.mem.Allocator, filename: []const u8) !void {
+    const config_dir = (try config.getDefaultConfigDir(allocator)) orelse return error.NoConfigDir;
+    defer allocator.free(config_dir);
+
+    const source_path = try std.fs.path.join(allocator, &.{ config_dir, filename });
+    defer allocator.free(source_path);
+
+    const link_path = try std.fs.path.join(allocator, &.{ config_dir, "config.yaml" });
+    defer allocator.free(link_path);
+
+    std.fs.deleteFileAbsolute(link_path) catch {};
+
+    std.fs.symLinkAbsolute(source_path, link_path, .{}) catch |err| {
+        if (err == error.AccessDenied or err == error.NotSupported or err == error.InvalidArgument) {
+            try std.fs.copyFileAbsolute(source_path, link_path, .{});
+        } else {
+            try std.fs.copyFileAbsolute(source_path, link_path, .{});
+        }
+    };
+}
+
+fn profileExists(allocator: std.mem.Allocator, name: []const u8) !bool {
+    const config_dir = (try config.getDefaultConfigDir(allocator)) orelse return false;
+    defer allocator.free(config_dir);
+
+    const profile_path = try std.fs.path.join(allocator, &.{ config_dir, name });
+    defer allocator.free(profile_path);
+
+    std.fs.accessAbsolute(profile_path, .{}) catch return false;
+    return true;
+}
+
+fn printProfileListJson(allocator: std.mem.Allocator) !void {
+    const config_dir = (try config.getDefaultConfigDir(allocator)) orelse {
+        printCliError(true, "PROFILE_LIST_FAILED", "could not determine config directory", "check HOME and retry `zclash profile list`");
+        return error.NoConfigDir;
+    };
+    defer allocator.free(config_dir);
+
+    var dir = std.fs.openDirAbsolute(config_dir, .{ .iterate = true }) catch |err| {
+        if (err == error.FileNotFound) {
+            std.debug.print("{{\"ok\":true,\"data\":{{\"profiles\":[],\"active\":null}}}}\n", .{});
+            return;
+        }
+        printCliError(true, "PROFILE_LIST_FAILED", "failed to open config directory", "ensure ~/.config/zclash exists and is readable");
+        return err;
+    };
+    defer dir.close();
+
+    const active_path = try std.fs.path.join(allocator, &.{ config_dir, "config.yaml" });
+    defer allocator.free(active_path);
+
+    var active_buf: [std.fs.max_path_bytes]u8 = undefined;
+    var active_name: ?[]const u8 = null;
+
+    if (std.fs.accessAbsolute(active_path, .{})) |_| {
+        if (std.fs.readLinkAbsolute(active_path, &active_buf)) |target| {
+            active_name = std.fs.path.basename(target);
+        } else |_| {
+            active_name = "config.yaml";
+        }
+    } else |_| {}
+
+    var out = std.ArrayList(u8).empty;
+    defer out.deinit(allocator);
+
+    try out.appendSlice(allocator, "{\"ok\":true,\"data\":{\"profiles\":[");
+
+    var it = dir.iterate();
+    var first = true;
+    while (try it.next()) |entry| {
+        if (entry.kind == .file and std.mem.endsWith(u8, entry.name, ".yaml")) {
+            if (!first) try out.appendSlice(allocator, ",");
+            first = false;
+            try out.appendSlice(allocator, "\"");
+            try out.appendSlice(allocator, entry.name);
+            try out.appendSlice(allocator, "\"");
+        }
+    }
+
+    try out.appendSlice(allocator, "],\"active\":");
+    if (active_name) |a| {
+        try out.appendSlice(allocator, "\"");
+        try out.appendSlice(allocator, a);
+        try out.appendSlice(allocator, "\"");
+    } else {
+        try out.appendSlice(allocator, "null");
+    }
+    try out.appendSlice(allocator, "}}\n");
+
+    std.debug.print("{s}", .{out.items});
 }
 
 fn printCliError(json_output: bool, code: []const u8, message: []const u8, hint: []const u8) void {
