@@ -108,19 +108,19 @@
 ## 预备任务：Phase 2（API 易用化）
 
 ### P2-1 API v1 资源模型
-- 状态：DOING
+- 状态：DONE
 - 优先级：P2
 - 输出：`docs/api/openapi.yaml`
 - 验收标准（Acceptance Criteria / DoD）：
-  - [ ] OpenAPI 覆盖 runtime/profiles/proxies/connections/rules/metrics 六类资源骨架
-  - [ ] REST 基本路由与核心字段结构可读可评审
-  - [ ] 错误响应统一 `code/message/hint`
+  - [x] OpenAPI 覆盖 runtime/profiles/proxies/connections/rules/metrics 六类资源骨架
+  - [x] REST 基本路由与核心字段结构可读可评审
+  - [x] 错误响应统一 `code/message/hint`
 - 子任务：
   - [x] runtime/profiles/proxies 资源骨架定义（OpenAPI 初稿）
   - [x] connections/rules/metrics 资源骨架补齐
-  - [ ] REST 与 WS 事件边界定义
-  - [ ] 版本策略定义
-- 备注：六类资源骨架已齐；下一步收敛 REST/WS 边界与版本策略。
+  - [x] REST 与 WS 事件边界定义
+  - [x] 版本策略定义
+- 备注：已补齐 REST/WS 边界与 v1 版本策略（见 `docs/api/openapi.yaml` 与 `docs/api/versioning.md`）。
 
 ### P2-2 错误码与测试
 - 状态：TODO
@@ -212,3 +212,4 @@
 - 2026-02-11 06:24（GMT+8）完成 P1-2 子任务 C：补齐 `proxy list/select/test` 与 `diag doctor` 的 `--json` 输出路径，P1-2 状态更新为 DONE。
 - 2026-02-11 06:36（GMT+8）启动 P2-1：新增 `docs/api/openapi.yaml` 初稿（runtime/profiles/proxies），并将 P2-1 更新为 DOING。
 - 2026-02-11 06:48（GMT+8）推进 P2-1 子任务 2：补齐 connections/rules/metrics 资源骨架，六类核心资源已覆盖。
+- 2026-02-11 07:00（GMT+8）完成 P2-1 子任务 3：明确 REST/WS 边界与 v1 版本策略；P2-1 状态更新为 DONE。

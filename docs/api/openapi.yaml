@@ -14,6 +14,47 @@ tags:
   - name: profiles
   - name: proxies
 
+x-api-boundary:
+  rest:
+    purpose: Resource snapshot and command-style state changes
+    endpoints:
+      - /v1/runtime
+      - /v1/profiles
+      - /v1/profiles/active
+      - /v1/profiles/import
+      - /v1/proxies
+      - /v1/proxies/select
+      - /v1/connections
+      - /v1/rules
+      - /v1/metrics
+    guarantees:
+      - REST responses are request-scoped snapshots
+      - REST operations must be idempotent where HTTP verb implies idempotency
+  websocket:
+    purpose: Streaming runtime events and incremental updates
+    endpoint: /v1/events
+    eventTypes:
+      - runtime.state_changed
+      - proxy.selection_changed
+      - connection.opened
+      - connection.closed
+      - metrics.tick
+    guarantees:
+      - WS does not replace REST bootstrap; clients should first GET baseline via REST
+      - Event payloads should be additive-compatible within v1
+
+x-versioning:
+  currentMajor: v1
+  compatibility:
+    - No breaking field removal/rename within v1
+    - New fields must be optional or have safe defaults
+    - Error envelope stays stable: ok=false + error.code/message/hint
+  breakingChangePolicy:
+    - Breaking changes require new major path (e.g. /v2)
+    - Provide migration notes before deprecating v1 behavior
+  deprecation:
+    - Deprecated fields/endpoints must include sunset note and transition path
+
 paths:
   /v1/runtime:
     get:
@@ -191,6 +232,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MetricsResponse'
+
+  /v1/events:
+    get:
+      tags: [runtime]
+      summary: WebSocket event stream endpoint (upgrade)
+      description: |
+        Upgrade to WebSocket and subscribe to incremental runtime events.
+        Clients should bootstrap via REST first, then consume WS deltas.
+      responses:
+        '101':
+          description: Switching Protocols (WebSocket upgrade)
+        '400':
+          description: Invalid upgrade request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
 components:
   schemas:
