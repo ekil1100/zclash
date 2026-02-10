@@ -103,7 +103,13 @@ pub fn startDaemon(allocator: std.mem.Allocator, config_path: ?[]const u8) !void
     };
     
     if (pid > 0) {
-        // 父进程：写入 PID 文件并退出
+        // 父进程：等待子进程至少稳定存活一小段时间，避免假启动
+        std.Thread.sleep(300 * std.time.ns_per_ms);
+        _ = std.posix.kill(pid, 0) catch {
+            std.debug.print("zclash failed to start (child exited early)\n", .{});
+            return error.StartFailed;
+        };
+
         try writePid(allocator, pid);
         std.debug.print("zclash started (PID: {d})\n", .{pid});
         return;
@@ -201,6 +207,23 @@ pub fn stopDaemon(allocator: std.mem.Allocator) !void {
         return err;
     };
     
+    // 等待优雅退出
+    var stopped = false;
+    var i: usize = 0;
+    while (i < 20) : (i += 1) { // 最多等待 2 秒
+        std.Thread.sleep(100 * std.time.ns_per_ms);
+        _ = std.posix.kill(pid, 0) catch {
+            stopped = true;
+            break;
+        };
+    }
+
+    if (!stopped) {
+        // 强制停止
+        std.posix.kill(pid, std.posix.SIG.KILL) catch {};
+        std.Thread.sleep(100 * std.time.ns_per_ms);
+    }
+
     // 删除 PID 文件
     removePidFile(allocator);
     std.debug.print("zclash stopped\n", .{});

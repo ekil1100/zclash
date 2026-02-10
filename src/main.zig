@@ -148,14 +148,14 @@ pub fn main() !void {
             try printConfigHelp();
             return;
         }
-        
+
         const subcmd = args[2];
-        
+
         if (std.mem.eql(u8, subcmd, "list") or std.mem.eql(u8, subcmd, "ls")) {
             try config.listConfigs(allocator);
             return;
         }
-        
+
         if (std.mem.eql(u8, subcmd, "use")) {
             if (args.len < 4) {
                 std.debug.print("Usage: zclash config use <configname>\n", .{});
@@ -164,17 +164,17 @@ pub fn main() !void {
             try config.switchConfig(allocator, args[3]);
             return;
         }
-        
+
         if (std.mem.eql(u8, subcmd, "download")) {
             if (args.len < 4) {
                 std.debug.print("Usage: zclash config download <url> [-n <name>] [-d]\n", .{});
                 return;
             }
-            
+
             const url = args[3];
             var download_name: ?[]const u8 = null;
             var set_default = false;
-            
+
             var i: usize = 4;
             while (i < args.len) : (i += 1) {
                 if (std.mem.eql(u8, args[i], "-n")) {
@@ -186,16 +186,16 @@ pub fn main() !void {
                     set_default = true;
                 }
             }
-            
+
             const filename = try config.downloadConfig(allocator, url, download_name);
             defer if (filename) |f| allocator.free(f);
-            
+
             if (set_default and filename != null) {
                 try config.switchConfig(allocator, filename.?);
             }
             return;
         }
-        
+
         // 未知子命令
         std.debug.print("Unknown config subcommand: {s}\n", .{subcmd});
         try printConfigHelp();
@@ -273,9 +273,9 @@ pub fn main() !void {
 
     // 处理 test 命令
     if (std.mem.eql(u8, cmd, "test")) {
-        // test 命令直接使用默认配置，不需要 -c 参数
-        // 加载默认配置
-        var cfg = try loadAndValidateConfig(allocator, null);
+        const config_path = parseConfigPathArg(args, 2);
+
+        var cfg = try loadAndValidateConfig(allocator, config_path);
         defer cfg.deinit();
 
         try test_cli.testProxy(allocator, &cfg, null);
@@ -285,6 +285,16 @@ pub fn main() !void {
     // 未知命令
     std.debug.print("Unknown command: {s}\n", .{cmd});
     try printHelp();
+}
+
+fn parseConfigPathArg(args: []const []const u8, start_index: usize) ?[]const u8 {
+    var i: usize = start_index;
+    while (i < args.len) : (i += 1) {
+        if (std.mem.eql(u8, args[i], "-c") and i + 1 < args.len) {
+            return args[i + 1];
+        }
+    }
+    return null;
 }
 
 fn runProxy(allocator: std.mem.Allocator, config_path: ?[]const u8, use_tui: bool) !void {
@@ -298,6 +308,9 @@ fn runProxy(allocator: std.mem.Allocator, config_path: ?[]const u8, use_tui: boo
     // 加载并验证配置
     var cfg = try loadAndValidateConfig(allocator, config_path);
     defer cfg.deinit();
+
+    // 启动前端口占用预检
+    try preflightPortCheck(&cfg);
 
     // Initialize outbound manager
     var manager = try outbound.OutboundManager.init(allocator, &cfg);
@@ -313,12 +326,9 @@ fn runProxy(allocator: std.mem.Allocator, config_path: ?[]const u8, use_tui: boo
 
     // Start API server if configured
     if (cfg.external_controller) |ec| {
-        const colon_pos = std.mem.lastIndexOf(u8, ec, ":");
-        if (colon_pos) |pos| {
-            const port = std.fmt.parseInt(u16, ec[pos + 1 ..], 10) catch 9090;
-            const api_thread = try std.Thread.spawn(.{}, apiThreadFn, .{ allocator, &cfg, &engine, &manager, port });
-            api_thread.detach();
-        }
+        const port = try parseExternalControllerPort(ec);
+        const api_thread = try std.Thread.spawn(.{}, apiThreadFn, .{ allocator, &cfg, &engine, &manager, port });
+        api_thread.detach();
     }
 
     // Run TUI or stay in background
@@ -333,7 +343,7 @@ fn runProxy(allocator: std.mem.Allocator, config_path: ?[]const u8, use_tui: boo
         std.debug.print("  Proxies: {}\n", .{cfg.proxies.items.len});
         std.debug.print("  Rules: {}\n", .{cfg.rules.items.len});
         std.debug.print("\nProxy server running. Press Ctrl+C to stop.\n", .{});
-        
+
         while (true) {
             std.Thread.sleep(1 * std.time.ns_per_s);
         }
@@ -349,44 +359,56 @@ fn loadAndValidateConfig(allocator: std.mem.Allocator, config_path: ?[]const u8)
     var validation_result = try validator.validate(allocator, &cfg);
     defer validation_result.deinit();
     validator.printResult(&validation_result);
-    
+
     if (!validation_result.isValid()) {
         cfg.deinit();
         std.process.exit(1);
     }
-    
+
     return cfg;
 }
 
 fn proxyThreadFn(allocator: std.mem.Allocator, cfg: *const config.Config, engine: *rule_engine.Engine, manager: *outbound.OutboundManager) void {
     std.Thread.sleep(100 * std.time.ns_per_ms);
 
-    if (cfg.mixed_port > 0) {
-        std.debug.print("Starting mixed proxy on port {}\n", .{cfg.mixed_port});
-        mixed_proxy.start(allocator, cfg.mixed_port, engine, manager) catch |err| {
-            std.debug.print("Mixed proxy error: {}\n", .{err});
-        };
-    } else {
-        if (cfg.port > 0) {
-            std.debug.print("Starting HTTP proxy on port {}\n", .{cfg.port});
-            http_proxy.start(allocator, cfg.port, engine, manager) catch |err| {
-                std.debug.print("HTTP proxy error: {}\n", .{err});
-            };
-        }
+    const bind_ip = effectiveBindAddress(cfg);
 
-        if (cfg.socks_port > 0) {
-            std.debug.print("Starting SOCKS5 proxy on port {}\n", .{cfg.socks_port});
-            socks5_proxy.start(allocator, cfg.socks_port, engine, manager) catch |err| {
-                std.debug.print("SOCKS5 proxy error: {}\n", .{err});
-            };
-        }
+    if (cfg.mixed_port > 0) {
+        std.debug.print("Starting mixed proxy on {s}:{}\n", .{ bind_ip, cfg.mixed_port });
+        mixed_proxy.start(allocator, bind_ip, cfg.mixed_port, engine, manager) catch |err| {
+            std.debug.print("Mixed proxy fatal error: {}\n", .{err});
+            std.process.exit(1);
+        };
+        return;
     }
+
+    var http_thread: ?std.Thread = null;
+    var socks_thread: ?std.Thread = null;
+
+    if (cfg.port > 0) {
+        std.debug.print("Starting HTTP proxy on {s}:{}\n", .{ bind_ip, cfg.port });
+        http_thread = std.Thread.spawn(.{}, httpThreadFn, .{ allocator, bind_ip, cfg.port, engine, manager }) catch |err| {
+            std.debug.print("Failed to start HTTP proxy thread: {}\n", .{err});
+            std.process.exit(1);
+        };
+    }
+
+    if (cfg.socks_port > 0) {
+        std.debug.print("Starting SOCKS5 proxy on {s}:{}\n", .{ bind_ip, cfg.socks_port });
+        socks_thread = std.Thread.spawn(.{}, socksThreadFn, .{ allocator, bind_ip, cfg.socks_port, engine, manager }) catch |err| {
+            std.debug.print("Failed to start SOCKS5 proxy thread: {}\n", .{err});
+            std.process.exit(1);
+        };
+    }
+
+    if (http_thread) |t| t.join();
+    if (socks_thread) |t| t.join();
 }
 
 fn runTui(allocator: std.mem.Allocator, cfg: *const config.Config, engine: *rule_engine.Engine, manager: *outbound.OutboundManager) !void {
     _ = engine;
     _ = manager;
-    
+
     var tui_manager = try tui.TuiManager.init(allocator, cfg);
     defer tui_manager.deinit();
 
@@ -412,8 +434,100 @@ fn runTui(allocator: std.mem.Allocator, cfg: *const config.Config, engine: *rule
 fn apiThreadFn(allocator: std.mem.Allocator, cfg: *const config.Config, engine: *rule_engine.Engine, manager: *outbound.OutboundManager, port: u16) void {
     var api_server = api.ApiServer.init(allocator, cfg, engine, manager, port);
     api_server.start() catch |err| {
-        std.debug.print("API server error: {}\n", .{err});
+        std.debug.print("API server fatal error: {}\n", .{err});
+        std.process.exit(1);
     };
+}
+
+fn httpThreadFn(allocator: std.mem.Allocator, bind_ip: []const u8, port: u16, engine: *rule_engine.Engine, manager: *outbound.OutboundManager) void {
+    http_proxy.start(allocator, bind_ip, port, engine, manager) catch |err| {
+        std.debug.print("HTTP proxy fatal error: {}\n", .{err});
+        std.process.exit(1);
+    };
+}
+
+fn socksThreadFn(allocator: std.mem.Allocator, bind_ip: []const u8, port: u16, engine: *rule_engine.Engine, manager: *outbound.OutboundManager) void {
+    socks5_proxy.start(allocator, bind_ip, port, engine, manager) catch |err| {
+        std.debug.print("SOCKS5 proxy fatal error: {}\n", .{err});
+        std.process.exit(1);
+    };
+}
+
+fn effectiveBindAddress(cfg: *const config.Config) []const u8 {
+    if (!cfg.allow_lan) return "127.0.0.1";
+    if (std.mem.eql(u8, cfg.bind_address, "*")) return "0.0.0.0";
+    return cfg.bind_address;
+}
+
+fn hasInProcessPortConflict(cfg: *const config.Config) !bool {
+    if (cfg.mixed_port > 0) {
+        if (cfg.external_controller) |ec| {
+            return (try parseExternalControllerPort(ec)) == cfg.mixed_port;
+        }
+        return false;
+    }
+
+    if (cfg.port > 0 and cfg.socks_port > 0 and cfg.port == cfg.socks_port) {
+        return true;
+    }
+
+    if (cfg.external_controller) |ec| {
+        const api_port = try parseExternalControllerPort(ec);
+        if (cfg.port > 0 and api_port == cfg.port) return true;
+        if (cfg.socks_port > 0 and api_port == cfg.socks_port) return true;
+    }
+
+    return false;
+}
+
+fn preflightPortCheck(cfg: *const config.Config) !void {
+    const bind_ip = effectiveBindAddress(cfg);
+
+    // 进程内端口冲突检查
+    if (try hasInProcessPortConflict(cfg)) {
+        std.debug.print("Port precheck failed: in-process port conflict detected\n", .{});
+        return error.PortConflict;
+    }
+
+    // 系统端口占用检查
+    if (cfg.mixed_port > 0) {
+        try checkPortAvailable(bind_ip, cfg.mixed_port);
+    } else {
+        if (cfg.port > 0) try checkPortAvailable(bind_ip, cfg.port);
+        if (cfg.socks_port > 0) try checkPortAvailable(bind_ip, cfg.socks_port);
+    }
+
+    if (cfg.external_controller) |ec| {
+        const api_port = try parseExternalControllerPort(ec);
+        // API 当前固定监听 127.0.0.1
+        try checkPortAvailable("127.0.0.1", api_port);
+    }
+}
+
+fn checkPortAvailable(ip: []const u8, port: u16) !void {
+    const address = std.net.Address.parseIp4(ip, port) catch {
+        std.debug.print("Invalid bind-address '{s}'\n", .{ip});
+        return error.InvalidBindAddress;
+    };
+
+    var server = address.listen(.{ .reuse_address = true }) catch {
+        std.debug.print("Port precheck failed: {s}:{d} is already in use\n", .{ ip, port });
+        return error.PortAlreadyInUse;
+    };
+    server.deinit();
+}
+
+fn parseExternalControllerPort(ec: []const u8) !u16 {
+    const colon_pos = std.mem.lastIndexOf(u8, ec, ":") orelse {
+        return error.InvalidExternalController;
+    };
+
+    const port = std.fmt.parseInt(u16, ec[colon_pos + 1 ..], 10) catch {
+        return error.InvalidExternalController;
+    };
+
+    if (port == 0) return error.InvalidExternalController;
+    return port;
 }
 
 fn printHelp() !void {
@@ -519,4 +633,57 @@ fn printProxyHelp() !void {
     std.debug.print("    zclash proxy select                 # Show selection UI\n", .{});
     std.debug.print("    zclash proxy select -g Proxy -p HK  # Select HK in Proxy group\n", .{});
     std.debug.print("\n", .{});
+}
+
+test "parseExternalControllerPort valid and invalid" {
+    const testing = std.testing;
+
+    try testing.expectEqual(@as(u16, 9090), try parseExternalControllerPort("127.0.0.1:9090"));
+    try testing.expectError(error.InvalidExternalController, parseExternalControllerPort("127.0.0.1"));
+    try testing.expectError(error.InvalidExternalController, parseExternalControllerPort("127.0.0.1:abc"));
+    try testing.expectError(error.InvalidExternalController, parseExternalControllerPort("127.0.0.1:0"));
+}
+
+test "parseConfigPathArg handles -c" {
+    const testing = std.testing;
+
+    const args = [_][]const u8{ "zclash", "test", "-c", "./x.yaml" };
+    try testing.expectEqualStrings("./x.yaml", parseConfigPathArg(args[0..], 2).?);
+
+    const args2 = [_][]const u8{ "zclash", "test" };
+    try testing.expect(parseConfigPathArg(args2[0..], 2) == null);
+}
+
+test "hasInProcessPortConflict detects conflicts" {
+    const testing = std.testing;
+    const allocator = testing.allocator;
+
+    var cfg = config.Config{
+        .allocator = allocator,
+        .port = 7890,
+        .socks_port = 7891,
+        .mixed_port = 0,
+        .mode = try allocator.dupe(u8, "rule"),
+        .log_level = try allocator.dupe(u8, "info"),
+        .bind_address = try allocator.dupe(u8, "127.0.0.1"),
+        .proxies = std.ArrayList(config.Proxy).empty,
+        .proxy_groups = std.ArrayList(config.ProxyGroup).empty,
+        .rules = std.ArrayList(config.Rule).empty,
+    };
+    defer cfg.deinit();
+
+    try testing.expect(!(try hasInProcessPortConflict(&cfg)));
+
+    cfg.socks_port = 7890;
+    try testing.expect(try hasInProcessPortConflict(&cfg));
+
+    cfg.socks_port = 7891;
+    cfg.external_controller = try allocator.dupe(u8, "127.0.0.1:7891");
+    try testing.expect(try hasInProcessPortConflict(&cfg));
+    allocator.free(cfg.external_controller.?);
+    cfg.external_controller = null;
+
+    cfg.mixed_port = 7892;
+    cfg.external_controller = try allocator.dupe(u8, "127.0.0.1:7892");
+    try testing.expect(try hasInProcessPortConflict(&cfg));
 }
