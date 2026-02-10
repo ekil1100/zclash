@@ -136,19 +136,19 @@
 
 | 规范项 | 代码位置 | 现状 | 说明 |
 |---|---|---|---|
-| `start` 语义统一 | `src/main.zig`（命令分发）、`src/daemon.zig`（`startDaemon`） | 部分实现 | 已支持启动与配置参数；“已运行时返回统一结构”尚未标准化 |
-| `stop` 语义统一 | `src/main.zig`、`src/daemon.zig`（`stopDaemon`） | 部分实现 | 已支持停止；未运行时反馈仍偏文本化，缺统一状态结构 |
-| `restart` 语义统一 | `src/main.zig`（先 stop 后 start） | 部分实现 | 流程存在，但失败路径与输出契约未统一 |
-| `status` 语义统一 | `src/main.zig`（status 分支）、`src/daemon.zig`（状态查询与日志） | 部分实现 | 有状态查询能力；输出字段（PID/配置来源/错误）未统一结构化 |
-| `--json` 输出规范 | `src/main.zig`（当前未统一处理） | 未实现 | CLI 尚无统一 `--json` 解析与顶层响应结构 |
-| 错误格式 `code/message/hint` | `src/main.zig`、`src/daemon.zig`、`src/proxy_cli.zig`、`src/doctor_cli.zig` | 未实现 | 当前以 `std.debug.print` 文本为主，缺稳定错误码与 hint |
+| `start` 语义统一 | `src/main.zig`（命令分发）、`src/daemon.zig`（`startDaemon`） | 已实现（P1-1 范围内） | 输出已统一为 `ok action=start ...`，支持 `--json` |
+| `stop` 语义统一 | `src/main.zig`、`src/daemon.zig`（`stopDaemon`） | 已实现（P1-1 范围内） | 输出已统一为 `ok action=stop ...`，支持 `--json` |
+| `restart` 语义统一 | `src/main.zig`、`src/daemon.zig`（`restartDaemon`） | 已实现（P1-1 范围内） | stop/start 语义统一，支持 `--json` |
+| `status` 语义统一 | `src/main.zig`（status 分支）、`src/daemon.zig`（状态查询） | 已实现（P1-1 范围内） | 输出统一，支持 `--json` 结构化结果 |
+| `--json` 输出规范 | `src/main.zig`（`hasFlag(--json)`）、`src/daemon.zig`（`printCliOk/printCliError`） | 部分实现 | 已覆盖 start/stop/restart/status，其他资源命令待补齐 |
+| 错误格式 `code/message/hint` | `src/main.zig`、`src/daemon.zig` | 部分实现 | 已覆盖服务控制命令，`proxy/config/test/doctor` 仍待统一 |
 
 ### 8.1 缺口结论
-- 当前 CLI 主流程已可用，但“**契约化输出**”尚未落地。
-- P1-1 的核心缺口在于：
-  1) 统一 `--json` 输出层；
-  2) 统一错误结构（code/message/hint）；
-  3) 将 start/stop/restart/status 的状态语义落成稳定字段。
+- 服务控制主流程（start/stop/restart/status）的契约化输出已落地。
+- 当前剩余缺口在于：
+  1) 将 `--json` 能力扩展到 `proxy/config/test/doctor` 等资源命令；
+  2) 将 `code/message/hint` 扩展到非服务控制命令；
+  3) 为 JSON 输出补充 `meta` 字段（command/timestamp）与回归测试。
 
 ## 9. 下一步最小实现序列（原子可提交）
 
@@ -164,8 +164,9 @@
 ## 10. 最小实现序列进度
 
 - [x] 原子任务 A：start/stop/restart/status 语义对齐（文本输出统一，错误输出具备 `code/message/hint` 结构）
-- [ ] 原子任务 B：补全 `--json` 开关与 `status` 结构化输出样板
+- [x] 原子任务 B：补全 `--json` 开关与 start/stop/restart/status 结构化输出
 - [ ] 原子任务 C：扩展错误结构到更多 CLI 资源命令并补充测试
 
 验证记录（关键场景）：
-- `zig test src/daemon.zig` 通过（用于确认服务控制路径改动可编译）
+- `zig run src/main.zig -- status --json` 输出：`{"ok":true,"data":{"action":"status","state":"stopped"}}`
+- `zig run src/main.zig -- stop --json` 输出：`{"ok":true,"data":{"action":"stop","state":"stopped","detail":"already_stopped"}}`

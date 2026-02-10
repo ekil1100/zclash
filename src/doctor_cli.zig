@@ -28,7 +28,7 @@ pub fn runDoctor(allocator: std.mem.Allocator, config_path: ?[]const u8) !void {
 fn collectDoctorData(allocator: std.mem.Allocator, config_path: ?[]const u8) !DoctorData {
     var data = DoctorData{
         .config_ok = false,
-        .config_source = if (config_path) "custom" else "default",
+        .config_source = if (config_path != null) "custom" else "default",
         .daemon_running = false,
         .daemon_pid = null,
         .ports = undefined,
@@ -47,7 +47,7 @@ fn collectDoctorData(allocator: std.mem.Allocator, config_path: ?[]const u8) !Do
 
         var vr = validator.validate(allocator, loaded_cfg) catch {
             data.config_ok = false;
-            data.config_source = if (config_path) "custom (parse ok, validation failed)" else "default (parse ok, validation failed)";
+            data.config_source = if (config_path != null) "custom (parse ok, validation failed)" else "default (parse ok, validation failed)";
             try fillEffectivePorts(allocator, loaded_cfg, &data);
             try fillDaemonStatus(allocator, &data);
             return data;

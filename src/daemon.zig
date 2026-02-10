@@ -88,17 +88,66 @@ pub fn isRunning(allocator: std.mem.Allocator) !bool {
     return true;
 }
 
-fn printCliError(code: []const u8, message: []const u8, hint: []const u8) void {
+fn printCliError(json_output: bool, code: []const u8, message: []const u8, hint: []const u8) void {
+    if (json_output) {
+        std.debug.print(
+            "{{\"ok\":false,\"error\":{{\"code\":\"{s}\",\"message\":\"{s}\",\"hint\":\"{s}\"}}}}\n",
+            .{ code, message, hint },
+        );
+        return;
+    }
+
     std.debug.print("error.code={s}\n", .{code});
     std.debug.print("error.message={s}\n", .{message});
     std.debug.print("error.hint={s}\n", .{hint});
 }
 
+fn printCliOk(json_output: bool, action: []const u8, state: []const u8, detail: ?[]const u8, pid: ?i32) void {
+    if (json_output) {
+        if (detail) |d| {
+            if (pid) |p| {
+                std.debug.print(
+                    "{{\"ok\":true,\"data\":{{\"action\":\"{s}\",\"state\":\"{s}\",\"detail\":\"{s}\",\"pid\":{d}}}}}\n",
+                    .{ action, state, d, p },
+                );
+            } else {
+                std.debug.print(
+                    "{{\"ok\":true,\"data\":{{\"action\":\"{s}\",\"state\":\"{s}\",\"detail\":\"{s}\"}}}}\n",
+                    .{ action, state, d },
+                );
+            }
+        } else if (pid) |p| {
+            std.debug.print(
+                "{{\"ok\":true,\"data\":{{\"action\":\"{s}\",\"state\":\"{s}\",\"pid\":{d}}}}}\n",
+                .{ action, state, p },
+            );
+        } else {
+            std.debug.print(
+                "{{\"ok\":true,\"data\":{{\"action\":\"{s}\",\"state\":\"{s}\"}}}}\n",
+                .{ action, state },
+            );
+        }
+        return;
+    }
+
+    if (detail) |d| {
+        if (pid) |p| {
+            std.debug.print("ok action={s} state={s} detail={s} pid={d}\n", .{ action, state, d, p });
+        } else {
+            std.debug.print("ok action={s} state={s} detail={s}\n", .{ action, state, d });
+        }
+    } else if (pid) |p| {
+        std.debug.print("ok action={s} state={s} pid={d}\n", .{ action, state, p });
+    } else {
+        std.debug.print("ok action={s} state={s}\n", .{ action, state });
+    }
+}
+
 /// 启动守护进程
-pub fn startDaemon(allocator: std.mem.Allocator, config_path: ?[]const u8) !void {
+pub fn startDaemon(allocator: std.mem.Allocator, config_path: ?[]const u8, json_output: bool) !void {
     // 检查是否已经在运行
     if (try isRunning(allocator)) {
-        std.debug.print("ok action=start state=running detail=already_running\n", .{});
+        printCliOk(json_output, "start", "running", "already_running", null);
         return;
     }
     
@@ -112,12 +161,12 @@ pub fn startDaemon(allocator: std.mem.Allocator, config_path: ?[]const u8) !void
         // 父进程：等待子进程至少稳定存活一小段时间，避免假启动
         std.Thread.sleep(300 * std.time.ns_per_ms);
         _ = std.posix.kill(pid, 0) catch {
-            printCliError("START_FAILED", "failed to start: child exited early", "check logs via `zclash log --no-follow` and retry");
+            printCliError(json_output, "START_FAILED", "failed to start: child exited early", "check logs via `zclash log --no-follow` and retry");
             return error.StartFailed;
         };
 
         try writePid(allocator, pid);
-        std.debug.print("ok action=start state=running pid={d}\n", .{pid});
+        printCliOk(json_output, "start", "running", null, pid);
         return;
     }
     
@@ -196,20 +245,20 @@ pub fn startDaemon(allocator: std.mem.Allocator, config_path: ?[]const u8) !void
 }
 
 /// 停止守护进程
-pub fn stopDaemon(allocator: std.mem.Allocator) !void {
+pub fn stopDaemon(allocator: std.mem.Allocator, json_output: bool) !void {
     const pid = try readPid(allocator) orelse {
-        std.debug.print("ok action=stop state=stopped detail=already_stopped\n", .{});
+        printCliOk(json_output, "stop", "stopped", "already_stopped", null);
         return;
     };
     
     // 发送 SIGTERM 信号
     std.posix.kill(pid, std.posix.SIG.TERM) catch |err| {
         if (err == error.ProcessNotFound) {
-            std.debug.print("ok action=stop state=stopped detail=already_stopped\n", .{});
+            printCliOk(json_output, "stop", "stopped", "already_stopped", null);
             removePidFile(allocator);
             return;
         }
-        printCliError("STOP_FAILED", "failed to send terminate signal", "verify process permissions and retry `zclash stop`");
+        printCliError(json_output, "STOP_FAILED", "failed to send terminate signal", "verify process permissions and retry `zclash stop`");
         return err;
     };
     
@@ -232,36 +281,36 @@ pub fn stopDaemon(allocator: std.mem.Allocator) !void {
 
     // 删除 PID 文件
     removePidFile(allocator);
-    std.debug.print("ok action=stop state=stopped pid={d}\n", .{pid});
+    printCliOk(json_output, "stop", "stopped", null, pid);
 }
 
 /// 重启守护进程
-pub fn restartDaemon(allocator: std.mem.Allocator, config_path: ?[]const u8) !void {
+pub fn restartDaemon(allocator: std.mem.Allocator, config_path: ?[]const u8, json_output: bool) !void {
     const was_running = try isRunning(allocator);
 
     if (was_running) {
-        try stopDaemon(allocator);
+        try stopDaemon(allocator, json_output);
     } else {
-        std.debug.print("ok action=restart detail=service_was_stopped\n", .{});
+        printCliOk(json_output, "restart", "stopped", "service_was_stopped", null);
     }
 
-    try startDaemon(allocator, config_path);
-    std.debug.print("ok action=restart state=running\n", .{});
+    try startDaemon(allocator, config_path, json_output);
+    printCliOk(json_output, "restart", "running", null, null);
 }
 
 /// 获取状态
-pub fn getStatus(allocator: std.mem.Allocator) !void {
+pub fn getStatus(allocator: std.mem.Allocator, json_output: bool) !void {
     const pid = try readPid(allocator);
 
     if (pid) |p| {
         if (try isRunning(allocator)) {
-            std.debug.print("ok action=status state=running pid={d}\n", .{p});
+            printCliOk(json_output, "status", "running", null, p);
         } else {
-            std.debug.print("ok action=status state=stopped detail=stale_pid_file pid={d}\n", .{p});
+            printCliOk(json_output, "status", "stopped", "stale_pid_file", p);
             removePidFile(allocator);
         }
     } else {
-        std.debug.print("ok action=status state=stopped\n", .{});
+        printCliOk(json_output, "status", "stopped", null, null);
     }
 }
 

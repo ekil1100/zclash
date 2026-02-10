@@ -40,6 +40,7 @@ pub fn main() !void {
     }
 
     const cmd = args[1];
+    const json_output = hasFlag(args, "--json");
 
     // 处理 daemon 运行模式（内部使用）
     if (std.mem.eql(u8, cmd, "--daemon-run")) {
@@ -83,8 +84,8 @@ pub fn main() !void {
             }
         }
         // 后台启动
-        daemon.startDaemon(allocator, config_path) catch |err| {
-            printCliError("START_FAILED", "failed to start daemon", "check config path and logs via `zclash log --no-follow`");
+        daemon.startDaemon(allocator, config_path, json_output) catch |err| {
+            printCliError(json_output, "START_FAILED", "failed to start daemon", "check config path and logs via `zclash log --no-follow`");
             return err;
         };
         return;
@@ -92,8 +93,8 @@ pub fn main() !void {
 
     // 处理 stop 命令
     if (std.mem.eql(u8, cmd, "stop")) {
-        daemon.stopDaemon(allocator) catch |err| {
-            printCliError("STOP_FAILED", "failed to stop daemon", "verify process permissions and retry `zclash stop`");
+        daemon.stopDaemon(allocator, json_output) catch |err| {
+            printCliError(json_output, "STOP_FAILED", "failed to stop daemon", "verify process permissions and retry `zclash stop`");
             return err;
         };
         return;
@@ -111,8 +112,8 @@ pub fn main() !void {
                 }
             }
         }
-        daemon.restartDaemon(allocator, config_path) catch |err| {
-            printCliError("RESTART_FAILED", "failed to restart daemon", "check logs and retry `zclash restart -c <config>`");
+        daemon.restartDaemon(allocator, config_path, json_output) catch |err| {
+            printCliError(json_output, "RESTART_FAILED", "failed to restart daemon", "check logs and retry `zclash restart -c <config>`");
             return err;
         };
         return;
@@ -120,8 +121,8 @@ pub fn main() !void {
 
     // 处理 status 命令
     if (std.mem.eql(u8, cmd, "status")) {
-        daemon.getStatus(allocator) catch |err| {
-            printCliError("STATUS_FAILED", "failed to read daemon status", "check pid file permissions and retry `zclash status`");
+        daemon.getStatus(allocator, json_output) catch |err| {
+            printCliError(json_output, "STATUS_FAILED", "failed to read daemon status", "check pid file permissions and retry `zclash status`");
             return err;
         };
         return;
@@ -304,10 +305,25 @@ pub fn main() !void {
     try printHelp();
 }
 
-fn printCliError(code: []const u8, message: []const u8, hint: []const u8) void {
+fn printCliError(json_output: bool, code: []const u8, message: []const u8, hint: []const u8) void {
+    if (json_output) {
+        std.debug.print(
+            "{{\"ok\":false,\"error\":{{\"code\":\"{s}\",\"message\":\"{s}\",\"hint\":\"{s}\"}}}}\n",
+            .{ code, message, hint },
+        );
+        return;
+    }
+
     std.debug.print("error.code={s}\n", .{code});
     std.debug.print("error.message={s}\n", .{message});
     std.debug.print("error.hint={s}\n", .{hint});
+}
+
+fn hasFlag(args: []const []const u8, flag: []const u8) bool {
+    for (args) |arg| {
+        if (std.mem.eql(u8, arg, flag)) return true;
+    }
+    return false;
 }
 
 fn parseConfigPathArg(args: []const []const u8, start_index: usize) ?[]const u8 {
