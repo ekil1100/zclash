@@ -171,3 +171,81 @@
 - `zig run src/main.zig -- status --json` 输出：`{"ok":true,"data":{"action":"status","state":"stopped"}}`
 - `zig run src/main.zig -- stop --json` 输出：`{"ok":true,"data":{"action":"stop","state":"stopped","detail":"already_stopped"}}`
 - `zig run src/main.zig -- proxy list -c testdata/config/minimal.yaml --json` 输出：`{"ok":true,"data":{"groups":[...]}}`
+
+---
+
+## 11. P1-2：profile 子命令规范（list/use/import/validate）
+
+### 11.1 `profile list`
+- 输入：`zclash profile list [--json]`
+- 成功输出（文本）：配置列表 + 当前激活项
+- 成功输出（JSON）：
+```json
+{
+  "ok": true,
+  "data": {
+    "profiles": ["default.yaml", "hk.yaml"],
+    "active": "default.yaml"
+  }
+}
+```
+- 错误输出：`code/message/hint`
+  - `PROFILE_LIST_FAILED`
+
+### 11.2 `profile use`
+- 输入：`zclash profile use <name> [--json]`
+- 成功语义：将 `<name>` 设为激活配置（幂等）
+- 成功输出（JSON）：
+```json
+{
+  "ok": true,
+  "data": {
+    "action": "profile_use",
+    "profile": "hk.yaml",
+    "state": "active"
+  }
+}
+```
+- 错误输出：
+  - `PROFILE_NOT_FOUND`
+  - `PROFILE_USE_FAILED`
+
+### 11.3 `profile import`
+- 输入：`zclash profile import <url_or_path> [-n <name>] [--json]`
+- 成功语义：导入配置并返回保存名称；可选是否设为默认
+- 成功输出（JSON）：
+```json
+{
+  "ok": true,
+  "data": {
+    "action": "profile_import",
+    "profile": "my.yaml",
+    "source": "https://..."
+  }
+}
+```
+- 错误输出：
+  - `PROFILE_IMPORT_FAILED`
+  - `PROFILE_SOURCE_INVALID`
+
+### 11.4 `profile validate`
+- 输入：`zclash profile validate [<name_or_path>] [--json]`
+- 成功语义：返回校验结果与 warnings/errors
+- 成功输出（JSON）：
+```json
+{
+  "ok": true,
+  "data": {
+    "valid": true,
+    "warnings": [],
+    "errors": []
+  }
+}
+```
+- 错误输出：
+  - `PROFILE_VALIDATE_FAILED`
+
+### 11.5 P1-2 最小实现顺序（文档先行）
+1. 先实现：`profile list/use`（基础读写闭环）
+2. 再实现：`profile import/validate`（导入与质量门禁）
+3. 每步都先补 `--json` + `code/message/hint`

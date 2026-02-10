@@ -87,13 +87,21 @@
 - 备注：已补“实现映射清单”（代码位置+实现状态+缺口）与最小实现序列 A/B/C；已落地 A+B+C 首批（服务控制命令 + `proxy list --json`，并补 `proxy` 路径部分错误结构），可复现验证已补齐。
 
 ### P1-2 Profile/Proxy/Diag 命令完善
-- 状态：TODO
+- 状态：DOING
 - 优先级：P1
 - 输出：CLI 子命令实现 + 文档
+- 验收标准（Acceptance Criteria / DoD）：
+  - [ ] `profile list/use/import/validate` 四子命令具备输入/输出/错误结构定义
+  - [ ] 至少 `profile list/use` 落地 `--json` 输出
+  - [ ] 错误输出统一 `code/message/hint`
+  - [ ] 提供至少 1 条可复现验证命令
 - 子任务：
-  - [ ] `profile list/use/import/validate`
-  - [ ] `proxy list/select/test`
-  - [ ] `diag doctor`
+  - [x] 文档补齐 `profile list/use/import/validate` 规范（`docs/cli/spec.md`）
+  - [ ] 实现 `profile list/use`（含 `--json`）
+  - [ ] 实现 `profile import/validate`（含 `--json`）
+  - [ ] `proxy list/select/test` 补齐剩余 `--json` 路径
+  - [ ] `diag doctor` 补齐 `--json` 输出
+- 备注：已定义 P1-2 最小实现顺序：先 list/use，再 import/validate。
 
 ---
 
@@ -192,3 +200,4 @@
 - 2026-02-11 05:12（GMT+8）落地 P1-1 最小实现序列 A：统一 start/stop/restart/status 文本语义；服务控制错误输出采用 `code/message/hint` 结构；更新 `spec.md` 进度与验证记录。
 - 2026-02-11 05:24（GMT+8）落地 P1-1 最小实现序列 B：新增 `--json` 开关并覆盖 start/stop/restart/status 结构化输出，补充可复现验证命令。
 - 2026-02-11 05:36（GMT+8）推进 P1-1 最小实现序列 C（首批）：扩展 `--json` 到 `proxy list`，并将 `proxy` 路径关键错误输出统一为 `code/message/hint`。
+- 2026-02-11 05:48（GMT+8）启动 P1-2 子任务 1：在 `docs/cli/spec.md` 补齐 profile 四子命令规范；`TASKS.md` 同步 P1-2 DoD 与最小实现顺序（先 list/use，再 import/validate）。
