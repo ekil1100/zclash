@@ -56,20 +56,20 @@
 - 备注：已回填 6 项关键指标 baseline/target，后续按压测结果持续更新。
 
 ### P0-4 差距清单与优先级
-- 状态：DOING
+- 状态：DONE
 - 优先级：P0
 - 负责人：Lan
 - 输出：`docs/roadmap/gap-analysis.md`
 - 验收标准（Acceptance Criteria）：
-  - [ ] 输出 P0/P1/P2 分级并给出判定依据
-  - [ ] 明确关键风险、依赖与缓解策略
-  - [ ] 明确 Phase 1 入口条件（可检查）
+  - [x] 输出 P0/P1/P2 分级并给出判定依据
+  - [x] 明确关键风险、依赖与缓解策略
+  - [x] 明确 Phase 1 入口条件（可检查）
 - 子任务：
   - [x] 汇总 P0-1/2/3 结果
   - [x] 给出优先级（P0/P1/P2）
   - [x] 给出风险与依赖
   - [x] 给出 Phase 1 入口条件
-- 备注：`gap-analysis.md` 已有初稿，待与 baseline 最终版对齐后定稿。
+- 备注：`gap-analysis.md` 已完成与 baseline/metrics 最终对齐，Phase 1 入口条件可验收。
 
 ---
 
@@ -185,3 +185,4 @@
 - 2026-02-11 04:00（GMT+8）完成 P0-1 收尾：`baseline.md` 增加 必补/增强/可延后 + P0/P1/P2 分级标注；P0-1 最后子项勾选完成。
 - 2026-02-11 04:09（GMT+8）完成 P0-2：落地 `testdata` 样例（minimal/multi-proxy/rule-matrix），P0-2 状态更新为 DONE。
 - 2026-02-11 04:13（GMT+8）完成 P0-3：`metrics.md` 回填 6 项关键指标 baseline/target（含 p50/p95 口径），P0-3 状态更新为 DONE。
+- 2026-02-11 04:25（GMT+8）完成 P0-4 收尾：`gap-analysis.md` 定稿（分级/风险依赖缓解/Phase 1 可检查入口条件），P0-4 状态更新为 DONE。
