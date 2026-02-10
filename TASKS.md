@@ -84,7 +84,7 @@
   - [x] 统一 `start/stop/restart/status` 语义与输出
   - [x] 增加 `--json` 输出规范
   - [x] 错误输出格式统一（code/message/hint）
-- 备注：`docs/cli/spec.md` 初稿已完成，下一步做实现对齐与示例回填。
+- 备注：已补“实现映射清单”（代码位置+实现状态+缺口）与最小实现序列 A/B/C；下一步进入实现落地。
 
 ### P1-2 Profile/Proxy/Diag 命令完善
 - 状态：TODO
@@ -188,3 +188,4 @@
 - 2026-02-11 04:13（GMT+8）完成 P0-3：`metrics.md` 回填 6 项关键指标 baseline/target（含 p50/p95 口径），P0-3 状态更新为 DONE。
 - 2026-02-11 04:25（GMT+8）完成 P0-4 收尾：`gap-analysis.md` 定稿（分级/风险依赖缓解/Phase 1 可检查入口条件），P0-4 状态更新为 DONE。
 - 2026-02-11 04:48（GMT+8）推进 P1-1：新增 `docs/cli/spec.md` 初稿，P1-1 更新为 DOING 并勾选 4 项文档子任务。
+- 2026-02-11 05:00（GMT+8）完善 P1-1：在 `docs/cli/spec.md` 新增实现映射清单（实现状态：已实现/部分实现/未实现）与最小实现序列（A/B/C）。

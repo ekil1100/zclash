@@ -132,8 +132,37 @@
 
 ---
 
-## 8. 下一步
+## 8. 实现映射清单（代码位置 + 缺口）
 
-1. 将本规范映射到当前 CLI 实现，列出不一致项；
-2. 先做最小破坏兼容改造（保持可用优先）；
-3. 对关键命令补充 TDD/BDD 验收用例。
+| 规范项 | 代码位置 | 现状 | 说明 |
+|---|---|---|---|
+| `start` 语义统一 | `src/main.zig`（命令分发）、`src/daemon.zig`（`startDaemon`） | 部分实现 | 已支持启动与配置参数；“已运行时返回统一结构”尚未标准化 |
+| `stop` 语义统一 | `src/main.zig`、`src/daemon.zig`（`stopDaemon`） | 部分实现 | 已支持停止；未运行时反馈仍偏文本化，缺统一状态结构 |
+| `restart` 语义统一 | `src/main.zig`（先 stop 后 start） | 部分实现 | 流程存在，但失败路径与输出契约未统一 |
+| `status` 语义统一 | `src/main.zig`（status 分支）、`src/daemon.zig`（状态查询与日志） | 部分实现 | 有状态查询能力；输出字段（PID/配置来源/错误）未统一结构化 |
+| `--json` 输出规范 | `src/main.zig`（当前未统一处理） | 未实现 | CLI 尚无统一 `--json` 解析与顶层响应结构 |
+| 错误格式 `code/message/hint` | `src/main.zig`、`src/daemon.zig`、`src/proxy_cli.zig`、`src/doctor_cli.zig` | 未实现 | 当前以 `std.debug.print` 文本为主，缺稳定错误码与 hint |
+
+### 8.1 缺口结论
+- 当前 CLI 主流程已可用，但“**契约化输出**”尚未落地。
+- P1-1 的核心缺口在于：
+  1) 统一 `--json` 输出层；
+  2) 统一错误结构（code/message/hint）；
+  3) 将 start/stop/restart/status 的状态语义落成稳定字段。
+
+## 9. 下一步最小实现序列（原子可提交）
+
+1. **原子任务 A：统一参数入口（`--json` 开关）**  
+   在 `main.zig` 增加全局 `--json` 解析与透传，不改业务逻辑，仅建立结构化输出开关。
+
+2. **原子任务 B：状态命令结构化输出**  
+   先改 `status` 命令：文本输出保留，新增 `--json` 下的标准结构（`ok/data/meta`）。
+
+3. **原子任务 C：错误输出标准化最小闭环**  
+   先覆盖 start/stop/restart/status 四命令，把核心错误统一为 `code/message/hint`；其它命令后续跟进。
+
+## 10. 下一步
+
+1. 先实施原子任务 A（不改变现有可用行为）；
+2. 再实施原子任务 B（先把 status 做成样板）；
+3. 最后实施原子任务 C，并补 TDD/BDD 验收用例。
