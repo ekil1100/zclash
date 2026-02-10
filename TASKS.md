@@ -117,10 +117,10 @@
   - [ ] 错误响应统一 `code/message/hint`
 - 子任务：
   - [x] runtime/profiles/proxies 资源骨架定义（OpenAPI 初稿）
-  - [ ] connections/rules/metrics 资源骨架补齐
+  - [x] connections/rules/metrics 资源骨架补齐
   - [ ] REST 与 WS 事件边界定义
   - [ ] 版本策略定义
-- 备注：已完成 P2-1 第一批文档骨架，下一步补齐其余三类资源与事件边界。
+- 备注：六类资源骨架已齐；下一步收敛 REST/WS 边界与版本策略。
 
 ### P2-2 错误码与测试
 - 状态：TODO
@@ -211,3 +211,4 @@
 - 2026-02-11 06:12（GMT+8）完成 P1-2 子任务 B：落地 `profile import/validate`（含 `--json`）与结构化错误输出，补充可复现验证命令。
 - 2026-02-11 06:24（GMT+8）完成 P1-2 子任务 C：补齐 `proxy list/select/test` 与 `diag doctor` 的 `--json` 输出路径，P1-2 状态更新为 DONE。
 - 2026-02-11 06:36（GMT+8）启动 P2-1：新增 `docs/api/openapi.yaml` 初稿（runtime/profiles/proxies），并将 P2-1 更新为 DOING。
+- 2026-02-11 06:48（GMT+8）推进 P2-1 子任务 2：补齐 connections/rules/metrics 资源骨架，六类核心资源已覆盖。

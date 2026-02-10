@@ -153,6 +153,45 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /v1/connections:
+    get:
+      tags: [runtime]
+      summary: List active connections
+      operationId: listConnections
+      responses:
+        '200':
+          description: Active connection list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionListResponse'
+
+  /v1/rules:
+    get:
+      tags: [runtime]
+      summary: List loaded rules
+      operationId: listRules
+      responses:
+        '200':
+          description: Rules list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleListResponse'
+
+  /v1/metrics:
+    get:
+      tags: [runtime]
+      summary: Get runtime metrics snapshot
+      operationId: getMetrics
+      responses:
+        '200':
+          description: Metrics snapshot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
+
 components:
   schemas:
     RuntimeStatusResponse:
@@ -315,6 +354,96 @@ components:
             state:
               type: string
               nullable: true
+
+    ConnectionListResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        data:
+          type: object
+          properties:
+            connections:
+              type: array
+              items:
+                $ref: '#/components/schemas/ConnectionEntry'
+
+    ConnectionEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        network:
+          type: string
+          example: tcp
+        target:
+          type: string
+          example: api.openai.com:443
+        inbound:
+          type: string
+          example: mixed
+        outbound:
+          type: string
+          example: PROXY
+        startAt:
+          type: string
+          format: date-time
+
+    RuleListResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        data:
+          type: object
+          properties:
+            rules:
+              type: array
+              items:
+                $ref: '#/components/schemas/RuleEntry'
+
+    RuleEntry:
+      type: object
+      properties:
+        type:
+          type: string
+          example: DOMAIN-SUFFIX
+        payload:
+          type: string
+          example: google.com
+        target:
+          type: string
+          example: PROXY
+
+    MetricsResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        data:
+          type: object
+          properties:
+            runtime:
+              type: object
+              properties:
+                uptime_sec:
+                  type: integer
+                goroutines:
+                  type: integer
+            traffic:
+              type: object
+              properties:
+                upload_bytes:
+                  type: integer
+                download_bytes:
+                  type: integer
+            latency:
+              type: object
+              properties:
+                dns_p50_ms:
+                  type: number
+                dns_p95_ms:
+                  type: number
 
     ErrorResponse:
       type: object
