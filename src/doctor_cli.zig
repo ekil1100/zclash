@@ -1,0 +1,186 @@
+const std = @import("std");
+const config = @import("config.zig");
+const validator = @import("config_validator.zig");
+const daemon = @import("daemon.zig");
+
+pub const PortEntry = struct {
+    label: []const u8,
+    port: u16,
+    listening: bool,
+};
+
+pub const DoctorData = struct {
+    config_ok: bool,
+    config_source: []const u8,
+    daemon_running: bool,
+    daemon_pid: ?i32,
+    ports: [3]PortEntry,
+    port_count: usize,
+};
+
+pub fn runDoctor(allocator: std.mem.Allocator, config_path: ?[]const u8) !void {
+    var data = try collectDoctorData(allocator, config_path);
+    const report = try formatDoctorReport(allocator, &data);
+    defer allocator.free(report);
+    std.debug.print("{s}", .{report});
+}
+
+fn collectDoctorData(allocator: std.mem.Allocator, config_path: ?[]const u8) !DoctorData {
+    var data = DoctorData{
+        .config_ok = false,
+        .config_source = if (config_path) "custom" else "default",
+        .daemon_running = false,
+        .daemon_pid = null,
+        .ports = undefined,
+        .port_count = 0,
+    };
+
+    var cfg: ?config.Config = null;
+    if (config_path) |path| {
+        cfg = config.load(allocator, path) catch null;
+    } else {
+        cfg = config.loadDefault(allocator) catch null;
+    }
+
+    if (cfg) |*loaded_cfg| {
+        defer loaded_cfg.deinit();
+
+        var vr = validator.validate(allocator, loaded_cfg) catch {
+            data.config_ok = false;
+            data.config_source = if (config_path) "custom (parse ok, validation failed)" else "default (parse ok, validation failed)";
+            try fillEffectivePorts(allocator, loaded_cfg, &data);
+            try fillDaemonStatus(allocator, &data);
+            return data;
+        };
+        defer vr.deinit();
+
+        data.config_ok = vr.isValid();
+        try fillEffectivePorts(allocator, loaded_cfg, &data);
+    }
+
+    try fillDaemonStatus(allocator, &data);
+    return data;
+}
+
+fn fillDaemonStatus(allocator: std.mem.Allocator, data: *DoctorData) !void {
+    data.daemon_pid = try daemon.readPid(allocator);
+    data.daemon_running = try daemon.isRunning(allocator);
+}
+
+fn fillEffectivePorts(allocator: std.mem.Allocator, cfg: *const config.Config, data: *DoctorData) !void {
+    _ = allocator;
+
+    if (cfg.mixed_port > 0) {
+        data.ports[0] = .{
+            .label = "mixed",
+            .port = cfg.mixed_port,
+            .listening = try isLocalPortListening(cfg.mixed_port),
+        };
+        data.port_count = 1;
+        return;
+    }
+
+    if (cfg.port > 0) {
+        data.ports[data.port_count] = .{
+            .label = "http",
+            .port = cfg.port,
+            .listening = try isLocalPortListening(cfg.port),
+        };
+        data.port_count += 1;
+    }
+
+    if (cfg.socks_port > 0) {
+        data.ports[data.port_count] = .{
+            .label = "socks",
+            .port = cfg.socks_port,
+            .listening = try isLocalPortListening(cfg.socks_port),
+        };
+        data.port_count += 1;
+    }
+}
+
+fn isLocalPortListening(port: u16) !bool {
+    const allocator = std.heap.page_allocator;
+    const stream = std.net.tcpConnectToHost(allocator, "127.0.0.1", port) catch return false;
+    stream.close();
+    return true;
+}
+
+pub fn formatDoctorReport(allocator: std.mem.Allocator, data: *const DoctorData) ![]u8 {
+    var out = std.ArrayList(u8).empty;
+    errdefer out.deinit(allocator);
+
+    const w = out.writer(allocator);
+    try w.print("zclash doctor\n", .{});
+    try w.print("{s:-^60}\n", .{""});
+
+    try w.print("Config: {s} ({s})\n", .{ if (data.config_ok) "OK" else "FAILED", data.config_source });
+
+    if (data.daemon_running) {
+        try w.print("Daemon: running", .{});
+        if (data.daemon_pid) |pid| {
+            try w.print(" (PID: {d})\n", .{pid});
+        } else {
+            try w.print("\n", .{});
+        }
+    } else {
+        try w.print("Daemon: not running\n", .{});
+    }
+
+    try w.print("Effective ports:\n", .{});
+    if (data.port_count == 0) {
+        try w.print("  - none\n", .{});
+    } else {
+        var i: usize = 0;
+        while (i < data.port_count) : (i += 1) {
+            const p = data.ports[i];
+            try w.print("  - {s}: 127.0.0.1:{d} [{s}]\n", .{ p.label, p.port, if (p.listening) "listening" else "not listening" });
+        }
+    }
+
+    try w.print("Suggestions:\n", .{});
+    if (!data.config_ok) {
+        try w.print("  1. Fix config syntax/validation issues, then rerun `zclash doctor`.\n", .{});
+    }
+    if (!data.daemon_running) {
+        try w.print("  2. Start service: zclash start -c <config>\n", .{});
+    }
+    var has_not_listening = false;
+    var i: usize = 0;
+    while (i < data.port_count) : (i += 1) {
+        if (!data.ports[i].listening) {
+            has_not_listening = true;
+            break;
+        }
+    }
+    if (has_not_listening) {
+        try w.print("  3. Ensure configured proxy ports are bound by zclash process.\n", .{});
+    }
+    if (data.config_ok and data.daemon_running and !has_not_listening) {
+        try w.print("  - No action needed.\n", .{});
+    }
+
+    return try out.toOwnedSlice(allocator);
+}
+
+test "formatDoctorReport basic output" {
+    const allocator = std.testing.allocator;
+
+    var data = DoctorData{
+        .config_ok = true,
+        .config_source = "default",
+        .daemon_running = false,
+        .daemon_pid = null,
+        .ports = undefined,
+        .port_count = 1,
+    };
+    data.ports[0] = .{ .label = "mixed", .port = 7890, .listening = false };
+
+    const report = try formatDoctorReport(allocator, &data);
+    defer allocator.free(report);
+
+    try std.testing.expect(std.mem.indexOf(u8, report, "zclash doctor") != null);
+    try std.testing.expect(std.mem.indexOf(u8, report, "Effective ports") != null);
+    try std.testing.expect(std.mem.indexOf(u8, report, "mixed: 127.0.0.1:7890") != null);
+    try std.testing.expect(std.mem.indexOf(u8, report, "Start service: zclash start -c <config>") != null);
+}

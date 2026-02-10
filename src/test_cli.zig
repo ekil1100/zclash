@@ -15,6 +15,31 @@ const TEST_TARGETS = [_]struct {
     .{ .name = "Cloudflare", .url = "http://1.1.1.1" },
 };
 
+const ProxyType = enum {
+    http,
+    socks5,
+};
+
+const EffectivePorts = struct {
+    mixed: ?u16,
+    http: ?u16,
+    socks: ?u16,
+};
+
+const FailureReason = enum {
+    dns,
+    tcp_connect,
+    tls_handshake,
+    auth_or_proxy_response,
+    timeout,
+    unknown,
+};
+
+const CurlResult = union(enum) {
+    ok: []u8,
+    failed: FailureReason,
+};
+
 /// 网络连接性测试
 pub fn testProxy(allocator: std.mem.Allocator, cfg: *const config.Config, proxy_name: ?[]const u8) !void {
     _ = proxy_name;
@@ -22,46 +47,85 @@ pub fn testProxy(allocator: std.mem.Allocator, cfg: *const config.Config, proxy_
     std.debug.print("Network Connectivity Test\n", .{});
     std.debug.print("{s:-^60}\n", .{""});
 
-    // mixed-port 开启时，按 Clash 语义应仅测试 mixed 端口
-    if (cfg.mixed_port > 0) {
-        std.debug.print("\nTesting via Mixed Proxy (127.0.0.1:{d}):\n", .{cfg.mixed_port});
-        if (try isLocalPortListening(allocator, cfg.mixed_port)) {
-            try testViaProxy(allocator, cfg.mixed_port, .http);
-        } else {
-            std.debug.print("  Proxy not listening on 127.0.0.1:{d}. Start zclash first (zclash start -c <config>).\n", .{cfg.mixed_port});
-        }
+    const effective = selectEffectivePorts(cfg);
+    try printEffectivePortsSummary(effective);
 
+    if (effective.mixed) |mixed_port| {
+        std.debug.print("\nTesting via Mixed Proxy (127.0.0.1:{d}):\n", .{mixed_port});
+        if (try isLocalPortListening(allocator, mixed_port)) {
+            try testViaProxy(allocator, mixed_port, .http);
+        } else {
+            printPortNotListeningHint(mixed_port);
+        }
         std.debug.print("\n", .{});
         return;
     }
 
-    // 测试 HTTP 代理
-    if (cfg.port > 0) {
-        std.debug.print("\nTesting via HTTP Proxy (127.0.0.1:{d}):\n", .{cfg.port});
-        if (try isLocalPortListening(allocator, cfg.port)) {
-            try testViaProxy(allocator, cfg.port, .http);
+    if (effective.http) |http_port| {
+        std.debug.print("\nTesting via HTTP Proxy (127.0.0.1:{d}):\n", .{http_port});
+        if (try isLocalPortListening(allocator, http_port)) {
+            try testViaProxy(allocator, http_port, .http);
         } else {
-            std.debug.print("  Proxy not listening on 127.0.0.1:{d}. Start zclash first (zclash start -c <config>).\n", .{cfg.port});
+            printPortNotListeningHint(http_port);
         }
     }
 
-    // 测试 SOCKS5 代理
-    if (cfg.socks_port > 0) {
-        std.debug.print("\nTesting via SOCKS5 Proxy (127.0.0.1:{d}):\n", .{cfg.socks_port});
-        if (try isLocalPortListening(allocator, cfg.socks_port)) {
-            try testViaProxy(allocator, cfg.socks_port, .socks5);
+    if (effective.socks) |socks_port| {
+        std.debug.print("\nTesting via SOCKS5 Proxy (127.0.0.1:{d}):\n", .{socks_port});
+        if (try isLocalPortListening(allocator, socks_port)) {
+            try testViaProxy(allocator, socks_port, .socks5);
         } else {
-            std.debug.print("  Proxy not listening on 127.0.0.1:{d}. Start zclash first (zclash start -c <config>).\n", .{cfg.socks_port});
+            printPortNotListeningHint(socks_port);
         }
     }
 
     std.debug.print("\n", .{});
 }
 
-const ProxyType = enum {
-    http,
-    socks5,
-};
+fn selectEffectivePorts(cfg: *const config.Config) EffectivePorts {
+    if (cfg.mixed_port > 0) {
+        return .{ .mixed = cfg.mixed_port, .http = null, .socks = null };
+    }
+
+    return .{
+        .mixed = null,
+        .http = if (cfg.port > 0) cfg.port else null,
+        .socks = if (cfg.socks_port > 0) cfg.socks_port else null,
+    };
+}
+
+fn printEffectivePortsSummary(effective: EffectivePorts) !void {
+    std.debug.print("Effective ports: ", .{});
+    if (effective.mixed) |p| {
+        std.debug.print("mixed=127.0.0.1:{d}\n", .{p});
+        return;
+    }
+
+    var printed = false;
+    if (effective.http) |p| {
+        std.debug.print("http=127.0.0.1:{d}", .{p});
+        printed = true;
+    }
+    if (effective.socks) |p| {
+        if (printed) std.debug.print(", ", .{});
+        std.debug.print("socks=127.0.0.1:{d}", .{p});
+        printed = true;
+    }
+    if (!printed) {
+        std.debug.print("none\n", .{});
+    } else {
+        std.debug.print("\n", .{});
+    }
+}
+
+fn printPortNotListeningHint(port: u16) void {
+    std.debug.print("  Proxy not listening on 127.0.0.1:{d}.\n", .{port});
+    std.debug.print("  Suggested fix: {s}\n", .{notListeningSuggestedCommand()});
+}
+
+fn notListeningSuggestedCommand() []const u8 {
+    return "zclash start -c <config>";
+}
 
 fn isLocalPortListening(allocator: std.mem.Allocator, port: u16) !bool {
     const stream = std.net.tcpConnectToHost(allocator, "127.0.0.1", port) catch return false;
@@ -77,7 +141,6 @@ fn testViaProxy(allocator: std.mem.Allocator, port: u16, proxy_type: ProxyType) 
     };
     defer allocator.free(proxy_url);
 
-    // 获取出口 IP 和地区信息
     std.debug.print("  Current IP/Location: ", .{});
     const ip_geo = try getIpGeoInfo(allocator, proxy_url);
     defer if (ip_geo) |info| {
@@ -108,17 +171,19 @@ fn testViaProxy(allocator: std.mem.Allocator, port: u16, proxy_type: ProxyType) 
     std.debug.print("\n  Latency Test:\n", .{});
     std.debug.print("  {s:-^50}\n", .{""});
 
-    // 测试各个目标
-    for (TEST_TARGETS[1..]) |target| { // 跳过第一个（IP 已经测过）
+    for (TEST_TARGETS[1..]) |target| {
         std.debug.print("  {s:12} ", .{target.name});
 
         const latency = try testUrlLatency(allocator, target.url, proxy_url);
 
-        if (latency) |ms| {
-            const color = if (ms < 100) "🟢" else if (ms < 300) "🟡" else "🔴";
-            std.debug.print("{s} {d}ms\n", .{ color, ms });
-        } else {
-            std.debug.print("⚫ Timeout/Failed\n", .{});
+        switch (latency) {
+            .ok => |ms| {
+                const color = if (ms < 100) "🟢" else if (ms < 300) "🟡" else "🔴";
+                std.debug.print("{s} {d}ms\n", .{ color, ms });
+            },
+            .failed => |reason| {
+                std.debug.print("⚫ {s}\n", .{failureReasonText(reason)});
+            },
         }
     }
 }
@@ -133,17 +198,22 @@ const IpGeoInfo = struct {
 
 /// 获取出口 IP 和地理位置信息
 fn getIpGeoInfo(allocator: std.mem.Allocator, proxy_url: []const u8) !?*IpGeoInfo {
-    const output = runCurl(allocator, proxy_url, "http://ipapi.co/json/", false) catch return null;
-    defer allocator.free(output);
+    const output = runCurl(allocator, proxy_url, "http://ipapi.co/json/", false);
+    defer switch (output) {
+        .ok => |ok| allocator.free(ok),
+        .failed => {},
+    };
 
-    const body = output;
+    const body = switch (output) {
+        .ok => |ok| ok,
+        .failed => return null,
+    };
 
     var info = try allocator.create(IpGeoInfo);
     info.city = null;
     info.region = null;
     info.country = null;
 
-    // 简单解析 IP
     if (extractJsonField(allocator, body, "ip")) |ip| {
         info.ip = ip;
     } else {
@@ -151,17 +221,12 @@ fn getIpGeoInfo(allocator: std.mem.Allocator, proxy_url: []const u8) !?*IpGeoInf
         return null;
     }
 
-    // 解析城市
     if (extractJsonField(allocator, body, "city")) |city| {
         info.city = city;
     }
-
-    // 解析地区/省份
     if (extractJsonField(allocator, body, "region")) |region| {
         info.region = region;
     }
-
-    // 解析国家
     if (extractJsonField(allocator, body, "country_name")) |country| {
         info.country = country;
     }
@@ -169,9 +234,7 @@ fn getIpGeoInfo(allocator: std.mem.Allocator, proxy_url: []const u8) !?*IpGeoInf
     return info;
 }
 
-/// 从 JSON 中提取字段值（简单实现）
 fn extractJsonField(allocator: std.mem.Allocator, json: []const u8, field: []const u8) ?[]const u8 {
-    // 查找字段: "field": "value"
     const pattern = std.fmt.allocPrint(allocator, "\"{s}\": \"", .{field}) catch return null;
     defer allocator.free(pattern);
 
@@ -186,36 +249,141 @@ fn extractJsonField(allocator: std.mem.Allocator, json: []const u8, field: []con
     return null;
 }
 
-/// 测试 URL 延迟
-fn testUrlLatency(allocator: std.mem.Allocator, url: []const u8, proxy_url: []const u8) !?u64 {
+fn testUrlLatency(allocator: std.mem.Allocator, url: []const u8, proxy_url: []const u8) !union(enum) {
+    ok: u64,
+    failed: FailureReason,
+} {
     const start_time = std.time.milliTimestamp();
-    const out = runCurl(allocator, proxy_url, url, true) catch return null;
-    allocator.free(out);
+    const curl_result = runCurl(allocator, proxy_url, url, true);
     const end_time = std.time.milliTimestamp();
-    return @intCast(end_time - start_time);
+
+    return switch (curl_result) {
+        .ok => |out| blk: {
+            allocator.free(out);
+            break :blk .{ .ok = @intCast(end_time - start_time) };
+        },
+        .failed => |reason| .{ .failed = reason },
+    };
 }
 
-fn runCurl(allocator: std.mem.Allocator, proxy_url: []const u8, url: []const u8, ignore_body: bool) ![]u8 {
+fn runCurl(allocator: std.mem.Allocator, proxy_url: []const u8, url: []const u8, ignore_body: bool) CurlResult {
     var args = std.ArrayList([]const u8).empty;
     defer args.deinit(allocator);
 
-    try args.appendSlice(allocator, &.{ "curl", "--silent", "--show-error", "--max-time", "6", "-x", proxy_url });
+    args.appendSlice(allocator, &.{ "curl", "--silent", "--show-error", "--max-time", "6", "-x", proxy_url }) catch {
+        return .{ .failed = .unknown };
+    };
     if (ignore_body) {
-        try args.appendSlice(allocator, &.{ "--output", "/dev/null" });
+        args.appendSlice(allocator, &.{ "--output", "/dev/null" }) catch {
+            return .{ .failed = .unknown };
+        };
     }
-    try args.append(allocator, url);
+    args.append(allocator, url) catch {
+        return .{ .failed = .unknown };
+    };
 
-    const result = try std.process.Child.run(.{
+    const result = std.process.Child.run(.{
         .allocator = allocator,
         .argv = args.items,
-    });
+    }) catch {
+        return .{ .failed = .unknown };
+    };
     defer allocator.free(result.stderr);
-    errdefer allocator.free(result.stdout);
 
-    if (result.term != .Exited or result.term.Exited != 0) {
-        allocator.free(result.stdout);
-        return error.CurlFailed;
+    if (result.term == .Exited and result.term.Exited == 0) {
+        return .{ .ok = result.stdout };
     }
 
-    return result.stdout;
+    allocator.free(result.stdout);
+    const exit_code: u8 = if (result.term == .Exited) result.term.Exited else 255;
+    return .{ .failed = classifyCurlFailure(exit_code, result.stderr) };
+}
+
+fn classifyCurlFailure(exit_code: u8, stderr: []const u8) FailureReason {
+    switch (exit_code) {
+        6 => return .dns,
+        7 => return .tcp_connect,
+        28 => return .timeout,
+        35, 51, 58, 59, 60 => return .tls_handshake,
+        5 => return .dns,
+        56, 52 => return .auth_or_proxy_response,
+        else => {},
+    }
+
+    if (containsAny(stderr, &.{ "Could not resolve host", "Name or service not known", "Could not resolve proxy" })) {
+        return .dns;
+    }
+    if (containsAny(stderr, &.{ "Failed to connect", "Connection refused", "No route to host", "Connection reset" })) {
+        return .tcp_connect;
+    }
+    if (containsAny(stderr, &.{ "SSL", "TLS", "handshake", "certificate" })) {
+        return .tls_handshake;
+    }
+    if (containsAny(stderr, &.{ "407", "Proxy Authentication Required", "Received HTTP code", "Empty reply from server" })) {
+        return .auth_or_proxy_response;
+    }
+    if (containsAny(stderr, &.{ "Operation timed out", "timed out" })) {
+        return .timeout;
+    }
+
+    return .unknown;
+}
+
+fn containsAny(haystack: []const u8, needles: []const []const u8) bool {
+    for (needles) |needle| {
+        if (std.mem.indexOf(u8, haystack, needle) != null) return true;
+    }
+    return false;
+}
+
+fn failureReasonText(reason: FailureReason) []const u8 {
+    return switch (reason) {
+        .dns => "DNS failure",
+        .tcp_connect => "TCP connect failure",
+        .tls_handshake => "TLS/handshake failure",
+        .auth_or_proxy_response => "Auth/proxy response failure",
+        .timeout => "Timeout",
+        .unknown => "Unknown failure",
+    };
+}
+
+test "selectEffectivePorts prefers mixed-port" {
+    const allocator = std.testing.allocator;
+
+    var cfg = config.Config{
+        .allocator = allocator,
+        .port = 7890,
+        .socks_port = 7891,
+        .mixed_port = 9999,
+        .mode = try allocator.dupe(u8, "rule"),
+        .log_level = try allocator.dupe(u8, "info"),
+        .bind_address = try allocator.dupe(u8, "127.0.0.1"),
+        .proxies = std.ArrayList(config.Proxy).empty,
+        .proxy_groups = std.ArrayList(config.ProxyGroup).empty,
+        .rules = std.ArrayList(config.Rule).empty,
+    };
+    defer cfg.deinit();
+
+    const effective = selectEffectivePorts(&cfg);
+    try std.testing.expectEqual(@as(?u16, 9999), effective.mixed);
+    try std.testing.expectEqual(@as(?u16, null), effective.http);
+    try std.testing.expectEqual(@as(?u16, null), effective.socks);
+}
+
+test "classifyCurlFailure core branches" {
+    try std.testing.expectEqual(FailureReason.dns, classifyCurlFailure(6, "Could not resolve host"));
+    try std.testing.expectEqual(FailureReason.tcp_connect, classifyCurlFailure(7, "Failed to connect"));
+    try std.testing.expectEqual(FailureReason.tls_handshake, classifyCurlFailure(35, "SSL connect error"));
+    try std.testing.expectEqual(FailureReason.auth_or_proxy_response, classifyCurlFailure(52, "Empty reply from server"));
+    try std.testing.expectEqual(FailureReason.timeout, classifyCurlFailure(28, "Operation timed out"));
+}
+
+test "failureReasonText returns actionable categories" {
+    try std.testing.expectEqualStrings("DNS failure", failureReasonText(.dns));
+    try std.testing.expectEqualStrings("TCP connect failure", failureReasonText(.tcp_connect));
+    try std.testing.expectEqualStrings("TLS/handshake failure", failureReasonText(.tls_handshake));
+}
+
+test "not listening hint includes executable command" {
+    try std.testing.expectEqualStrings("zclash start -c <config>", notListeningSuggestedCommand());
 }

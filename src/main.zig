@@ -11,6 +11,7 @@ const tui = @import("tui.zig");
 const daemon = @import("daemon.zig");
 const proxy_cli = @import("proxy_cli.zig");
 const test_cli = @import("test_cli.zig");
+const doctor_cli = @import("doctor_cli.zig");
 
 // 全局配置路径，用于重载
 var g_config_path: ?[]const u8 = null;
@@ -282,6 +283,13 @@ pub fn main() !void {
         return;
     }
 
+    // 处理 doctor 命令
+    if (std.mem.eql(u8, cmd, "doctor")) {
+        const config_path = parseConfigPathArg(args, 2);
+        try doctor_cli.runDoctor(allocator, config_path);
+        return;
+    }
+
     // 未知命令
     std.debug.print("Unknown command: {s}\n", .{cmd});
     try printHelp();
@@ -547,7 +555,8 @@ fn printHelp() !void {
     std.debug.print("    log [-n <lines>]        View logs\n", .{});
     std.debug.print("    config <subcmd>         Manage configurations\n", .{});
     std.debug.print("    proxy <subcmd>          Manage proxies\n", .{});
-    std.debug.print("    test                    Test network connectivity\n", .{});
+    std.debug.print("    test [-c <config>]      Test network connectivity\n", .{});
+    std.debug.print("    doctor [-c <config>]    Diagnose config/service/ports\n", .{});
     std.debug.print("\n", .{});
     std.debug.print("CONFIG COMMANDS:\n", .{});
     std.debug.print("    zclash config list                  List all available configs\n", .{});
@@ -652,6 +661,11 @@ test "parseConfigPathArg handles -c" {
 
     const args2 = [_][]const u8{ "zclash", "test" };
     try testing.expect(parseConfigPathArg(args2[0..], 2) == null);
+}
+
+test "include auxiliary cli tests" {
+    _ = @import("test_cli.zig");
+    _ = @import("doctor_cli.zig");
 }
 
 test "hasInProcessPortConflict detects conflicts" {

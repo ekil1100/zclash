@@ -212,7 +212,10 @@ curl -x socks5://127.0.0.1:7891 http://httpbin.org/ip
 
 | 命令 | 说明 |
 |------|------|
-| `zclash test` | 测试网络连接性（通过本地代理出口显示IP/地区和延迟，依赖系统 `curl`） |
+| `zclash test` | 测试网络连接性（自动选择 effective ports：优先 mixed-port，否则 http/socks；依赖系统 `curl`） |
+| `zclash test -c <path>` | 使用指定配置进行连通性测试 |
+| `zclash doctor` | 诊断配置可解析性、daemon 运行状态与关键端口监听情况 |
+| `zclash doctor -c <path>` | 使用指定配置执行诊断 |
 
 ### 网络测试示例
 
@@ -223,17 +226,40 @@ zclash test
 # 输出示例：
 # Network Connectivity Test
 # ------------------------------------------------------------
-# Testing via HTTP Proxy (127.0.0.1:7890):
+# Effective ports: mixed=127.0.0.1:7890
+#
+# Testing via Mixed Proxy (127.0.0.1:7890):
 #   Current IP/Location: 203.0.113.45 (Tokyo, Tokyo, Japan)
 #
 #   Latency Test:
 #   --------------------------------------------------
 #   Google       🟢 45ms
 #   YouTube      🟢 52ms
-#   Netflix      🟢 120ms
-#   OpenAI       🟡 180ms
-#   GitHub       🟢 38ms
-#   Cloudflare   🟢 25ms
+#   Netflix      ⚫ DNS failure
+#   OpenAI       ⚫ TLS/handshake failure
+#   GitHub       ⚫ TCP connect failure
+#   Cloudflare   ⚫ Timeout
+```
+
+### Doctor 诊断示例
+
+```bash
+# 诊断默认配置/服务状态
+zclash doctor
+
+# 指定配置诊断
+zclash doctor -c ~/.config/zclash/mysub.yaml
+
+# 输出示例：
+# zclash doctor
+# ------------------------------------------------------------
+# Config: OK (default)
+# Daemon: not running
+# Effective ports:
+#   - mixed: 127.0.0.1:7890 [not listening]
+# Suggestions:
+#   2. Start service: zclash start -c <config>
+#   3. Ensure configured proxy ports are bound by zclash process.
 ```
 
 ### 配置管理示例
