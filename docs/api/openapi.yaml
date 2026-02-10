@@ -1,0 +1,334 @@
+openapi: 3.0.3
+info:
+  title: zclash API
+  version: 0.1.0-draft
+  description: |
+    Draft API v1 resource model for zclash.
+    Phase P2-1 focuses on runtime/profiles/proxies core resources.
+servers:
+  - url: http://127.0.0.1:9090
+    description: local controller
+
+tags:
+  - name: runtime
+  - name: profiles
+  - name: proxies
+
+paths:
+  /v1/runtime:
+    get:
+      tags: [runtime]
+      summary: Get runtime status
+      operationId: getRuntime
+      responses:
+        '200':
+          description: Runtime status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuntimeStatusResponse'
+
+  /v1/profiles:
+    get:
+      tags: [profiles]
+      summary: List available profiles
+      operationId: listProfiles
+      responses:
+        '200':
+          description: Profile list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileListResponse'
+
+  /v1/profiles/active:
+    get:
+      tags: [profiles]
+      summary: Get active profile
+      operationId: getActiveProfile
+      responses:
+        '200':
+          description: Active profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileActiveResponse'
+
+    put:
+      tags: [profiles]
+      summary: Switch active profile
+      operationId: setActiveProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileActivateRequest'
+      responses:
+        '200':
+          description: Profile switched
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileActiveResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Profile not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/profiles/import:
+    post:
+      tags: [profiles]
+      summary: Import profile from URL or local path
+      operationId: importProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileImportRequest'
+      responses:
+        '200':
+          description: Import result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileImportResponse'
+        '400':
+          description: Invalid request or source
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/proxies:
+    get:
+      tags: [proxies]
+      summary: List proxy groups and nodes
+      operationId: listProxies
+      responses:
+        '200':
+          description: Proxy graph
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProxyListResponse'
+
+  /v1/proxies/select:
+    post:
+      tags: [proxies]
+      summary: Select a proxy for a group
+      operationId: selectProxy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProxySelectRequest'
+      responses:
+        '200':
+          description: Selection result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProxySelectResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Group or proxy not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    RuntimeStatusResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        data:
+          type: object
+          properties:
+            state:
+              type: string
+              enum: [running, stopped]
+            pid:
+              type: integer
+              nullable: true
+            mode:
+              type: string
+              example: rule
+            startedAt:
+              type: string
+              format: date-time
+              nullable: true
+
+    ProfileListResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        data:
+          type: object
+          properties:
+            profiles:
+              type: array
+              items:
+                type: string
+            active:
+              type: string
+              nullable: true
+
+    ProfileActiveResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        data:
+          type: object
+          properties:
+            profile:
+              type: string
+            state:
+              type: string
+              enum: [active]
+
+    ProfileActivateRequest:
+      type: object
+      required: [profile]
+      properties:
+        profile:
+          type: string
+
+    ProfileImportRequest:
+      type: object
+      required: [source]
+      properties:
+        source:
+          type: string
+          description: URL or local path
+        name:
+          type: string
+          nullable: true
+
+    ProfileImportResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        data:
+          type: object
+          properties:
+            action:
+              type: string
+              enum: [profile_import]
+            profile:
+              type: string
+            source:
+              type: string
+
+    ProxyListResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        data:
+          type: object
+          properties:
+            groups:
+              type: array
+              items:
+                $ref: '#/components/schemas/ProxyGroup'
+            stats:
+              type: object
+              properties:
+                group_count:
+                  type: integer
+                proxy_count:
+                  type: integer
+
+    ProxyGroup:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        proxies:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProxyNode'
+
+    ProxyNode:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+
+    ProxySelectRequest:
+      type: object
+      required: [group]
+      properties:
+        group:
+          type: string
+        proxy:
+          type: string
+          nullable: true
+
+    ProxySelectResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        data:
+          type: object
+          properties:
+            action:
+              type: string
+              enum: [proxy_select]
+            group:
+              type: string
+            proxy:
+              type: string
+              nullable: true
+            choices:
+              type: array
+              items:
+                type: string
+              nullable: true
+            state:
+              type: string
+              nullable: true
+
+    ErrorResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          enum: [false]
+        error:
+          type: object
+          required: [code, message, hint]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            hint:
+              type: string
