@@ -83,13 +83,19 @@ pub fn main() !void {
             }
         }
         // 后台启动
-        try daemon.startDaemon(allocator, config_path);
+        daemon.startDaemon(allocator, config_path) catch |err| {
+            printCliError("START_FAILED", "failed to start daemon", "check config path and logs via `zclash log --no-follow`");
+            return err;
+        };
         return;
     }
 
     // 处理 stop 命令
     if (std.mem.eql(u8, cmd, "stop")) {
-        try daemon.stopDaemon(allocator);
+        daemon.stopDaemon(allocator) catch |err| {
+            printCliError("STOP_FAILED", "failed to stop daemon", "verify process permissions and retry `zclash stop`");
+            return err;
+        };
         return;
     }
 
@@ -105,16 +111,19 @@ pub fn main() !void {
                 }
             }
         }
-        // 先停止
-        daemon.stopDaemon(allocator) catch {};
-        // 再启动
-        try daemon.startDaemon(allocator, config_path);
+        daemon.restartDaemon(allocator, config_path) catch |err| {
+            printCliError("RESTART_FAILED", "failed to restart daemon", "check logs and retry `zclash restart -c <config>`");
+            return err;
+        };
         return;
     }
 
     // 处理 status 命令
     if (std.mem.eql(u8, cmd, "status")) {
-        try daemon.getStatus(allocator);
+        daemon.getStatus(allocator) catch |err| {
+            printCliError("STATUS_FAILED", "failed to read daemon status", "check pid file permissions and retry `zclash status`");
+            return err;
+        };
         return;
     }
 
@@ -293,6 +302,12 @@ pub fn main() !void {
     // 未知命令
     std.debug.print("Unknown command: {s}\n", .{cmd});
     try printHelp();
+}
+
+fn printCliError(code: []const u8, message: []const u8, hint: []const u8) void {
+    std.debug.print("error.code={s}\n", .{code});
+    std.debug.print("error.message={s}\n", .{message});
+    std.debug.print("error.hint={s}\n", .{hint});
 }
 
 fn parseConfigPathArg(args: []const []const u8, start_index: usize) ?[]const u8 {

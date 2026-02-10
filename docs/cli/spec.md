@@ -161,8 +161,11 @@
 3. **原子任务 C：错误输出标准化最小闭环**  
    先覆盖 start/stop/restart/status 四命令，把核心错误统一为 `code/message/hint`；其它命令后续跟进。
 
-## 10. 下一步
+## 10. 最小实现序列进度
 
-1. 先实施原子任务 A（不改变现有可用行为）；
-2. 再实施原子任务 B（先把 status 做成样板）；
-3. 最后实施原子任务 C，并补 TDD/BDD 验收用例。
+- [x] 原子任务 A：start/stop/restart/status 语义对齐（文本输出统一，错误输出具备 `code/message/hint` 结构）
+- [ ] 原子任务 B：补全 `--json` 开关与 `status` 结构化输出样板
+- [ ] 原子任务 C：扩展错误结构到更多 CLI 资源命令并补充测试
+
+验证记录（关键场景）：
+- `zig test src/daemon.zig` 通过（用于确认服务控制路径改动可编译）

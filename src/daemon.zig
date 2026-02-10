@@ -88,11 +88,17 @@ pub fn isRunning(allocator: std.mem.Allocator) !bool {
     return true;
 }
 
+fn printCliError(code: []const u8, message: []const u8, hint: []const u8) void {
+    std.debug.print("error.code={s}\n", .{code});
+    std.debug.print("error.message={s}\n", .{message});
+    std.debug.print("error.hint={s}\n", .{hint});
+}
+
 /// 启动守护进程
 pub fn startDaemon(allocator: std.mem.Allocator, config_path: ?[]const u8) !void {
     // 检查是否已经在运行
     if (try isRunning(allocator)) {
-        std.debug.print("zclash is already running\n", .{});
+        std.debug.print("ok action=start state=running detail=already_running\n", .{});
         return;
     }
     
@@ -106,12 +112,12 @@ pub fn startDaemon(allocator: std.mem.Allocator, config_path: ?[]const u8) !void
         // 父进程：等待子进程至少稳定存活一小段时间，避免假启动
         std.Thread.sleep(300 * std.time.ns_per_ms);
         _ = std.posix.kill(pid, 0) catch {
-            std.debug.print("zclash failed to start (child exited early)\n", .{});
+            printCliError("START_FAILED", "failed to start: child exited early", "check logs via `zclash log --no-follow` and retry");
             return error.StartFailed;
         };
 
         try writePid(allocator, pid);
-        std.debug.print("zclash started (PID: {d})\n", .{pid});
+        std.debug.print("ok action=start state=running pid={d}\n", .{pid});
         return;
     }
     
@@ -192,18 +198,18 @@ pub fn startDaemon(allocator: std.mem.Allocator, config_path: ?[]const u8) !void
 /// 停止守护进程
 pub fn stopDaemon(allocator: std.mem.Allocator) !void {
     const pid = try readPid(allocator) orelse {
-        std.debug.print("zclash is not running\n", .{});
+        std.debug.print("ok action=stop state=stopped detail=already_stopped\n", .{});
         return;
     };
     
     // 发送 SIGTERM 信号
     std.posix.kill(pid, std.posix.SIG.TERM) catch |err| {
         if (err == error.ProcessNotFound) {
-            std.debug.print("zclash is not running\n", .{});
+            std.debug.print("ok action=stop state=stopped detail=already_stopped\n", .{});
             removePidFile(allocator);
             return;
         }
-        std.debug.print("Failed to stop zclash: {s}\n", .{@errorName(err)});
+        printCliError("STOP_FAILED", "failed to send terminate signal", "verify process permissions and retry `zclash stop`");
         return err;
     };
     
@@ -226,22 +232,36 @@ pub fn stopDaemon(allocator: std.mem.Allocator) !void {
 
     // 删除 PID 文件
     removePidFile(allocator);
-    std.debug.print("zclash stopped\n", .{});
+    std.debug.print("ok action=stop state=stopped pid={d}\n", .{pid});
+}
+
+/// 重启守护进程
+pub fn restartDaemon(allocator: std.mem.Allocator, config_path: ?[]const u8) !void {
+    const was_running = try isRunning(allocator);
+
+    if (was_running) {
+        try stopDaemon(allocator);
+    } else {
+        std.debug.print("ok action=restart detail=service_was_stopped\n", .{});
+    }
+
+    try startDaemon(allocator, config_path);
+    std.debug.print("ok action=restart state=running\n", .{});
 }
 
 /// 获取状态
 pub fn getStatus(allocator: std.mem.Allocator) !void {
     const pid = try readPid(allocator);
-    
+
     if (pid) |p| {
         if (try isRunning(allocator)) {
-            std.debug.print("zclash is running (PID: {d})\n", .{p});
+            std.debug.print("ok action=status state=running pid={d}\n", .{p});
         } else {
-            std.debug.print("zclash is not running (stale PID file: {d})\n", .{p});
+            std.debug.print("ok action=status state=stopped detail=stale_pid_file pid={d}\n", .{p});
             removePidFile(allocator);
         }
     } else {
-        std.debug.print("zclash is not running\n", .{});
+        std.debug.print("ok action=status state=stopped\n", .{});
     }
 }
 
