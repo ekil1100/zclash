@@ -189,21 +189,76 @@ pub fn main() !void {
             }
 
             if (json_output) {
-                switchProfileSilent(allocator, profile_name) catch |err| {
+                switchProfileSilent(allocator, profile_name) catch {
                     printCliError(json_output, "PROFILE_USE_FAILED", "failed to switch profile", "verify config directory permissions and retry");
-                    return err;
+                    return;
                 };
                 std.debug.print("{{\"ok\":true,\"data\":{{\"action\":\"profile_use\",\"profile\":\"{s}\",\"state\":\"active\"}}}}\n", .{profile_name});
             } else {
-                config.switchConfig(allocator, profile_name) catch |err| {
+                config.switchConfig(allocator, profile_name) catch {
                     printCliError(json_output, "PROFILE_USE_FAILED", "failed to switch profile", "verify config directory permissions and retry");
-                    return err;
+                    return;
                 };
             }
             return;
         }
 
-        printCliError(json_output, "PROFILE_SUBCOMMAND_UNKNOWN", "unknown profile subcommand", "use `zclash profile list|use <name>`");
+        if (std.mem.eql(u8, subcmd, "import")) {
+            if (args.len < 4) {
+                printCliError(json_output, "PROFILE_SOURCE_REQUIRED", "profile import source is required", "use `zclash profile import <url_or_path> [-n name]`");
+                return;
+            }
+
+            const source = args[3];
+            var import_name: ?[]const u8 = null;
+            var i: usize = 4;
+            while (i < args.len) : (i += 1) {
+                if (std.mem.eql(u8, args[i], "-n") and i + 1 < args.len) {
+                    import_name = args[i + 1];
+                    i += 1;
+                }
+            }
+
+            var imported_name: ?[]const u8 = null;
+            if (std.mem.startsWith(u8, source, "http://") or std.mem.startsWith(u8, source, "https://")) {
+                imported_name = config.downloadConfig(allocator, source, import_name) catch {
+                    printCliError(json_output, "PROFILE_IMPORT_FAILED", "failed to import profile from url", "check URL/network and retry");
+                    return;
+                };
+            } else {
+                imported_name = importLocalProfile(allocator, source, import_name) catch {
+                    printCliError(json_output, "PROFILE_IMPORT_FAILED", "failed to import profile from local path", "check file path and retry");
+                    return;
+                };
+            }
+            defer if (imported_name) |n| allocator.free(n);
+
+            if (json_output) {
+                std.debug.print("{{\"ok\":true,\"data\":{{\"action\":\"profile_import\",\"profile\":\"{s}\",\"source\":\"{s}\"}}}}\n", .{ imported_name orelse "", source });
+            }
+            return;
+        }
+
+        if (std.mem.eql(u8, subcmd, "validate")) {
+            const target = if (args.len >= 4) args[3] else null;
+            var cfg = resolveProfileConfig(allocator, target) catch {
+                printCliError(json_output, "PROFILE_VALIDATE_FAILED", "failed to load profile for validation", "run `zclash profile list` or pass a valid path");
+                return;
+            };
+            defer cfg.deinit();
+
+            var vr = try validator.validate(allocator, &cfg);
+            defer vr.deinit();
+
+            if (json_output) {
+                try printValidationJson(allocator, &vr);
+            } else {
+                validator.printResult(&vr);
+            }
+            return;
+        }
+
+        printCliError(json_output, "PROFILE_SUBCOMMAND_UNKNOWN", "unknown profile subcommand", "use `zclash profile list|use|import|validate`");
         return;
     }
 
@@ -368,6 +423,79 @@ pub fn main() !void {
     // 未知命令
     std.debug.print("Unknown command: {s}\n", .{cmd});
     try printHelp();
+}
+
+fn importLocalProfile(allocator: std.mem.Allocator, source: []const u8, import_name: ?[]const u8) !?[]const u8 {
+    const src_abs = std.fs.cwd().realpathAlloc(allocator, source) catch {
+        return error.FileNotFound;
+    };
+    defer allocator.free(src_abs);
+
+    const config_dir = (try config.getDefaultConfigDir(allocator)) orelse return error.NoConfigDir;
+    defer allocator.free(config_dir);
+
+    std.fs.makeDirAbsolute(config_dir) catch |err| {
+        if (err != error.PathAlreadyExists) return err;
+    };
+
+    const basename = std.fs.path.basename(src_abs);
+    const raw_name = import_name orelse basename;
+    const final_name = if (std.mem.endsWith(u8, raw_name, ".yaml"))
+        try allocator.dupe(u8, raw_name)
+    else
+        try std.fmt.allocPrint(allocator, "{s}.yaml", .{raw_name});
+
+    const dst_abs = try std.fs.path.join(allocator, &.{ config_dir, final_name });
+    defer allocator.free(dst_abs);
+
+    try std.fs.copyFileAbsolute(src_abs, dst_abs, .{});
+    return final_name;
+}
+
+fn resolveProfileConfig(allocator: std.mem.Allocator, target: ?[]const u8) !config.Config {
+    if (target == null) {
+        return try config.loadDefault(allocator);
+    }
+
+    const t = target.?;
+    if (std.mem.indexOfScalar(u8, t, '/')) |_| {
+        return try config.load(allocator, t);
+    }
+
+    const config_dir = (try config.getDefaultConfigDir(allocator)) orelse return error.NoConfigDir;
+    defer allocator.free(config_dir);
+
+    const profile_path = try std.fs.path.join(allocator, &.{ config_dir, t });
+    defer allocator.free(profile_path);
+
+    return try config.load(allocator, profile_path);
+}
+
+fn printValidationJson(allocator: std.mem.Allocator, vr: *const validator.ValidationResult) !void {
+    var out = std.ArrayList(u8).empty;
+    defer out.deinit(allocator);
+
+    try out.appendSlice(allocator, "{\"ok\":true,\"data\":{\"valid\":");
+    try out.appendSlice(allocator, if (vr.isValid()) "true" else "false");
+    try out.appendSlice(allocator, ",\"warnings\":[");
+
+    for (vr.warnings.items, 0..) |w, i| {
+        if (i > 0) try out.appendSlice(allocator, ",");
+        try out.appendSlice(allocator, "\"");
+        try out.appendSlice(allocator, w.message);
+        try out.appendSlice(allocator, "\"");
+    }
+
+    try out.appendSlice(allocator, "],\"errors\":[");
+    for (vr.errors.items, 0..) |e, i| {
+        if (i > 0) try out.appendSlice(allocator, ",");
+        try out.appendSlice(allocator, "\"");
+        try out.appendSlice(allocator, e.message);
+        try out.appendSlice(allocator, "\"");
+    }
+
+    try out.appendSlice(allocator, "]}}\n");
+    std.debug.print("{s}", .{out.items});
 }
 
 fn switchProfileSilent(allocator: std.mem.Allocator, filename: []const u8) !void {
