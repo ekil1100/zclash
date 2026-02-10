@@ -1,19 +1,36 @@
 const std = @import("std");
 const config = @import("config.zig");
 
+fn proxyTypeString(pt: config.ProxyType) []const u8 {
+    return switch (pt) {
+        .direct => "DIRECT",
+        .reject => "REJECT",
+        .http => "HTTP",
+        .socks5 => "SOCKS5",
+        .ss => "SS",
+        .vmess => "VMess",
+        .trojan => "Trojan",
+        .vless => "VLESS",
+    };
+}
+
+fn groupTypeString(gt: config.ProxyGroupType) []const u8 {
+    return switch (gt) {
+        .select => "select",
+        .url_test => "url-test",
+        .fallback => "fallback",
+        .load_balance => "load-balance",
+        .relay => "relay",
+    };
+}
+
 /// 列出所有代理组和节点
 pub fn listProxies(_: std.mem.Allocator, cfg: *const config.Config) !void {
     std.debug.print("Proxy Groups:\n", .{});
     std.debug.print("{s:-^60}\n", .{""});
 
     for (cfg.proxy_groups.items) |group| {
-        const type_str = switch (group.group_type) {
-            .select => "select",
-            .url_test => "url-test",
-            .fallback => "fallback",
-            .load_balance => "load-balance",
-            .relay => "relay",
-        };
+        const type_str = groupTypeString(group.group_type);
 
         std.debug.print("\n{s} ({s}) - {d} proxies\n", .{
             group.name,
@@ -27,16 +44,7 @@ pub fn listProxies(_: std.mem.Allocator, cfg: *const config.Config) !void {
             var proxy_type: ?[]const u8 = null;
             for (cfg.proxies.items) |proxy| {
                 if (std.mem.eql(u8, proxy.name, proxy_name)) {
-                    proxy_type = switch (proxy.proxy_type) {
-                        .direct => "DIRECT",
-                        .reject => "REJECT",
-                        .http => "HTTP",
-                        .socks5 => "SOCKS5",
-                        .ss => "SS",
-                        .vmess => "VMess",
-                        .trojan => "Trojan",
-                        .vless => "VLESS",
-                    };
+                    proxy_type = proxyTypeString(proxy.proxy_type);
                     break;
                 }
             }
@@ -55,16 +63,7 @@ pub fn listProxies(_: std.mem.Allocator, cfg: *const config.Config) !void {
         std.debug.print("{s:-^60}\n", .{""});
 
         for (cfg.proxies.items, 0..) |proxy, i| {
-            const proxy_type = switch (proxy.proxy_type) {
-                .direct => "DIRECT",
-                .reject => "REJECT",
-                .http => "HTTP",
-                .socks5 => "SOCKS5",
-                .ss => "SS",
-                .vmess => "VMess",
-                .trojan => "Trojan",
-                .vless => "VLESS",
-            };
+            const proxy_type = proxyTypeString(proxy.proxy_type);
 
             if (proxy.port > 0) {
                 std.debug.print("{d}. {s:20} [{s}] {s}:{d}\n", .{
@@ -85,6 +84,50 @@ pub fn listProxies(_: std.mem.Allocator, cfg: *const config.Config) !void {
     }
 
     std.debug.print("\n", .{});
+}
+
+/// 以 JSON 格式列出代理组和节点（P1-1 序列 C）
+pub fn listProxiesJson(allocator: std.mem.Allocator, cfg: *const config.Config) !void {
+    var out = std.ArrayList(u8).empty;
+    defer out.deinit(allocator);
+
+    const w = out.writer(allocator);
+    try out.appendSlice(allocator, "{\"ok\":true,\"data\":{\"groups\":[");
+
+    for (cfg.proxy_groups.items, 0..) |group, gi| {
+        if (gi > 0) try out.appendSlice(allocator, ",");
+        try out.appendSlice(allocator, "{\"name\":\"");
+        try out.appendSlice(allocator, group.name);
+        try out.appendSlice(allocator, "\",\"type\":\"");
+        try out.appendSlice(allocator, groupTypeString(group.group_type));
+        try out.appendSlice(allocator, "\",\"proxies\":[");
+
+        for (group.proxies.items, 0..) |proxy_name, pi| {
+            if (pi > 0) try out.appendSlice(allocator, ",");
+            var ptype: []const u8 = "unknown";
+            for (cfg.proxies.items) |proxy| {
+                if (std.mem.eql(u8, proxy.name, proxy_name)) {
+                    ptype = proxyTypeString(proxy.proxy_type);
+                    break;
+                }
+            }
+            try out.appendSlice(allocator, "{\"name\":\"");
+            try out.appendSlice(allocator, proxy_name);
+            try out.appendSlice(allocator, "\",\"type\":\"");
+            try out.appendSlice(allocator, ptype);
+            try out.appendSlice(allocator, "\"}");
+        }
+
+        try out.appendSlice(allocator, "]}");
+    }
+
+    try out.appendSlice(allocator, "],\"stats\":{\"group_count\":");
+    try w.print("{d}", .{cfg.proxy_groups.items.len});
+    try out.appendSlice(allocator, ",\"proxy_count\":");
+    try w.print("{d}", .{cfg.proxies.items.len});
+    try out.appendSlice(allocator, "}}}\n");
+
+    std.debug.print("{s}", .{out.items});
 }
 
 /// 选择代理节点（用于 select 类型的组）
@@ -152,16 +195,7 @@ pub fn selectProxy(allocator: std.mem.Allocator, cfg: *config.Config, group_name
             var proxy_type: ?[]const u8 = null;
             for (cfg.proxies.items) |proxy| {
                 if (std.mem.eql(u8, proxy.name, proxy_name_in_group)) {
-                    proxy_type = switch (proxy.proxy_type) {
-                        .direct => "DIRECT",
-                        .reject => "REJECT",
-                        .http => "HTTP",
-                        .socks5 => "SOCKS5",
-                        .ss => "SS",
-                        .vmess => "VMess",
-                        .trojan => "Trojan",
-                        .vless => "VLESS",
-                    };
+                    proxy_type = proxyTypeString(proxy.proxy_type);
                     break;
                 }
             }

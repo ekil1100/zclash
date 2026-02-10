@@ -236,10 +236,17 @@ pub fn main() !void {
             }
 
             // 加载配置
-            var cfg = try loadAndValidateConfig(allocator, config_path);
+            var cfg = loadAndValidateConfig(allocator, config_path, !json_output) catch |err| {
+                printCliError(json_output, "PROXY_CONFIG_LOAD_FAILED", "failed to load/validate config for proxy list", "check config path and retry with `-c <config>`");
+                return err;
+            };
             defer cfg.deinit();
 
-            try proxy_cli.listProxies(allocator, &cfg);
+            if (json_output) {
+                try proxy_cli.listProxiesJson(allocator, &cfg);
+            } else {
+                try proxy_cli.listProxies(allocator, &cfg);
+            }
             return;
         }
 
@@ -269,7 +276,7 @@ pub fn main() !void {
             }
 
             // 加载配置（需要可变引用）
-            var cfg = try loadAndValidateConfig(allocator, config_path);
+            var cfg = try loadAndValidateConfig(allocator, config_path, !json_output);
             defer cfg.deinit();
 
             try proxy_cli.selectProxy(allocator, &cfg, group_name, proxy_name);
@@ -277,8 +284,12 @@ pub fn main() !void {
         }
 
         // 未知子命令
-        std.debug.print("Unknown proxy subcommand: {s}\n", .{subcmd});
-        try printProxyHelp();
+        if (json_output) {
+            printCliError(json_output, "PROXY_SUBCOMMAND_UNKNOWN", "unknown proxy subcommand", "use `zclash proxy --help` or `zclash help`");
+        } else {
+            std.debug.print("Unknown proxy subcommand: {s}\n", .{subcmd});
+            try printProxyHelp();
+        }
         return;
     }
 
@@ -286,7 +297,7 @@ pub fn main() !void {
     if (std.mem.eql(u8, cmd, "test")) {
         const config_path = parseConfigPathArg(args, 2);
 
-        var cfg = try loadAndValidateConfig(allocator, config_path);
+        var cfg = try loadAndValidateConfig(allocator, config_path, !json_output);
         defer cfg.deinit();
 
         try test_cli.testProxy(allocator, &cfg, null);
@@ -345,7 +356,7 @@ fn runProxy(allocator: std.mem.Allocator, config_path: ?[]const u8, use_tui: boo
     }
 
     // 加载并验证配置
-    var cfg = try loadAndValidateConfig(allocator, config_path);
+    var cfg = try loadAndValidateConfig(allocator, config_path, true);
     defer cfg.deinit();
 
     // 启动前端口占用预检
@@ -389,7 +400,7 @@ fn runProxy(allocator: std.mem.Allocator, config_path: ?[]const u8, use_tui: boo
     }
 }
 
-fn loadAndValidateConfig(allocator: std.mem.Allocator, config_path: ?[]const u8) !config.Config {
+fn loadAndValidateConfig(allocator: std.mem.Allocator, config_path: ?[]const u8, print_validation: bool) !config.Config {
     var cfg = if (config_path) |path|
         try config.load(allocator, path)
     else
@@ -397,7 +408,9 @@ fn loadAndValidateConfig(allocator: std.mem.Allocator, config_path: ?[]const u8)
 
     var validation_result = try validator.validate(allocator, &cfg);
     defer validation_result.deinit();
-    validator.printResult(&validation_result);
+    if (print_validation) {
+        validator.printResult(&validation_result);
+    }
 
     if (!validation_result.isValid()) {
         cfg.deinit();

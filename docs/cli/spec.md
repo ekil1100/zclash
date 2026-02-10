@@ -140,8 +140,8 @@
 | `stop` 语义统一 | `src/main.zig`、`src/daemon.zig`（`stopDaemon`） | 已实现（P1-1 范围内） | 输出已统一为 `ok action=stop ...`，支持 `--json` |
 | `restart` 语义统一 | `src/main.zig`、`src/daemon.zig`（`restartDaemon`） | 已实现（P1-1 范围内） | stop/start 语义统一，支持 `--json` |
 | `status` 语义统一 | `src/main.zig`（status 分支）、`src/daemon.zig`（状态查询） | 已实现（P1-1 范围内） | 输出统一，支持 `--json` 结构化结果 |
-| `--json` 输出规范 | `src/main.zig`（`hasFlag(--json)`）、`src/daemon.zig`（`printCliOk/printCliError`） | 部分实现 | 已覆盖 start/stop/restart/status，其他资源命令待补齐 |
-| 错误格式 `code/message/hint` | `src/main.zig`、`src/daemon.zig` | 部分实现 | 已覆盖服务控制命令，`proxy/config/test/doctor` 仍待统一 |
+| `--json` 输出规范 | `src/main.zig`（`hasFlag(--json)`）、`src/daemon.zig`（`printCliOk/printCliError`）、`src/proxy_cli.zig`（`listProxiesJson`） | 部分实现 | 已覆盖 start/stop/restart/status + `proxy list`，其他资源命令待补齐 |
+| 错误格式 `code/message/hint` | `src/main.zig`、`src/daemon.zig` | 部分实现 | 已覆盖服务控制命令 + `proxy` 部分路径（配置加载/未知子命令）；其余命令待统一 |
 
 ### 8.1 缺口结论
 - 服务控制主流程（start/stop/restart/status）的契约化输出已落地。
@@ -165,8 +165,9 @@
 
 - [x] 原子任务 A：start/stop/restart/status 语义对齐（文本输出统一，错误输出具备 `code/message/hint` 结构）
 - [x] 原子任务 B：补全 `--json` 开关与 start/stop/restart/status 结构化输出
-- [ ] 原子任务 C：扩展错误结构到更多 CLI 资源命令并补充测试
+- [x] 原子任务 C（首批）：扩展 `--json` 到资源命令 `proxy list`，并补齐 `proxy` 路径部分错误结构
 
 验证记录（关键场景）：
 - `zig run src/main.zig -- status --json` 输出：`{"ok":true,"data":{"action":"status","state":"stopped"}}`
 - `zig run src/main.zig -- stop --json` 输出：`{"ok":true,"data":{"action":"stop","state":"stopped","detail":"already_stopped"}}`
+- `zig run src/main.zig -- proxy list -c testdata/config/minimal.yaml --json` 输出：`{"ok":true,"data":{"groups":[...]}}`
