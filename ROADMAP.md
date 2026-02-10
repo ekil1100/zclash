@@ -1,0 +1,159 @@
+# ROADMAP.md — zclash 详尽开发计划（对标并超越 mihomo/clash）
+
+## 0. 路线图说明
+
+- 本文件是**唯一开发计划来源**
+- AGENTS.md 只保留原则与协作规范
+- 计划按阶段推进，允许并行，但必须有清晰里程碑与验收口径
+
+---
+
+## Phase 0 — 基线与差距分析（1~2 周）
+
+### 目标
+先“看清楚”，建立可量化对比。
+
+### 任务
+- [ ] 梳理 mihomo/clash 能力矩阵（功能、交互、性能、稳定性）
+- [ ] 梳理 zclash 当前能力矩阵（已实现/缺失/不稳定）
+- [ ] 建立标准测试场景与样例配置集
+- [ ] 明确北极星指标与采样方法
+- [ ] 输出差距清单与优先级
+
+### 交付物
+- `docs/benchmark/baseline.md`
+- `docs/roadmap/gap-analysis.md`
+
+### 验收
+- 可清晰回答“我们比谁差、差在哪、优先补什么”
+
+---
+
+## Phase 1 — CLI 直觉化（2~3 周）
+
+### 目标
+CLI 首次使用可猜、可完成核心任务。
+
+### 任务
+- [ ] 命令模型统一：`zclash <resource> <action>` + 常见快捷模式
+- [ ] 核心命令：`start/stop/restart/status`
+- [ ] profile 命令：`list/use/import/validate`
+- [ ] proxy 命令：`list/select/test`
+- [ ] 诊断命令：`diag doctor`
+- [ ] 全面支持 `--json`
+- [ ] 错误输出统一（原因 + hint + 文档链接）
+
+### 交付物
+- `docs/cli/spec.md`
+- `docs/cli/migration.md`
+
+### 验收
+- 新用户 ≤5 分钟完成：启动 → 切换节点 → 查看状态
+
+---
+
+## Phase 2 — API 易用化（2~4 周）
+
+### 目标
+建立稳定、可集成、可文档化的 API v1。
+
+### 任务
+- [ ] 定义资源模型（runtime/profiles/proxies/connections/rules/metrics）
+- [ ] 统一错误码结构：`code/message/hint`
+- [ ] REST + WebSocket 事件流边界清晰
+- [ ] 输出 OpenAPI 并自动校验
+- [ ] 关键端点集成测试覆盖
+
+### 交付物
+- `docs/api/openapi.yaml`
+- `docs/api/error-codes.md`
+
+### 验收
+- API 可预测、版本稳定、可直接生成 SDK
+
+---
+
+## Phase 3 — TUI 易用化（2~3 周）
+
+### 目标
+让 TUI 成为“高效控制台”，不是“功能堆叠页”。
+
+### 任务
+- [ ] 信息架构重排：Overview / Proxies / Connections / Logs / Diagnose
+- [ ] 全局快捷键统一：`? / / / g / r`
+- [ ] 代理组切换与延迟对比体验优化
+- [ ] 连接筛选/排序与日志过滤
+- [ ] 重载配置后结果反馈可见
+
+### 交付物
+- `docs/tui/interaction.md`
+- `docs/tui/keymap.md`
+
+### 验收
+- 不看文档也能完成核心任务
+- 首屏 3 秒可读懂当前状态
+
+---
+
+## Phase 4 — 性能与稳定性（持续）
+
+### 目标
+在关键指标上达到或超过基线，并具备长期稳定运行能力。
+
+### 任务（性能）
+- [ ] 热路径 profiling（规则匹配、DNS、握手、转发）
+- [ ] 分配与内存行为优化
+- [ ] 连接池与并发调度优化
+
+### 任务（稳定性）
+- [ ] 热重载回滚机制
+- [ ] 故障注入（超时、抖动、节点故障）
+- [ ] 24h/72h 长稳测试
+
+### 交付物
+- `docs/perf/reports/*.md`
+- `docs/reliability/chaos-tests.md`
+
+### 验收
+- 指标稳定、可复现、无明显性能回退
+
+---
+
+## Phase 5 — 兼容与生态（并行）
+
+### 目标
+降低迁移成本，扩大可用生态。
+
+### 任务
+- [ ] mihomo/clash 配置兼容层
+- [ ] 迁移工具（lint + autofix）
+- [ ] 常见 GUI/面板接入说明
+- [ ] 样例配置库
+
+### 交付物
+- `docs/compat/mihomo-clash.md`
+- `tools/config-migrator/`
+
+### 验收
+- 常见配置可低成本迁移，且行为可解释
+
+---
+
+## 指标看板（持续更新）
+
+- 启动耗时
+- 规则匹配延迟（p50/p95）
+- 单连接与并发吞吐
+- DNS 解析耗时与命中率
+- 错误率/重试率
+- 长稳期间崩溃数与恢复时间
+
+---
+
+## 当前优先级（Now）
+
+1. 完成 Phase 0 的能力对比与差距清单
+2. 同步产出 CLI 术语与命令规范草案
+3. 锁定 API v1 资源模型与错误码方案
+4. TUI 信息架构原型
+5. 建立基础 benchmark + 回归脚本
