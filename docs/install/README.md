@@ -76,7 +76,49 @@ bash scripts/install/verify-install-env.sh
 - 失败：verify before install / upgrade without version / upgrade before install
 - 跨环境：普通用户路径 / 权限不足（模拟） / 已有安装覆盖
 
-## 6) Beta 试用注意事项（常见失败 + next-step）
+## 6) Beta 试用验收清单（人话版 + 证据路径）
+
+### A. 安装通过
+- 验收命令：
+  - `bash scripts/install/oc-run.sh install --target-dir /tmp/zclash-beta`
+- 通过条件：
+  - 输出 `INSTALL_RESULT=PASS`
+- 证据路径：
+  - `/tmp/zclash-beta/.zclash_installed`
+  - `/tmp/zclash-beta/.zclash_version`
+
+### B. 验证通过
+- 验收命令：
+  - `bash scripts/install/oc-run.sh verify --target-dir /tmp/zclash-beta`
+- 通过条件：
+  - 输出 `INSTALL_RESULT=PASS`
+  - 输出 `INSTALL_ACTION=verify`
+- 证据路径：
+  - `/tmp/zclash-beta/.zclash_installed`
+
+### C. 升级通过
+- 验收命令：
+  - `bash scripts/install/oc-run.sh upgrade --target-dir /tmp/zclash-beta --version v0.2.0`
+- 通过条件：
+  - 输出 `INSTALL_RESULT=PASS`
+  - `.zclash_version` 内容变更为目标版本
+- 证据路径：
+  - `/tmp/zclash-beta/.zclash_version`
+
+### D. 失败与回滚可操作
+- 验收命令：
+  - `bash scripts/install/verify-install-flow.sh`
+  - `bash scripts/install/verify-install-env.sh`
+- 通过条件：
+  - 失败场景输出 `INSTALL_FAILED_STEP` + `INSTALL_NEXT_STEP`
+  - 回归脚本输出整体 PASS/FAIL 汇总
+- 证据路径：
+  - `/tmp/zclash-install-regression/*`
+  - `/tmp/zclash-install-env/install-env-summary.json`
+
+---
+
+## 7) Beta 试用注意事项（常见失败 + next-step）
 
 - `INSTALL_FAILED_STEP=arg-parse`
   - 场景：命令参数不完整或 action 错误
