@@ -178,6 +178,18 @@
 - 每个动作给出结果：成功/失败/耗时
 - 失败时必须给 `下一步动作`（修复建议）
 
+### 机器输出口径（与脚本实现对齐）
+- `ROLLBACK_CHECK_RESULT=PASS|FAIL`
+- `ROLLBACK_CHECK_STATUS=<running|done|failed|...>`
+- `ROLLBACK_CHECK_COST_MS=<number>`
+- `ROLLBACK_CHECK_REPORT=<path>`
+- `ROLLBACK_CHECK_NEXT_STEP=<hint>`
+
+### 验收命令（最小）
+```bash
+bash scripts/reliability/run-rollback-check.sh
+```
+
 ---
 
 ## 3) 交互一致性约束
