@@ -76,7 +76,7 @@
 ## 预备任务：Phase 1（CLI 直觉化）
 
 ### P1-1 CLI 命令模型统一
-- 状态：DOING
+- 状态：DONE
 - 优先级：P1
 - 输出：`docs/cli/spec.md`
 - 子任务：
@@ -231,3 +231,4 @@
 - 2026-02-11 07:36（GMT+8）完成 P2-2 子任务 3：对齐 profile/proxy/diag 路径错误码到字典与 OpenAPI 枚举。
 - 2026-02-11 07:48（GMT+8）完成 P2-2 子任务 4：新增 `src/integration_error_test.zig`（profile/proxy/diag 各 1 个错误场景），断言 `code/message/hint` 结构通过。
 - 2026-02-11 08:00（GMT+8）启动 P3-1：新增 `docs/tui/interaction.md` 初稿（五区布局/快捷键一致性/首屏密度优化），并将 P3-1 更新为 DOING。
+- 2026-02-11 08:02（GMT+8）收敛看板状态：P1-1 验收子项已全量完成，状态更新为 DONE。
