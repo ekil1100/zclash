@@ -1,0 +1,30 @@
+{
+  "run_id": "migrator-samples-1770786923",
+  "status": "PASS",
+  "pass_count": 3,
+  "fail_count": 0,
+  "failed_items": [],
+  "results": [
+    {
+      "sample_id": "sample-1",
+      "input": "tools/config-migrator/examples/sample-1.yaml",
+      "result": "PASS",
+      "diff": "",
+      "hint": "ok"
+    },
+    {
+      "sample_id": "sample-2",
+      "input": "tools/config-migrator/examples/sample-2.yaml",
+      "result": "PASS",
+      "diff": "",
+      "hint": "ok"
+    },
+    {
+      "sample_id": "sample-3",
+      "input": "tools/config-migrator/examples/sample-3.yaml",
+      "result": "PASS",
+      "diff": "",
+      "hint": "ok"
+    }
+  ]
+}

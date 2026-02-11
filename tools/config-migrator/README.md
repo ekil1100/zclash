@@ -99,3 +99,21 @@ bash tools/config-migrator/verify-samples.sh
 - `status` -> `result`
 - `reason` -> `hint`
 - `autofix_output`/`*.fixed.yaml` 可用于生成 `diff`
+
+---
+
+## 6) 自动汇总脚本（P5-1E）
+
+离线复现命令：
+```bash
+bash tools/config-migrator/summarize-results.sh
+```
+
+输出：
+- `MIGRATOR_SUMMARY_RESULT=PASS|FAIL`
+- `MIGRATOR_SUMMARY_REPORT=tools/config-migrator/reports/samples-summary.json`
+
+汇总字段：
+- `pass_count` / `fail_count`
+- `failed_items[]`
+- `results[]`（使用统一字段：`sample_id/input/result/diff/hint`）
