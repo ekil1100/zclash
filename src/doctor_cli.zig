@@ -16,6 +16,8 @@ pub const DoctorData = struct {
     daemon_pid: ?i32,
     ports: [3]PortEntry,
     port_count: usize,
+    version: []const u8 = "v0.1.0",
+    network_ok: bool = false,
 };
 
 pub fn runDoctorJson(allocator: std.mem.Allocator, config_path: ?[]const u8) !void {
@@ -24,10 +26,12 @@ pub fn runDoctorJson(allocator: std.mem.Allocator, config_path: ?[]const u8) !vo
     var out = std.ArrayList(u8).empty;
     defer out.deinit(allocator);
 
-    try out.writer(allocator).print("{{\"ok\":true,\"data\":{{\"action\":\"doctor\",\"config_ok\":{s},\"config_source\":\"{s}\",\"daemon_running\":{s},\"daemon_pid\":", .{
+    try out.writer(allocator).print("{{\"ok\":true,\"data\":{{\"action\":\"doctor\",\"version\":\"{s}\",\"config_ok\":{s},\"config_source\":\"{s}\",\"daemon_running\":{s},\"network_ok\":{s},\"daemon_pid\":", .{
+        data.version,
         if (data.config_ok) "true" else "false",
         data.config_source,
         if (data.daemon_running) "true" else "false",
+        if (data.network_ok) "true" else "false",
     });
 
     if (data.daemon_pid) |pid| {
@@ -89,7 +93,14 @@ fn collectDoctorData(allocator: std.mem.Allocator, config_path: ?[]const u8) !Do
     }
 
     try fillDaemonStatus(allocator, &data);
+    data.network_ok = checkNetworkConnectivity();
     return data;
+}
+
+fn checkNetworkConnectivity() bool {
+    const stream = std.net.tcpConnectToHost(std.heap.page_allocator, "1.1.1.1", 53) catch return false;
+    stream.close();
+    return true;
 }
 
 fn fillDaemonStatus(allocator: std.mem.Allocator, data: *DoctorData) !void {
@@ -144,6 +155,7 @@ pub fn formatDoctorReport(allocator: std.mem.Allocator, data: *const DoctorData)
     try w.print("zclash doctor\n", .{});
     try w.print("{s:-^60}\n", .{""});
 
+    try w.print("Version: {s}\n", .{data.version});
     try w.print("Config: {s} ({s})\n", .{ if (data.config_ok) "OK" else "FAILED", data.config_source });
 
     if (data.daemon_running) {
@@ -157,6 +169,7 @@ pub fn formatDoctorReport(allocator: std.mem.Allocator, data: *const DoctorData)
         try w.print("Daemon: not running\n", .{});
     }
 
+    try w.print("Network: {s}\n", .{if (data.network_ok) "OK" else "UNREACHABLE"});
     try w.print("Effective ports:\n", .{});
     if (data.port_count == 0) {
         try w.print("  - none\n", .{});

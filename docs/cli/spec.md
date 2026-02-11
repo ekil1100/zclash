@@ -173,7 +173,16 @@
 - `zig run src/main.zig -- proxy list -c testdata/config/minimal.yaml --json` 输出：`{"ok":true,"data":{"groups":[...]}}`
 - `zig run src/main.zig -- proxy select -g PROXY --json -c testdata/config/minimal.yaml` 输出：`{"ok":true,"data":{"action":"proxy_select",...}}`
 - `zig run src/main.zig -- proxy test -c testdata/config/minimal.yaml --json` 输出：`{"ok":true,"data":{"action":"proxy_test",...}}`
-- `zig run src/main.zig -- diag doctor -c testdata/config/minimal.yaml --json` 输出：`{"ok":true,"data":{"action":"doctor",...}}`
+- `zig run src/main.zig -- diag doctor -c testdata/config/minimal.yaml --json` 输出：`{"ok":true,"data":{"action":"doctor","version":"v0.1.0","config_ok":...,"network_ok":...,...}}`
+
+#### doctor --json 结构化输出字段（v1.1+）
+- `version`：当前版本
+- `config_ok`：配置是否有效
+- `config_source`：配置来源
+- `daemon_running`：守护进程是否运行
+- `network_ok`：网络连通性（DNS 53 端口可达）
+- `daemon_pid`：守护进程 PID
+- `ports`：有效端口列表
 
 ---
 
