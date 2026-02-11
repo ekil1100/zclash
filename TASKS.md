@@ -513,24 +513,26 @@
 ### P7-2 [1.1] 并行泳道（与 1.0 试用期同步推进）
 - 策略文档：`docs/roadmap/1.1-planning.md`
 - 约束：不破坏 1.0 稳定性；冲突时优先 1.0；提交标注 `[1.0]` 或 `[1.1]`
-- [ ] P7-2A [1.1] 迁移规则扩展：proxy-groups 检测
-  - 范围：`tools/config-migrator/` + 回归
-  - DoD：新增 >=1 条 proxy-groups 规则 + 回归通过
-  - 风险：低
-- [ ] P7-2B [1.1] DNS 字段兼容补齐
-  - 范围：`src/` DNS + `docs/compat/`
-  - DoD：覆盖 enable/nameserver + 迁移规则 DNS_FIELD_CHECK + 回归通过
+- [x] P7-2A [1.1] 迁移规则扩展：proxy-groups 检测
+  - 产出：R3 `PROXY_GROUP_TYPE_CHECK` 规则 + 回归样例 + parity 对齐
+  - 回归：`run-regression.sh` 3/3 PASS
+- [ ] P7-2B [1.1] DNS 字段兼容补齐（实现）
+  - 范围：`src/` DNS + `tools/config-migrator/`
+  - DoD：实现 DNS_FIELD_CHECK 规则 + 回归通过
   - 风险：中（默认 off，验证后开启）
-- [ ] P7-2C [1.1] TUI 日志高亮最小实现
-  - 范围：`src/` TUI 日志渲染
-  - DoD：error/warn/info 三色 + 不破坏 `--json`
-  - 风险：低
-- [ ] P7-2D [1.1] 诊断命令增强 `zclash doctor --json`
-  - 范围：`src/doctor_cli.zig` + `docs/cli/spec.md`
-  - DoD：结构化输出版本/配置/网络/端口 4 项 + 与 trial-healthcheck 对齐
-  - 风险：低
-- 依赖关系：P7-2A/C/D 完全并行；P7-2B 条件并行（需额外验证）
-- NEXT（唯一）：P7-2A（低风险迁移规则扩展，可立即开始）
+  - 前置：P7-2B-prep 设计已完成
+- [x] P7-2B-prep [1.1] DNS 字段兼容调研与规则设计
+  - 产出：`docs/compat/mihomo-clash.md` DNS 字段映射表 + DNS_FIELD_CHECK 设计
+- [x] P7-2C [1.1] TUI 日志高亮最小实现
+  - 产出：`src/tui.zig` error(红)/warn(黄)/info(蓝) 三色 + `--json` 无影响
+  - 构建+测试通过
+- [x] P7-2D [1.1] 诊断命令增强 `zclash doctor --json`
+  - 产出：`src/doctor_cli.zig` 新增 version/network_ok 字段 + `docs/cli/spec.md` 补字段说明
+  - 构建+测试通过
+- [x] P7-2E [1.1] 回归入口接入新规则
+  - 产出：parity checker 接入 R3，`run-all.sh` 全链路 PASS
+- 依赖关系：P7-2A/C/D/B-prep 并行完成；P7-2E 串行收口
+- NEXT（唯一）：P7-2B 实现 DNS_FIELD_CHECK 规则（已有设计文档）
 
 ---
 
@@ -660,3 +662,8 @@
 - 2026-02-12 03:48（GMT+8）完成 P7-1D：新增一键健康检查（安装完整性/版本/配置/网络 4 项诊断）。
 - 2026-02-12 03:48（GMT+8）完成 P7-1E：收口本批并在 README 补试用指南入口。
 - 2026-02-12 03:54（GMT+8）口径修正：统一为"推进落地"而非"推荐"；新增 1.1 并行泳道策略文档与首批 4 个任务。
+- 2026-02-12 04:08（GMT+8）完成 P7-2A：新增 PROXY_GROUP_TYPE_CHECK 规则（R3），回归 3/3 PASS。
+- 2026-02-12 04:08（GMT+8）完成 P7-2C：TUI 日志级别三色高亮（error/warn/info）。
+- 2026-02-12 04:08（GMT+8）完成 P7-2D：doctor --json 新增 version/network_ok 字段。
+- 2026-02-12 04:08（GMT+8）完成 P7-2B-prep：DNS 字段映射表 + DNS_FIELD_CHECK 规则设计。
+- 2026-02-12 04:08（GMT+8）完成 P7-2E：parity checker 接入 R3，run-all.sh 全链路 PASS。

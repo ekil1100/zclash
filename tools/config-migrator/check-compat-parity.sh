@@ -14,7 +14,7 @@ if [[ ! -f "$COMPAT_DOC" || ! -f "$MIGRATOR_RUN" ]]; then
 fi
 
 declared_rules=$( (grep -E '^- `[^`]+`$' "$COMPAT_DOC" || true) | sed -E 's/^- `([^`]+)`$/\1/' | sort -u )
-implemented_rules=$( (grep -Eo 'PORT_TYPE_INT|LOG_LEVEL_ENUM' "$MIGRATOR_RUN" || true) | sort -u )
+implemented_rules=$( (grep -Eo 'PORT_TYPE_INT|LOG_LEVEL_ENUM|PROXY_GROUP_TYPE_CHECK' "$MIGRATOR_RUN" || true) | sort -u )
 
 missing_in_impl=$(comm -23 <(printf '%s
 ' "$declared_rules") <(printf '%s
