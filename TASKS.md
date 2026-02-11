@@ -283,7 +283,10 @@
     - DoD：3 个样例迁移输入输出与校验结果可复现
     - 预计时长：45 分钟
     - 产出：`tools/config-migrator/examples/*` + `tools/config-migrator/reports/samples-report.json`
-- 依赖：P5-1A（已完成） -> P5-1B（已完成） -> P5-1C（已完成）（串行）
+  - [x] P5-1D 迁移验证结果归档格式统一（并行预拆）
+    - DoD：统一字段 `sample_id/input/result/diff/hint`
+    - 产出：`tools/config-migrator/README.md` 第5节（兼容映射说明）
+- 依赖：P5-1A（已完成） -> P5-1B（已完成） -> P5-1C（已完成） -> P5-1D（已完成）（串行）
 
 ---
 
@@ -356,5 +359,6 @@
 - 2026-02-11 13:02（GMT+8）完成 P5-1A：新增 `docs/compat/mihomo-clash.md` 初版能力清单（按模块分组，含支持状态与 P0/P1/P2 优先级建议）；NEXT 切换为 P5-1B。
 - 2026-02-11 13:02（GMT+8）完成 P5-1B 预拆：落地 migrator lint/autofix 最小执行框架（输入输出契约 + 2条规则示例），并在 TASKS 固化与 P5-1A 串行依赖，NEXT 切换为 P5-1C。
 - 2026-02-11 13:14（GMT+8）完成 P5-1C：新增 3 个迁移样例与 `verify-samples.sh` 可复现校验脚本，输出 `MIGRATOR_SAMPLES_RESULT` 与 `reports/samples-report.json`。
+- 2026-02-11 13:14（GMT+8）完成 P5-1D 预拆：统一迁移验证归档字段（sample_id/input/result/diff/hint），并在 migrator README 增加与现有输出的兼容映射。
 - 2026-02-11 11:06（GMT+8）完成 P4-2A 预拆：在 perf README 增加 history 目录治理规则（命名/保留上限/清理方式），明确 latest 与 history 关系并提供可执行清理命令。
 - 2026-02-11 11:12（GMT+8）完成 P4-1H：在 perf README 明确热路径采样对象/窗口/样本量，补齐 3 个热路径指标采集方式，并声明 latest/history 字段兼容约束。

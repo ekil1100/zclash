@@ -65,3 +65,37 @@ bash tools/config-migrator/verify-samples.sh
 - 总结果：`MIGRATOR_SAMPLES_RESULT=PASS|FAIL`
 - 报告路径：`tools/config-migrator/reports/samples-report.json`
 - 每个样例均含 `status`（PASS/FAIL）与 `reason`
+
+---
+
+## 5) 迁移验证结果归档统一格式（P5-1D）
+
+统一字段（单样例）：
+- `sample_id`：样例标识（如 `sample-1`）
+- `input`：输入文件路径
+- `result`：`PASS|FAIL`
+- `diff`：迁移差异摘要（可为空字符串）
+- `hint`：修复或下一步建议
+
+推荐归档结构：
+```json
+{
+  "run_id": "migrator-samples-<ts>",
+  "status": "PASS|FAIL",
+  "results": [
+    {
+      "sample_id": "sample-1",
+      "input": "tools/config-migrator/examples/sample-1.yaml",
+      "result": "PASS",
+      "diff": "mixed-port: \"7890\" -> 7890",
+      "hint": "autofix applied for numeric port"
+    }
+  ]
+}
+```
+
+与现有输出兼容映射：
+- `sample` -> `sample_id`
+- `status` -> `result`
+- `reason` -> `hint`
+- `autofix_output`/`*.fixed.yaml` 可用于生成 `diff`
