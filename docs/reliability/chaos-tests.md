@@ -105,6 +105,38 @@
   - 恢复时间与健康检查结果被完整归档
 - 预计时长：20 分钟
 
+### 首轮执行步骤模板（适用于 Case-1/2/3）
+
+1) 触发（Trigger）
+- 记录 `case_id`、触发时间、触发参数
+- 执行对应注入动作（DNS/节点不可用/进程退出）
+
+2) 观测（Observe）
+- 记录核心指标变化：`rule_eval_p95_ms` / `dns_resolve_p95_ms` / `throughput_rps` / `handshake_p95_ms`
+- 记录事件字段：错误日志、告警、恢复动作触发时间
+
+3) 恢复（Recover）
+- 执行恢复动作（恢复上游、恢复节点、自动拉起确认）
+- 记录恢复完成时间与首个健康检查结果
+
+4) 判定（Judge）
+- 对照 case 级恢复判定与阈值规则，给出 PASS/FAIL
+
+### 每轮输出字段（最小）
+- `run_id`
+- `case_id`
+- `trigger_ts`
+- `recover_ts`
+- `status`（`PASS|FAIL`）
+- `failed_fields[]`
+- `recover_actions[]`
+- `duration_ms`
+- `note`
+
+### PASS/FAIL 判定（首轮）
+- PASS：触发成功 + 观测到预期异常 + 在 SLA 内恢复 + 健康检查通过
+- FAIL：任一环节缺失，或恢复超时，或恢复后健康检查失败
+
 ---
 
 ## 7) 72h 长稳测试计划（最小落地）
