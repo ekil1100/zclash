@@ -24,10 +24,10 @@
   - [x] 标注“必补项/增强项/可延后项”
 - 备注：已完成最终对齐检查（baseline vs gap-analysis）。差异已清零：DNS/观测已拆分、P0/P1/P2→ROADMAP 逐项追溯映射已显式化。结论：P0-1 满足转 DONE 条件。
 - P0-1 进入 DONE 验收清单（可打勾）：
-  - [ ] `baseline.md` 拆分 DNS 与观测为独立维度（满足“7 大维度”）
-  - [ ] `baseline.md` 每个维度均包含：基线现状 / zclash 现状 / 差距等级 / 下一步建议
-  - [ ] `baseline.md` 中 P0/P1/P2 分级项可追溯到 `docs/roadmap/gap-analysis.md`
-  - [ ] `TASKS.md` 中 P0-1 验收标准 3 项全部勾选
+  - [x] `baseline.md` 拆分 DNS 与观测为独立维度（满足“7 大维度”）
+  - [x] `baseline.md` 每个维度均包含：基线现状 / zclash 现状 / 差距等级 / 下一步建议
+  - [x] `baseline.md` 中 P0/P1/P2 分级项可追溯到 `docs/roadmap/gap-analysis.md`
+  - [x] `TASKS.md` 中 P0-1 验收标准 3 项全部勾选
 - 验收责任人：Lan（执行自检）+ Like（最终确认）
 - 验收输入文档：`docs/benchmark/baseline.md`、`docs/roadmap/gap-analysis.md`、`TASKS.md`
 
@@ -295,3 +295,4 @@
 - 2026-02-11 10:11（GMT+8）完成 P0-1 最终验收收口：三条验收标准全部勾选，P0-1 状态由 DOING 更新为 DONE（保留验收输入文档与责任人）。
 - 2026-02-11 10:11（GMT+8）完成 P4-1E：统一回归入口为 `scripts/perf-regression.sh`（转发至 run-baseline），补齐 README 本地执行与结果判读最小说明。
 - 2026-02-11 10:23（GMT+8）完成 P4-1G 收口：同步 P4-1 已完成项（含 P4-1F），明确依赖顺序，并指定唯一 NEXT 为 P4-1H（profiling 采样计划）。
+- 2026-02-11 10:29（GMT+8）完成 P4-1I：清理 P0-1 DONE 区块未勾选残留，验收清单与 DONE 状态对齐（保留验收责任人与输入路径）。
