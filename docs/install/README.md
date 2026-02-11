@@ -89,6 +89,9 @@ bash scripts/install/run-3step-smoke.sh
 
 # P6-8C 回滚失败分支验收
 bash scripts/install/verify-rollback-flow.sh
+
+# P6-8D 证据归档自动化校验（latest + history）
+bash scripts/install/verify-evidence-archive.sh
 ```
 
 回归覆盖（最小集）：
@@ -177,6 +180,15 @@ Beta checklist runner 输出（机器+人类摘要）：
 
 ## 8) Beta 证据归档规范
 
+自动化校验命令：
+```bash
+# 先生成一份最新归档（可选，但推荐）
+bash scripts/install/run-beta-checklist.sh
+
+# 再校验 archive 结构/命名/latest 指针
+bash scripts/install/verify-evidence-archive.sh
+```
+
 归档根目录：`docs/install/evidence/`
 - `history/<run_id>/`：每次 checklist 运行的归档
 - `latest`：指向最近一次运行的软链接
@@ -200,6 +212,17 @@ Beta checklist runner 输出（机器+人类摘要）：
 - `pass_rate`
 - `failed_items` (array)
 - `items` (array, each includes `id/result/evidence/note`)
+
+归档自动化校验输出：
+- `INSTALL_RESULT=PASS|FAIL`
+- `INSTALL_ACTION=evidence-archive-check`
+- `INSTALL_REPORT=<archive root>`
+- `INSTALL_FAILED_STEP=<missing checks>`
+- `INSTALL_NEXT_STEP=<hint>`
+- `INSTALL_SUMMARY=<human-readable summary>`
+- `EVIDENCE_ARCHIVE_RESULT=PASS|FAIL`
+- `EVIDENCE_ARCHIVE_MISSING=<comma-separated missing items>`
+- `EVIDENCE_ARCHIVE_LATEST_RUN_ID=<run_id>`
 
 路径矩阵回归输出（与 runner 字段口径对齐）：
 - `INSTALL_RESULT=PASS|FAIL`

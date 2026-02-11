@@ -456,6 +456,11 @@
   - DoD：统一 `INSTALL_*` 字段与 next-step，输出最小回归摘要
   - 预计时长：30 分钟
   - 产出：`scripts/install/verify-rollback-flow.sh` + `docs/install/README.md`
+- [x] P6-8D Beta 证据归档自动化（并行）
+  - 范围：自动校验 history 结构、命名规范、latest 指针
+  - DoD：输出 PASS/FAIL 与缺失项，文档给出运行方式
+  - 预计时长：30 分钟
+  - 产出：`scripts/install/verify-evidence-archive.sh` + `docs/install/README.md`
 
 - 依赖关系：
   - 串行主线：P6-7A -> P6-7C
@@ -577,3 +582,4 @@
 - 2026-02-12 02:22（GMT+8）完成 P6-8A：扩展非模拟权限失败场景到两类真实受限路径（`/var/root`、`/System`），并在 env 回归汇总中校验 `INSTALL_FAILED_STEP` + `INSTALL_NEXT_STEP` 字段。
 - 2026-02-12 02:22（GMT+8）完成 P6-8B：扩展路径矩阵覆盖异常路径冲突与已有安装覆盖，新增机读汇总字段 `INSTALL_MATRIX_FAILED_HINTS` 并提供失败样例人话提示。
 - 2026-02-12 02:23（GMT+8）完成 P6-8C：新增 `verify-rollback-flow.sh` 覆盖 rollback 成功/失败分支，统一输出 `INSTALL_*` + next-step 并产出最小摘要。
+- 2026-02-12 02:23（GMT+8）完成 P6-8D：新增 `verify-evidence-archive.sh` 自动校验 evidence history/命名/latest 指针，输出 PASS/FAIL 与缺失项，并在 README 补运行方式。
