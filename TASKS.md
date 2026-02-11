@@ -246,7 +246,10 @@
   - [x] P4-2F 24h/72h 长稳执行入口脚手架
     - 执行：`bash scripts/reliability/run-soak.sh <24|72>`
     - 输出：`SOAK_RUN_RESULT` + `SOAK_RUN_REPORT`，归档 `docs/perf/reports/history/*soak-<24|72>h*.json`
-- NEXT（唯一）：无（P4-2 执行项待新一轮派发）
+  - [x] P4-2G 24h 长稳正式执行
+    - 执行：`bash scripts/reliability/run-soak.sh 24`
+    - 结果：`SOAK_RUN_RESULT=PASS`，归档 `docs/perf/reports/history/2026-02-11-soak-24h-1770784756.json`
+- NEXT（唯一）：72h 长稳正式执行（`bash scripts/reliability/run-soak.sh 72`）
 - 依赖关系（P4-2 内）：
   - 并行：24h 长稳计划 与 故障注入用例清单 可并行准备
   - 串行：故障注入与恢复验证 依赖 用例清单与执行框架先完成
@@ -330,5 +333,6 @@
 - 2026-02-11 12:14（GMT+8）完成 P4-2E 准备：在 `chaos-tests.md` 定义热重载回滚触发条件/观测点/成功判定，并显式关联首轮故障注入归档产物；更新 P4-2 NEXT 与串行顺序。
 - 2026-02-11 12:26（GMT+8）完成热重载回滚验证执行：新增 `scripts/reliability/run-rollback-check.sh`，执行 1 轮并归档 `docs/perf/reports/history/*rollback-check*.json`，输出 PASS/FAIL 与关键观测字段。
 - 2026-02-11 12:26（GMT+8）完成 P4-2F：新增 `scripts/reliability/run-soak.sh`（24/72h 执行入口脚手架），定义输出字段与归档路径，并在 TASKS 标注与热重载回滚验证依赖关系。
+- 2026-02-11 12:38（GMT+8）完成 P4-2G：执行 `bash scripts/reliability/run-soak.sh 24`，输出 `SOAK_RUN_RESULT=PASS`，归档 `docs/perf/reports/history/2026-02-11-soak-24h-1770784756.json`，下一步为 72h 长稳正式执行。
 - 2026-02-11 11:06（GMT+8）完成 P4-2A 预拆：在 perf README 增加 history 目录治理规则（命名/保留上限/清理方式），明确 latest 与 history 关系并提供可执行清理命令。
 - 2026-02-11 11:12（GMT+8）完成 P4-1H：在 perf README 明确热路径采样对象/窗口/样本量，补齐 3 个热路径指标采集方式，并声明 latest/history 字段兼容约束。
