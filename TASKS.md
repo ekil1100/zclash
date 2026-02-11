@@ -359,10 +359,13 @@
 - 优先级：P6
 - 输出：`docs/install/`, `scripts/install/`
 - 子任务：
+  - [x] P6-2A 一键安装最小方案契约（install/verify/upgrade）
+    - 输出：`docs/install/README.md` + `scripts/install/oc-{install,verify,upgrade}.sh`
+    - 契约：输入/输出/失败 next-step + 3 条可执行验收命令
   - [x] P6-2B 安装链路风险清单与回滚策略草案（并行）
     - 输出：`docs/install/risk-rollback.md`
     - 口径：问题 -> next-step -> 回滚建议（与现有排障口径一致）
-- NEXT（唯一）：P6-2A 一键安装最小方案契约（install/verify/upgrade）
+- NEXT（唯一）：P6-2C 一键入口 `oc-run.sh` 串联 install/verify/upgrade
 
 ---
 
@@ -456,3 +459,4 @@
 - 2026-02-11 11:06（GMT+8）完成 P4-2A 预拆：在 perf README 增加 history 目录治理规则（命名/保留上限/清理方式），明确 latest 与 history 关系并提供可执行清理命令。
 - 2026-02-11 11:12（GMT+8）完成 P4-1H：在 perf README 明确热路径采样对象/窗口/样本量，补齐 3 个热路径指标采集方式，并声明 latest/history 字段兼容约束。
 - 2026-02-11 22:51（GMT+8）完成 P6-2B：新增安装链路风险清单与回滚策略草案（权限/路径/依赖/平台），并在 TASKS 建立 P6-2 分组与 NEXT 指向 P6-2A。
+- 2026-02-11 23:03（GMT+8）完成 P6-2A：冻结 install/verify/upgrade 最小契约与脚本命名约定，补齐 3 条可执行验收命令；NEXT 切换为 P6-2C（统一一键入口）。
