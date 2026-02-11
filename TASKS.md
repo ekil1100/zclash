@@ -203,6 +203,7 @@
   - 并行：P4-2 与 P4-1 可并行（不阻塞 P4-1 主线）
 - 已完成项（归档）：P4-1A / P4-1B / P4-1C / P4-1D / P4-1E / P4-1F / P4-1J / P4-1K / P4-1L / P4-1M。
 - 参考入口命令：`bash scripts/perf-regression.sh --check-consistency`
+- 入口验证结果（2026-02-11 10:54 GMT+8）：`PERF_README_CONSISTENCY=PASS`（一致性检查已被统一入口实际调用）
 
 ### P4-2 长稳与故障注入
 - 状态：TODO
@@ -278,3 +279,4 @@
 - 2026-02-11 10:34（GMT+8）完成 P4-1L：重排 P4-1 列表仅保留未完成项，已完成项归档到备注；保留唯一 NEXT 与并行/串行依赖，不扩新范围。
 - 2026-02-11 10:42（GMT+8）完成 P4-1M：将 README/脚本一致性检查接入统一入口 `scripts/perf-regression.sh --check-consistency`，输出 PASS/FAIL + 失败字段明细，并在 TASKS 记录入口命令。
 - 2026-02-11 10:43（GMT+8）完成 P4-1N：P4-1 最小化收口，仅保留可执行下一项（P4-1H）；完成项归档精简并保留依赖说明。
+- 2026-02-11 10:54（GMT+8）执行 P4-1M 入口验证：通过统一命令 `bash scripts/perf-regression.sh --check-consistency` 实测一致性检查链路，结果 `PERF_README_CONSISTENCY=PASS`。
