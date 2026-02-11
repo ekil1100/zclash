@@ -532,7 +532,51 @@
 - [x] P7-2E [1.1] 回归入口接入新规则
   - 产出：parity checker 接入 R3，`run-all.sh` 全链路 PASS
 - 依赖关系：P7-2A/C/D/B-prep 并行完成；P7-2E 串行收口
-- NEXT（唯一）：P7-2B 实现 DNS_FIELD_CHECK 规则（已有设计文档）
+- [x] P7-2B [1.1] DNS 字段兼容实现
+  - 产出：R4 `DNS_FIELD_CHECK` 规则（enable/nameserver/enhanced-mode） + 回归样例 + parity 对齐
+  - 回归：`run-all.sh` 4/4 PASS
+
+### P7-3 [1.0] Beta 准入基础设施
+- [x] P7-3A [1.0] CI workflow 验证
+  - 产出：`.github/workflows/ci.yml` 新增 install regression 步骤
+  - 验证：本地 build+test+migrator+install 全 PASS
+- [x] P7-3B [1.0] Beta 准入自检脚本
+  - 产出：`scripts/run-beta-gate.sh` 一键跑 build/test/migrator/install 4 项
+  - 回归：4/4 PASS
+- [x] P7-3C [1.0] README 补充 Beta 状态与安装说明
+  - 产出：README 增加 Beta 状态、安装入口、反馈入口
+- [x] P7-3D [1.0] P7 收口 + P8 第一批拆解
+  - 产出：TASKS.md P7 close-ready + P8 首批任务
+- P7 结论：close-ready（P7-1 试用文档 + P7-2 [1.1] 功能推进 + P7-3 [1.0] 准入基础设施全部完成）
+
+### P8 第一批任务（1.0 收口 + 1.1 功能推进）
+
+- [ ] P8-1A [1.0] 迁移边界文档补齐
+  - 范围：`docs/compat/mihomo-clash.md`
+  - DoD：补齐 3+ 个"不能迁"的边界场景（含绕行建议）；与能力清单一致
+  - 预估：2h
+
+- [ ] P8-1B [1.1] 迁移规则扩展：dns.nameserver 格式校验
+  - 范围：`tools/config-migrator/` + 回归
+  - DoD：检测 nameserver 中无效格式（如纯 IP 缺少协议前缀）；回归通过
+  - 预估：1-2h
+
+- [ ] P8-1C [1.1] `zclash doctor` 增加配置路径输出
+  - 范围：`src/doctor_cli.zig`
+  - DoD：`--json` 输出新增 `config_path` 字段（实际使用的配置文件绝对路径）；构建+测试通过
+  - 预估：1h
+
+- [ ] P8-1D [1.0] Beta gate 增加 zig build test 失败详情
+  - 范围：`scripts/run-beta-gate.sh`
+  - DoD：失败时输出具体 test 名称和错误信息（不止 FAIL）
+  - 预估：1h
+
+- [ ] P8-1E [1.1] 迁移规则扩展：proxy-groups 空 proxies 检测
+  - 范围：`tools/config-migrator/` + 回归
+  - DoD：检测 proxy-groups 中 proxies 为空或缺失的组；回归通过
+  - 预估：1h
+
+- NEXT（唯一）：P8-1A（1.0 迁移边界文档，优先收敛 1.0 准入条件）
 
 ---
 
@@ -667,3 +711,8 @@
 - 2026-02-12 04:08（GMT+8）完成 P7-2D：doctor --json 新增 version/network_ok 字段。
 - 2026-02-12 04:08（GMT+8）完成 P7-2B-prep：DNS 字段映射表 + DNS_FIELD_CHECK 规则设计。
 - 2026-02-12 04:08（GMT+8）完成 P7-2E：parity checker 接入 R3，run-all.sh 全链路 PASS。
+- 2026-02-12 04:48（GMT+8）完成 P7-2B：实现 DNS_FIELD_CHECK 规则（R4），回归 4/4 PASS。
+- 2026-02-12 04:48（GMT+8）完成 P7-3A：CI 新增 install regression 步骤，本地全链路验证 PASS。
+- 2026-02-12 04:48（GMT+8）完成 P7-3B：新增 Beta 准入自检脚本 run-beta-gate.sh，4/4 PASS。
+- 2026-02-12 04:48（GMT+8）完成 P7-3C：README 补充 Beta 状态、安装入口、反馈入口。
+- 2026-02-12 04:48（GMT+8）完成 P7-3D：P7 close-ready + P8 第一批 5 个原子任务拆解。
