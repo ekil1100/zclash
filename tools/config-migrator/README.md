@@ -137,6 +137,11 @@ bash tools/config-migrator/summarize-results.sh
 bash tools/config-migrator/run-regression.sh
 ```
 
+全链路单入口（P6-1A-2）：
+```bash
+bash tools/config-migrator/run-all.sh
+```
+
 覆盖范围：
 - R1 `PORT_TYPE_INT`（verify-r1）
 - R2 `LOG_LEVEL_ENUM`（lint + suggested=info）
@@ -151,6 +156,7 @@ bash tools/config-migrator/run-regression.sh
 归档兼容：
 - 回归入口直接写 `samples-summary.json`，字段兼容统一格式：
   `sample_id/input/result/diff/hint`
+- `run-all.sh` 复用 `run-regression.sh` 输出，不改变 fail-fast 与人类摘要字段。
 
 ---
 
