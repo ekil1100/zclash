@@ -1,0 +1,41 @@
+{
+  "run_id": "chaos-round-1770783463",
+  "timestamp": "2026-02-11T04:17:43Z",
+  "phase": "fault-injection-round-1",
+  "status": "PASS",
+  "results": [
+{
+  "run_id": "chaos-round-1770783463",
+  "case_id": "Case-1-DNS-timeout",
+  "trigger_ts": "2026-02-11T04:17:43Z",
+  "recover_ts": "2026-02-11T04:17:43Z",
+  "status": "PASS",
+  "failed_fields": [],
+  "recover_actions": ["simulated_recover"],
+  "duration_ms": 100,
+  "note": "dry-run execution: trigger/observe/recover simulated"
+},
+{
+  "run_id": "chaos-round-1770783463",
+  "case_id": "Case-2-proxy-unavailable",
+  "trigger_ts": "2026-02-11T04:17:43Z",
+  "recover_ts": "2026-02-11T04:17:43Z",
+  "status": "PASS",
+  "failed_fields": [],
+  "recover_actions": ["simulated_recover"],
+  "duration_ms": 100,
+  "note": "dry-run execution: trigger/observe/recover simulated"
+},
+{
+  "run_id": "chaos-round-1770783463",
+  "case_id": "Case-3-process-exit",
+  "trigger_ts": "2026-02-11T04:17:43Z",
+  "recover_ts": "2026-02-11T04:17:43Z",
+  "status": "PASS",
+  "failed_fields": [],
+  "recover_actions": ["simulated_recover"],
+  "duration_ms": 100,
+  "note": "dry-run execution: trigger/observe/recover simulated"
+}
+  ]
+}

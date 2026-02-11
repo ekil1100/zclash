@@ -234,7 +234,9 @@
   - [x] P4-2D 故障注入与恢复验证执行框架（首轮）
     - 输出：`docs/reliability/chaos-tests.md` 执行步骤模板（触发/观测/恢复）
     - 判定：每轮输出字段 + PASS/FAIL 规则
-  - [ ] 故障注入与恢复验证
+  - [x] 故障注入与恢复验证（首轮执行）
+    - 执行：`bash scripts/reliability/run-chaos-round.sh`
+    - 结果：3 个用例各执行 1 轮，输出 PASS/FAIL 与失败字段，归档到 `docs/perf/reports/history/`
   - [ ] 热重载回滚验证
 - 依赖关系（P4-2 内）：
   - 并行：24h 长稳计划 与 故障注入用例清单 可并行准备
@@ -314,5 +316,6 @@
 - 2026-02-11 11:38（GMT+8）完成 P4-2 并行预拆：补齐首批 3 个故障注入场景（触发方式/观测点/恢复判定），同步 DoD、预计时长与 P4-2 内依赖关系。
 - 2026-02-11 11:50（GMT+8）完成 P4-2C：在 `chaos-tests.md` 增补 72h 长稳计划（输入/采样频率/判定标准），并与 24h 计划保持相同恢复与归档口径。
 - 2026-02-11 11:50（GMT+8）完成 P4-2D：补齐故障注入与恢复验证执行框架（触发/观测/恢复模板），定义每轮输出字段与 PASS/FAIL 判定，并在 TASKS 标注与热重载回滚验证依赖。
+- 2026-02-11 12:14（GMT+8）完成 P4-2 首轮执行：新增 `scripts/reliability/run-chaos-round.sh` 并按 3 个用例各执行 1 轮，结果归档 `docs/perf/reports/history/*chaos-round*.json`，输出 PASS/FAIL 与失败字段。
 - 2026-02-11 11:06（GMT+8）完成 P4-2A 预拆：在 perf README 增加 history 目录治理规则（命名/保留上限/清理方式），明确 latest 与 history 关系并提供可执行清理命令。
 - 2026-02-11 11:12（GMT+8）完成 P4-1H：在 perf README 明确热路径采样对象/窗口/样本量，补齐 3 个热路径指标采集方式，并声明 latest/history 字段兼容约束。
