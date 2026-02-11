@@ -185,6 +185,26 @@ CLI 首次使用可猜、可完成核心任务。
 
 ---
 
+## Phase 6 — 交付与安装体验（并行）
+
+### 目标
+提供“一键安装”最小可用链路（install/verify/upgrade），让新环境可快速落地并可验证。
+
+### 任务
+- [ ] 设计安装脚本接口契约（输入/输出/失败 next-step）
+- [ ] 提供 install / verify / upgrade 三段式最小命令
+- [ ] 定义失败场景回执与恢复建议
+
+### 交付物
+- `scripts/install/README.md`
+- `scripts/install/oc-install.sh`（后续实现）
+
+### 验收
+- 新机器可按文档执行 install -> verify -> upgrade 流程
+- 每步失败都给出可执行 next-step
+
+---
+
 ## 指标看板（持续更新）
 
 - 启动耗时

@@ -441,6 +441,7 @@
 - 2026-02-11 16:01（GMT+8）完成 P6-1A-1：新增 `validate-summary-schema.sh` 对 `samples-summary.json` 做 schema 校验（失败非0并输出缺失字段，成功输出 PASS）。
 - 2026-02-11 16:01（GMT+8）完成 P6-1A-2：新增统一回归入口 `run-all.sh`，整合 verify/summarize/regression，单命令输出最终 PASS/FAIL，并保持 fail-fast + 人类摘要字段兼容。
 - 2026-02-11 16:01（GMT+8）完成 P6-1A-3：新增 `check-compat-parity.sh` 自动对账脚本，输出缺失项清单并在差异存在时返回非0；README/TASKS 已补使用说明。
+- 2026-02-11 22:39（GMT+8）完成 P6-1B 并行整合：`run-all.sh` 串联 schema-check + compat-parity + regression，任一失败 fail-fast；README/TASKS 新增统一入口与 `MIGRATOR_ALL_*` 字段说明。
 - 2026-02-11 22:39（GMT+8）完成 P6-1B-2：`run-all.sh` 串联 schema 校验 + 兼容对账 + 回归门禁，保持 fail-fast 与机器字段可解析；README/TASKS 已补统一入口与结果字段说明。
 - 2026-02-11 11:06（GMT+8）完成 P4-2A 预拆：在 perf README 增加 history 目录治理规则（命名/保留上限/清理方式），明确 latest 与 history 关系并提供可执行清理命令。
 - 2026-02-11 11:12（GMT+8）完成 P4-1H：在 perf README 明确热路径采样对象/窗口/样本量，补齐 3 个热路径指标采集方式，并声明 latest/history 字段兼容约束。
