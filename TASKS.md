@@ -562,7 +562,48 @@
 - [x] P8-1E [1.1] proxy-groups 空 proxies 检测
   - 产出：R6 `PROXY_GROUP_EMPTY_PROXIES` 规则 + 回归样例
 - 回归：`run-all.sh` 6/6 PASS，`run-beta-gate.sh` 4/4 PASS
-- NEXT（唯一）：P8-2（继续 1.0 收敛 + 1.1 功能推进，等待下一轮派发）
+### P8-2（1.0 准入验收 + 1.1 继续推进）
+- [x] P8-2A [1.0] 1.0 准入条件逐项验收
+  - 产出：`docs/roadmap/1.0-readiness-audit.md`（8 项中 6 项已满足，72h 长稳是唯一阻塞）
+- [x] P8-2B [1.1] TUN_ENABLE_CHECK 规则
+  - 产出：R7 规则 + 回归样例，回归 7/7 PASS
+- [x] P8-2C [1.0] 三合一总验证脚本
+  - 产出：`scripts/run-full-validation.sh`（install+migrator+beta-gate），3/3 PASS
+- [x] P8-2D [1.1] doctor 增加 proxy_reachable
+  - 产出：`--json` 新增 `proxy_reachable` 字段（本地端口监听检测）
+- [x] P8-2E 收口 + P9 拆解
+  - 产出：TASKS.md P8 close-ready + P9 首批任务
+- P8 结论：close-ready
+- 迁移规则总览：R1-R7 共 7 条，覆盖 port/log/proxy-group/dns/tun
+
+### P9 第一批任务（1.0 最终收口 + 1.1 继续）
+
+- [ ] P9-1A [1.0] 24h 长稳测试准备：真实配置 + 启动脚本
+  - 范围：`scripts/reliability/` + `docs/reliability/`
+  - DoD：准备可用的代理配置 + 24h soak 启动命令 + 监控采集脚本；可一键启动
+  - 预估：2h
+
+- [ ] P9-1B [1.1] 迁移规则扩展：external-controller 格式校验
+  - 范围：`tools/config-migrator/` + 回归
+  - DoD：检测 external-controller 格式（host:port）+ 回归通过
+  - 预估：1h
+
+- [ ] P9-1C [1.1] doctor 增加配置校验详情输出
+  - 范围：`src/doctor_cli.zig`
+  - DoD：`--json` 新增 `config_errors` 数组（从 validator 获取错误列表）；构建+测试通过
+  - 预估：2h
+
+- [ ] P9-1D [1.0] CI 增加 full-validation 步骤
+  - 范围：`.github/workflows/ci.yml`
+  - DoD：CI 中调用 `run-full-validation.sh`；本地验证通过
+  - 预估：0.5h
+
+- [ ] P9-1E [1.1] 迁移规则扩展：allow-lan + bind-address 语义检测
+  - 范围：`tools/config-migrator/` + 回归
+  - DoD：检测 allow-lan=false 时 bind-address 非 127.0.0.1 的矛盾配置；回归通过
+  - 预估：1h
+
+- NEXT（唯一）：P9-1A（1.0 唯一阻塞项：长稳测试准备）
 
 ---
 
@@ -707,3 +748,8 @@
 - 2026-02-12 05:10（GMT+8）完成 P8-1C：doctor --json 新增 config_path 字段。
 - 2026-02-12 05:10（GMT+8）完成 P8-1D：Beta gate 失败时输出错误详情。
 - 2026-02-12 05:10（GMT+8）完成 P8-1E：R6 PROXY_GROUP_EMPTY_PROXIES 规则。
+- 2026-02-12 05:30（GMT+8）完成 P8-2A：1.0 准入审计（6/8 满足，72h 长稳唯一阻塞）。
+- 2026-02-12 05:30（GMT+8）完成 P8-2B：R7 TUN_ENABLE_CHECK 规则。
+- 2026-02-12 05:30（GMT+8）完成 P8-2C：三合一总验证脚本 run-full-validation.sh。
+- 2026-02-12 05:30（GMT+8）完成 P8-2D：doctor --json 新增 proxy_reachable。
+- 2026-02-12 05:30（GMT+8）完成 P8-2E：P8 close-ready + P9 首批 5 个任务拆解。
