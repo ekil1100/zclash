@@ -74,14 +74,15 @@ docs/perf/reports/
 ## 5) 回归执行入口（本地 / CI 一致）
 
 ### 5.1 本地入口
-- 命令：`bash scripts/perf/run-baseline.sh`
+- 命令：`bash scripts/perf-regression.sh`
 - 约定：
+  - `scripts/perf-regression.sh` 作为统一入口，内部转发到 `scripts/perf/run-baseline.sh`
   - 读取本文件定义的指标阈值
   - 输出 `docs/perf/reports/latest.json`
   - 同步归档到 `docs/perf/reports/history/`
 
 ### 5.2 CI 入口
-- 命令：`bash scripts/perf/run-baseline.sh`
+- 命令：`bash scripts/perf-regression.sh`
 - 约定：
   - 与本地完全同命令、同参数口径
   - CI 仅负责执行与门禁，不维护另一套脚本逻辑
@@ -93,6 +94,13 @@ docs/perf/reports/
 - **失败判定**：
   1) 脚本退出码非 `0`
   2) 任一关键指标越阈值
+
+### 5.4 本地执行与结果判读（最小）
+1) 执行：`bash scripts/perf-regression.sh`
+2) 终端判读：
+   - `PERF_REGRESSION_RESULT=PASS` → 本轮通过
+   - `PERF_REGRESSION_RESULT=FAIL` → 本轮失败
+3) 文件判读：查看 `docs/perf/reports/latest.json` 中各指标的 `value/threshold/pass`。
 
 ---
 

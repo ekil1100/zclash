@@ -199,7 +199,7 @@
     - DoD：脚本可执行并输出占位指标（`rule_eval_p95_ms` / `dns_p95_ms` / `throughput_rps`）与阈值占位
     - 预计时长：30-50 分钟
   - [x] P4-1B 回归执行入口定义（本地/CI）
-    - 命令统一：`bash scripts/perf/run-baseline.sh`
+    - 命令统一：`bash scripts/perf-regression.sh`
     - 判定标准：exit code + 关键指标阈值
     - 引用：`docs/perf/reports/README.md` 第5节（入口）与第6节（脚本接入）
   - [x] P4-1C 指标阈值占位收敛（可执行化）
@@ -207,9 +207,12 @@
     - 新增：失败后处理建议（定位路径/放宽阈值规则）
     - 引用：`docs/perf/reports/README.md` 第4节与第7节
   - [x] P4-1D perf 回归脚本入口占位
-    - 入口：`scripts/perf/run-baseline.sh`（与文档命令一致）
+    - 入口：`scripts/perf-regression.sh`（统一入口，转发到 `scripts/perf/run-baseline.sh`）
     - 协议：输出 `PERF_REGRESSION_RESULT=PASS|FAIL`，exit code 0/非0 对应 PASS/FAIL
     - 边界：仅占位，不实现真实采样与阈值计算逻辑
+  - [x] P4-1E 占位脚本与文档对齐校验
+    - 校验：脚本入口与 README 命令一致
+    - 新增：本地执行与结果判读最小说明
   - [ ] 热路径 profiling
   - [ ] 性能回归基线脚本
   - [ ] 回归门禁阈值
@@ -281,3 +284,4 @@
 - 2026-02-11 10:05（GMT+8）完成 P0-1 收口差异修复A：`baseline.md` 已将 DNS 与观测拆分为独立维度，并补齐维度描述；P0-1 剩余差异收敛为“追溯映射待显式化”。
 - 2026-02-11 10:05（GMT+8）完成 P0-1 收口差异修复B：在 `gap-analysis.md` 显式补齐 P0/P1/P2→ROADMAP 逐项映射；P0-1 差异清零，满足转 DONE 条件。
 - 2026-02-11 10:11（GMT+8）完成 P0-1 最终验收收口：三条验收标准全部勾选，P0-1 状态由 DOING 更新为 DONE（保留验收输入文档与责任人）。
+- 2026-02-11 10:11（GMT+8）完成 P4-1E：统一回归入口为 `scripts/perf-regression.sh`（转发至 run-baseline），补齐 README 本地执行与结果判读最小说明。
