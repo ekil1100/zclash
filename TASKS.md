@@ -421,11 +421,11 @@
   - DoD：输出 `INSTALL_RESULT=FAIL` + `INSTALL_FAILED_STEP` + `INSTALL_NEXT_STEP`
   - 预计时长：35 分钟
   - 产出：`scripts/install/verify-install-env.sh` + 报告样例
-- [ ] P6-7B 多平台路径矩阵（并行）
+- [x] P6-7B 多平台路径矩阵（并行）
   - 范围：补齐 `/usr/local/bin`、`~/.local/bin`、自定义目录差异验证
   - DoD：回归输出平台/路径维度汇总 JSON
   - 预计时长：40 分钟
-  - 产出：`scripts/install/verify-install-env.sh` + `docs/install/README.md`
+  - 产出：`scripts/install/verify-install-path-matrix.sh` + `docs/install/README.md`
 - [ ] P6-7C 回滚动作脚本化（串行，依赖 P6-7A）
   - 范围：新增最小 rollback 脚本，支持清理安装标记/版本/shim
   - DoD：成功/失败均输出机器字段与 next-step
@@ -550,3 +550,4 @@
 - 2026-02-12 00:31（GMT+8）完成 P6-5B：安装 README 增补 Beta 验收清单（安装/验证/升级/失败回滚），每项附验收命令与证据路径，并与 runner/回归脚本输出口径对齐。
 - 2026-02-12 01:07（GMT+8）完成 P6-6E：收口 P6 安装链路本批结论（done/remaining），预拆下一批 P6-7 原子任务（范围/DoD/预计时长），并明确唯一 NEXT 与串并行关系。
 - 2026-02-12 01:47（GMT+8）完成 P6-7A：新增非模拟权限验证（真实受限路径）并保留模拟兜底场景；失败输出 `INSTALL_RESULT=FAIL` + `INSTALL_FAILED_STEP` + `INSTALL_NEXT_STEP`。
+- 2026-02-12 01:47（GMT+8）完成 P6-7B：新增多平台路径矩阵回归脚本（`/usr/local/bin` 风格、`~/.local/bin`、自定义路径），输出 PASS/FAIL 汇总与失败样例并保持 `INSTALL_*` 字段口径一致。

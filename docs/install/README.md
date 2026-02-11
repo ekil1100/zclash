@@ -75,6 +75,9 @@ bash scripts/install/run-beta-checklist.sh
 
 # P6-7A 非模拟权限验证（真实受限路径，预期 FAIL 且含 next-step）
 bash scripts/install/oc-run.sh install --target-dir /var/root/zclash-install-test
+
+# P6-7B 多平台路径矩阵（3类路径组合）
+bash scripts/install/verify-install-path-matrix.sh
 ```
 
 回归覆盖（最小集）：
@@ -159,3 +162,12 @@ Beta checklist runner 输出（机器+人类摘要）：
 - `BETA_CHECKLIST_REPORT=<summary.json path>`
 - `BETA_CHECKLIST_EVIDENCE=<comma-separated evidence roots>`
 - `BETA_CHECKLIST_SUMMARY=<human-readable summary>`
+
+路径矩阵回归输出（与 runner 字段口径对齐）：
+- `INSTALL_RESULT=PASS|FAIL`
+- `INSTALL_ACTION=path-matrix`
+- `INSTALL_REPORT=<summary.json path>`
+- `INSTALL_FAILED_STEP=<failed case ids>`
+- `INSTALL_NEXT_STEP=<hint>`
+- `INSTALL_MATRIX_FAILED_SAMPLES=<comma-separated ids>`
+- `INSTALL_SUMMARY=<human-readable summary>`
