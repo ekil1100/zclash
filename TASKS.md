@@ -318,7 +318,32 @@
     - 输出：新增 `MIGRATOR_REGRESSION_SUMMARY`（总数/失败规则/失败样例）
     - 兼容：机器字段保持不变（向后兼容）
 - 依赖：P5-1A（已完成） -> P5-1B（已完成） -> P5-1C（已完成） -> P5-1D（已完成） -> P5-1E（已完成） -> P5-1F（已完成） -> P5-1G（已完成） -> P5-2B（已完成） -> P5-2C（已完成） -> P5-2D（已完成） -> P5-3A（已完成） -> P5-4B（已完成）（串行）
-- NEXT（唯一）：无（P5 首批规则与门禁收口已完成，等待下一轮派发）
+- NEXT（唯一）：P6-1A 任务 1（migrator 回归报告 schema 校验）
+
+---
+
+## 预备任务：Phase 6（迁移链路工程化）
+
+### P6-1 迁移回归工程化（第一批3项原子任务）
+- 状态：DOING
+- 优先级：P6
+- 输出：`tools/config-migrator/`, `docs/compat/`
+- 原子任务：
+  - [ ] P6-1A-1 migrator 回归报告 schema 校验（NEXT）
+    - 范围：为 `samples-summary.json` 增加 schema 校验脚本与最小校验规则
+    - DoD：校验失败返回非0，输出缺失字段名；校验通过输出 PASS
+    - 预计时长：30 分钟
+  - [ ] P6-1A-2 migrator 回归命令统一封装
+    - 范围：统一 `verify-samples` / `summarize-results` / `run-regression` 入口
+    - DoD：单命令完成全链路并输出最终 PASS/FAIL
+    - 预计时长：35 分钟
+  - [ ] P6-1A-3 兼容清单与规则实现自动对账
+    - 范围：比对 `docs/compat/mihomo-clash.md` 与已实现规则清单
+    - DoD：输出“已声明未实现 / 已实现未声明”差异列表
+    - 预计时长：40 分钟
+- 依赖：
+  - 串行：P6-1A-1（NEXT） -> P6-1A-2 -> P6-1A-3
+  - 并行：Phase 5 历史维护可并行，不阻塞 P6-1 主线
 
 ---
 
@@ -402,5 +427,6 @@
 - 2026-02-11 14:14（GMT+8）完成 P5-3B：在 migrator README 文档化 R1/R2 输入条件、修复策略与限制，补充 lint/autofix/regression 最小命令示例并对齐当前脚本行为。
 - 2026-02-11 14:25（GMT+8）重复派发确认：P5-3A/P5-3B 均已完成，回执对应 commit 为 `0de15ed` / `ec89df9`。
 - 2026-02-11 14:38（GMT+8）完成 P5-4B：在 fail-fast 输出上新增人类友好摘要 `MIGRATOR_REGRESSION_SUMMARY`（总数/失败规则/失败样例），并保持机器字段向后兼容。
+- 2026-02-11 14:50（GMT+8）完成 P6-1A 第一批任务清单落地：新增 3 个原子任务（范围/DoD/预计时长），指定唯一 NEXT 为 `P6-1A-1`，并标注串行/并行依赖。
 - 2026-02-11 11:06（GMT+8）完成 P4-2A 预拆：在 perf README 增加 history 目录治理规则（命名/保留上限/清理方式），明确 latest 与 history 关系并提供可执行清理命令。
 - 2026-02-11 11:12（GMT+8）完成 P4-1H：在 perf README 明确热路径采样对象/窗口/样本量，补齐 3 个热路径指标采集方式，并声明 latest/history 字段兼容约束。
