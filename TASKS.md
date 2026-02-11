@@ -143,13 +143,18 @@
 ## 预备任务：Phase 3（TUI 易用化）
 
 ### P3-1 信息架构重排
-- 状态：TODO
+- 状态：DOING
 - 优先级：P3
 - 输出：`docs/tui/interaction.md`
+- 验收标准（Acceptance Criteria / DoD）：
+  - [ ] 五区布局定义可评审且可实现（Overview/Proxies/Connections/Logs/Diagnose）
+  - [ ] 全局快捷键一致性原则明确（含冲突与提示约束）
+  - [ ] 首屏信息密度优化原则可执行（含优先级和展示边界）
 - 子任务：
-  - [ ] Overview/Proxies/Connections/Logs/Diagnose 五区布局
-  - [ ] 全局快捷键统一
-  - [ ] 首屏信息密度优化
+  - [x] Overview/Proxies/Connections/Logs/Diagnose 五区布局
+  - [x] 全局快捷键统一
+  - [x] 首屏信息密度优化
+- 备注：`docs/tui/interaction.md` 初稿已完成，下一步进入 P3-2 键位与交互细化。
 
 ### P3-2 核心交互增强
 - 状态：TODO
@@ -225,3 +230,4 @@
 - 2026-02-11 07:24（GMT+8）完成 P2-2 子任务 2：将错误码字典映射到 OpenAPI（x-error-code-dictionary + ErrorResponse.code enum）。
 - 2026-02-11 07:36（GMT+8）完成 P2-2 子任务 3：对齐 profile/proxy/diag 路径错误码到字典与 OpenAPI 枚举。
 - 2026-02-11 07:48（GMT+8）完成 P2-2 子任务 4：新增 `src/integration_error_test.zig`（profile/proxy/diag 各 1 个错误场景），断言 `code/message/hint` 结构通过。
+- 2026-02-11 08:00（GMT+8）启动 P3-1：新增 `docs/tui/interaction.md` 初稿（五区布局/快捷键一致性/首屏密度优化），并将 P3-1 更新为 DOING。
