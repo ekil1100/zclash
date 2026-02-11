@@ -289,7 +289,17 @@
   - [x] P5-1E 样例迁移验证结果自动汇总脚本
     - DoD：输出 PASS/FAIL 统计 + 失败项清单，并兼容统一归档字段
     - 产出：`tools/config-migrator/summarize-results.sh` + `tools/config-migrator/reports/samples-summary.json`
-- 依赖：P5-1A（已完成） -> P5-1B（已完成） -> P5-1C（已完成） -> P5-1D（已完成） -> P5-1E（已完成）（串行）
+  - [x] P5-1F 首批规则实现顺序定义（并行预拆）
+    - 串行顺序：R1 `PORT_TYPE_INT` -> R2 `LOG_LEVEL_ENUM`
+    - 并行项：样例回放（verify-samples）可与规则实现并行执行
+    - R1 输入条件：`port/socks-port/mixed-port` 为数字字符串
+      - 修复动作：autofix 转为整数
+      - 验收方法：`run.sh lint` 命中 `PORT_TYPE_INT` + `run.sh autofix` 后类型修复
+    - R2 输入条件：`log-level` 不在 `debug|info|warning|error|silent`
+      - 修复动作：不自动修复，返回建议值 `info`
+      - 验收方法：`run.sh lint` 命中 `LOG_LEVEL_ENUM`（error）且 `fixable=false`
+- 依赖：P5-1A（已完成） -> P5-1B（已完成） -> P5-1C（已完成） -> P5-1D（已完成） -> P5-1E（已完成） -> P5-1F（已完成）（串行）
+- NEXT（唯一）：R1 `PORT_TYPE_INT` 规则实现落地（代码级）
 
 ---
 
@@ -364,5 +374,6 @@
 - 2026-02-11 13:14（GMT+8）完成 P5-1C：新增 3 个迁移样例与 `verify-samples.sh` 可复现校验脚本，输出 `MIGRATOR_SAMPLES_RESULT` 与 `reports/samples-report.json`。
 - 2026-02-11 13:14（GMT+8）完成 P5-1D 预拆：统一迁移验证归档字段（sample_id/input/result/diff/hint），并在 migrator README 增加与现有输出的兼容映射。
 - 2026-02-11 13:26（GMT+8）完成 P5-1E：新增 `summarize-results.sh` 自动汇总脚本，输出 PASS/FAIL 统计与失败项清单，并生成 `reports/samples-summary.json`。
+- 2026-02-11 13:26（GMT+8）完成 P5-1F 预拆：在 TASKS 明确首批规则实现顺序（R1->R2）、并行项、每条规则输入条件/修复动作/验收方法，并固化唯一 NEXT。
 - 2026-02-11 11:06（GMT+8）完成 P4-2A 预拆：在 perf README 增加 history 目录治理规则（命名/保留上限/清理方式），明确 latest 与 history 关系并提供可执行清理命令。
 - 2026-02-11 11:12（GMT+8）完成 P4-1H：在 perf README 明确热路径采样对象/窗口/样本量，补齐 3 个热路径指标采集方式，并声明 latest/history 字段兼容约束。
