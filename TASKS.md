@@ -373,6 +373,10 @@
     - verify：校验安装标记与版本文件存在
     - upgrade：要求 `--version` 并写入新版本
     - 约束：保留机器字段与失败 next-step
+  - [x] P6-3B 一键安装回归用例与试用文档（并行）
+    - 回归：`verify-install-flow.sh` 覆盖 install/verify/upgrade 成功+失败样例
+    - 文档：README 新增“3步安装试用（人话版）”
+    - 对齐：输出字段保持 `INSTALL_*` 机器可解析契约
 - NEXT（唯一）：无（P6-2/P6-3 当前项已收口，等待下一轮派发）
 
 ---
@@ -470,3 +474,4 @@
 - 2026-02-11 23:03（GMT+8）完成 P6-2A：冻结 install/verify/upgrade 最小契约与脚本命名约定，补齐 3 条可执行验收命令；NEXT 切换为 P6-2C（统一一键入口）。
 - 2026-02-11 23:03（GMT+8）完成 P6-2C：新增一键安装脚手架首版（`oc-run.sh` 串联 install/verify/upgrade），并统一输出 PASS/FAIL + next-step 机器字段。
 - 2026-02-11 23:15（GMT+8）完成 P6-3A：在脚手架上接入最小真实闭环（install/verify/upgrade 各1条可执行路径），失败返回 next-step，机器字段保持兼容。
+- 2026-02-11 23:15（GMT+8）完成 P6-3B：新增 `verify-install-flow.sh` 覆盖成功/失败回归样例，并在安装 README 增加“3步安装试用”人话说明，输出字段与 runner 保持一致。

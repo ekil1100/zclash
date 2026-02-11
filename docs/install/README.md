@@ -44,17 +44,28 @@ scripts/install/
 
 ---
 
-## 4) 验收命令（可执行）
+## 4) 3步安装试用（人话版）
+
+1. **先安装**（把基础文件放到目标目录）
+   ```bash
+   bash scripts/install/oc-run.sh install --target-dir /tmp/zclash-bin
+   ```
+2. **再验证**（确认安装标记和版本信息可读）
+   ```bash
+   bash scripts/install/oc-run.sh verify --target-dir /tmp/zclash-bin
+   ```
+3. **最后升级**（模拟升级到新版本）
+   ```bash
+   bash scripts/install/oc-run.sh upgrade --target-dir /tmp/zclash-bin --version v0.1.0
+   ```
+
+如果失败，不要慌：看 `INSTALL_FAILED_STEP` 和 `INSTALL_NEXT_STEP`，按提示做下一步。
+
+## 5) 验收命令（可执行）
 
 ```bash
-# 1) install
-bash scripts/install/oc-run.sh install --target-dir /tmp/zclash-bin
-
-# 2) verify
-bash scripts/install/oc-run.sh verify --target-dir /tmp/zclash-bin
-
-# 3) upgrade
-bash scripts/install/oc-run.sh upgrade --target-dir /tmp/zclash-bin --version v0.1.0
+# install/verify/upgrade 成功+失败样例回归
+bash scripts/install/verify-install-flow.sh
 ```
 
 标准输出字段（机器可解析）：
