@@ -426,7 +426,7 @@
   - DoD：回归输出平台/路径维度汇总 JSON
   - 预计时长：40 分钟
   - 产出：`scripts/install/verify-install-path-matrix.sh` + `docs/install/README.md`
-- [ ] P6-7C 回滚动作脚本化（串行，依赖 P6-7A）
+- [x] P6-7C 回滚动作脚本化（串行，依赖 P6-7A）
   - 范围：新增最小 rollback 脚本，支持清理安装标记/版本/shim
   - DoD：成功/失败均输出机器字段与 next-step
   - 预计时长：45 分钟
@@ -440,7 +440,7 @@
 - 依赖关系：
   - 串行主线：P6-7A -> P6-7C
   - 并行支线：P6-7B / P6-7D 可并行，不阻塞主线
-- NEXT（唯一）：P6-7C 回滚动作脚本化（串行，依赖 P6-7A）
+- NEXT（唯一）：P6-7D Beta 证据归档规范（并行）
 
 ---
 
@@ -551,3 +551,4 @@
 - 2026-02-12 01:07（GMT+8）完成 P6-6E：收口 P6 安装链路本批结论（done/remaining），预拆下一批 P6-7 原子任务（范围/DoD/预计时长），并明确唯一 NEXT 与串并行关系。
 - 2026-02-12 01:47（GMT+8）完成 P6-7A：新增非模拟权限验证（真实受限路径）并保留模拟兜底场景；失败输出 `INSTALL_RESULT=FAIL` + `INSTALL_FAILED_STEP` + `INSTALL_NEXT_STEP`。
 - 2026-02-12 01:47（GMT+8）完成 P6-7B：新增多平台路径矩阵回归脚本（`/usr/local/bin` 风格、`~/.local/bin`、自定义路径），输出 PASS/FAIL 汇总与失败样例并保持 `INSTALL_*` 字段口径一致。
+- 2026-02-12 01:48（GMT+8）完成 P6-7C：新增 `oc-rollback.sh` 并接入 `oc-run.sh rollback`，固化回滚动作（清理标记/版本/shim）；成功/失败均输出统一 `INSTALL_*` 字段与 next-step。

@@ -11,13 +11,13 @@
 ## 2) 最小接口契约
 
 ### 输入
-- `action`：`install|verify|upgrade`
+- `action`：`install|verify|upgrade|rollback`
 - `--target-dir`：安装目录（可选，默认 `/usr/local/bin`）
 - `--version`：升级目标版本（upgrade 必填）
 
 ### 输出（机器可解析）
 - `INSTALL_RESULT=PASS|FAIL`
-- `INSTALL_ACTION=<install|verify|upgrade>`
+- `INSTALL_ACTION=<install|verify|upgrade|rollback>`
 - `INSTALL_REPORT=<path/to/report.json>`
 - 失败时：`INSTALL_FAILED_STEP=<step>` + `INSTALL_NEXT_STEP=<hint>`
 
@@ -58,6 +58,11 @@ scripts/install/
    ```bash
    bash scripts/install/oc-run.sh upgrade --target-dir /tmp/zclash-bin --version v0.1.0
    ```
+
+（可选）**回滚清理**（删除安装标记/版本/shim）
+```bash
+bash scripts/install/oc-run.sh rollback --target-dir /tmp/zclash-bin
+```
 
 如果失败，不要慌：看 `INSTALL_FAILED_STEP` 和 `INSTALL_NEXT_STEP`，按提示做下一步。
 
@@ -149,7 +154,7 @@ bash scripts/install/verify-install-path-matrix.sh
 
 标准输出字段（机器可解析）：
 - `INSTALL_RESULT=PASS|FAIL`
-- `INSTALL_ACTION=<install|verify|upgrade>`
+- `INSTALL_ACTION=<install|verify|upgrade|rollback>`
 - `INSTALL_REPORT=<path>`
 - `INSTALL_FAILED_STEP=<step>`
 - `INSTALL_NEXT_STEP=<hint>`
