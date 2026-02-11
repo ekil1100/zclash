@@ -1,5 +1,5 @@
 {
-  "run_id": "migrator-samples-1770786923",
+  "run_id": "migrator-samples-1770789819",
   "status": "PASS",
   "results": [
     {
@@ -15,8 +15,8 @@
       "input": "tools/config-migrator/examples/sample-2.yaml",
       "lint_output": "tools/config-migrator/reports/sample-2.lint.json",
       "autofix_output": "tools/config-migrator/reports/sample-2.autofix.json",
-      "status": "PASS",
-      "reason": "ok"
+      "status": "FAIL",
+      "reason": "lint_command_failed"
     },
     {
       "sample": "sample-3",

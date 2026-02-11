@@ -304,8 +304,11 @@
   - [x] P5-2B R2 规则实现：`LOG_LEVEL_ENUM` 校验与建议
     - 实现：非法 `log-level` 返回 `LOG_LEVEL_ENUM`（error, `fixable=false`, `suggested=info`）
     - 验证：`run.sh lint tools/config-migrator/examples/sample-2.yaml` 输出建议值 `info`
-- 依赖：P5-1A（已完成） -> P5-1B（已完成） -> P5-1C（已完成） -> P5-1D（已完成） -> P5-1E（已完成） -> P5-1F（已完成） -> P5-1G（已完成） -> P5-2B（已完成）（串行）
-- NEXT（唯一）：无（P5 首批规则实现已完成，等待下一轮派发）
+  - [x] P5-2C R1 落地验收补齐
+    - 覆盖：`port/socks-port/mixed-port` 三字段数字字符串->整数
+    - 验证：`verify-r1.sh` + `verify-samples.sh` + `summarize-results.sh` 结果一致为 PASS
+- 依赖：P5-1A（已完成） -> P5-1B（已完成） -> P5-1C（已完成） -> P5-1D（已完成） -> P5-1E（已完成） -> P5-1F（已完成） -> P5-1G（已完成） -> P5-2B（已完成） -> P5-2C（已完成）（串行）
+- NEXT（唯一）：无（P5 首批规则与验收已完成，等待下一轮派发）
 
 ---
 
@@ -383,5 +386,6 @@
 - 2026-02-11 13:26（GMT+8）完成 P5-1F 预拆：在 TASKS 明确首批规则实现顺序（R1->R2）、并行项、每条规则输入条件/修复动作/验收方法，并固化唯一 NEXT。
 - 2026-02-11 13:50（GMT+8）完成 P5-1G（R1）：实现 `PORT_TYPE_INT` lint+autofix（port/socks-port/mixed-port），新增 `verify-r1.sh` 与样例 `r1-port-string.yaml`，验证 PASS。
 - 2026-02-11 13:50（GMT+8）完成 P5-2B（R2）：实现 `LOG_LEVEL_ENUM` 校验（error/fixable=false）并输出建议值 `info`；与 summarize-results 统一归档字段兼容。
+- 2026-02-11 14:02（GMT+8）完成 P5-2C：执行 R1 验收补齐（verify-r1 + verify-samples + summarize-results），三字段修复与汇总结果一致为 PASS。
 - 2026-02-11 11:06（GMT+8）完成 P4-2A 预拆：在 perf README 增加 history 目录治理规则（命名/保留上限/清理方式），明确 latest 与 history 关系并提供可执行清理命令。
 - 2026-02-11 11:12（GMT+8）完成 P4-1H：在 perf README 明确热路径采样对象/窗口/样本量，补齐 3 个热路径指标采集方式，并声明 latest/history 字段兼容约束。
