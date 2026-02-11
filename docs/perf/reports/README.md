@@ -130,6 +130,41 @@ docs/perf/reports/
 }
 ```
 
+### 6.1 一次执行结果样例（与当前脚本输出一致）
+
+#### 成功样例（PASS）
+终端输出：
+```text
+PERF_REGRESSION_RESULT=PASS
+PERF_REGRESSION_REPORT=/path/to/zclash/docs/perf/reports/latest.json
+```
+返回码：`0`
+
+结果文件（`latest.json`）关键字段示例：
+```json
+{
+  "run_id": "p4d-placeholder-1739241000",
+  "timestamp": "2026-02-11T02:30:00Z",
+  "mode": "placeholder",
+  "metrics": {
+    "rule_eval_p95_ms": {"value": 0.0, "threshold": 1.0, "pass": true},
+    "dns_resolve_p95_ms": {"value": 0.0, "threshold": 80.0, "pass": true},
+    "throughput_rps": {"value": 0, "threshold": 800, "pass": true}
+  }
+}
+```
+判定规则：终端为 `PERF_REGRESSION_RESULT=PASS` 且返回码 `0` 即通过。
+
+#### 失败样例（FAIL）
+终端输出（示例）：
+```text
+PERF_REGRESSION_RESULT=FAIL
+```
+返回码：`1`
+
+判定规则：出现 `PERF_REGRESSION_RESULT=FAIL` 或返回码非 `0` 即失败；
+若是参数错误（如未知参数），返回码为 `2`，同样按失败处理。
+
 ---
 
 ## 7) 失败后处理建议（P4-1.C）
