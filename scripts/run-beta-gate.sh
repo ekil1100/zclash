@@ -14,12 +14,18 @@ run_gate() {
   local name="$1"
   shift
   echo "=== [$name] ==="
-  if "$@" >/dev/null 2>&1; then
+  local output
+  output=$("$@" 2>&1) || true
+  local exit_code=${PIPESTATUS[0]:-$?}
+  if [[ $exit_code -eq 0 ]]; then
     passed+=("$name")
     echo "  PASS"
   else
     failed+=("$name")
     echo "  FAIL"
+    echo "  --- failure details ---"
+    echo "$output" | grep -iE "error|fail|FAIL|expected|panic" | head -20 | sed 's/^/  /'
+    echo "  --- end ---"
   fi
 }
 
