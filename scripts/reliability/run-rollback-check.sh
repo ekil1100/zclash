@@ -42,4 +42,11 @@ cat > "$OUT_FILE" <<EOF
 EOF
 
 echo "ROLLBACK_CHECK_RESULT=$status"
+echo "ROLLBACK_CHECK_STATUS=$reload_status"
+echo "ROLLBACK_CHECK_COST_MS=$recover_ms"
 echo "ROLLBACK_CHECK_REPORT=$OUT_FILE"
+if [[ "$status" != "PASS" ]]; then
+  echo "ROLLBACK_CHECK_NEXT_STEP=check rollback trigger/health probes and rerun"
+else
+  echo "ROLLBACK_CHECK_NEXT_STEP=none"
+fi
