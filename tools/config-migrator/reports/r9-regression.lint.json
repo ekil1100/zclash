@@ -1,0 +1,1 @@
+{"ok":true,"mode":"lint","issues":[{"rule":"ALLOW_LAN_BIND_CONFLICT","level":"warn","path":"bind-address","message":"allow-lan=false but bind-address=0.0.0.0 (will be overridden to 127.0.0.1)","fixable":false,"suggested":"127.0.0.1"}],"fixed":0,"hint":"run autofix for fixable issues"}
