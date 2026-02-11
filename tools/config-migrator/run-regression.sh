@@ -11,6 +11,7 @@ REPORT_DIR="$BASE/reports"
 mkdir -p "$REPORT_DIR"
 
 failed_rules=()
+failed_samples=()
 results=()
 
 # R1 validation (PORT_TYPE_INT)
@@ -18,6 +19,7 @@ if bash "$BASE/verify-r1.sh" >/dev/null 2>&1; then
   results+=("{\"sample_id\":\"R1_PORT_TYPE_INT\",\"input\":\"tools/config-migrator/examples/r1-port-string.yaml\",\"result\":\"PASS\",\"diff\":\"port/socks-port/mixed-port string->int\",\"hint\":\"autofix applied\"}")
 else
   failed_rules+=("PORT_TYPE_INT")
+  failed_samples+=("R1_PORT_TYPE_INT")
   results+=("{\"sample_id\":\"R1_PORT_TYPE_INT\",\"input\":\"tools/config-migrator/examples/r1-port-string.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"verify-r1 failed\"}")
 fi
 
@@ -28,10 +30,12 @@ if bash "$BASE/run.sh" lint "$BASE/examples/sample-2.yaml" > "$R2_OUT" 2>/dev/nu
     results+=("{\"sample_id\":\"R2_LOG_LEVEL_ENUM\",\"input\":\"tools/config-migrator/examples/sample-2.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"invalid log-level detected with suggested=info\"}")
   else
     failed_rules+=("LOG_LEVEL_ENUM")
+    failed_samples+=("R2_LOG_LEVEL_ENUM")
     results+=("{\"sample_id\":\"R2_LOG_LEVEL_ENUM\",\"input\":\"tools/config-migrator/examples/sample-2.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected LOG_LEVEL_ENUM error with suggested=info\"}")
   fi
 else
   failed_rules+=("LOG_LEVEL_ENUM")
+  failed_samples+=("R2_LOG_LEVEL_ENUM")
   results+=("{\"sample_id\":\"R2_LOG_LEVEL_ENUM\",\"input\":\"tools/config-migrator/examples/sample-2.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"lint command failed\"}")
 fi
 
@@ -74,11 +78,14 @@ EOF
 if [[ "$status" == "PASS" ]]; then
   echo "MIGRATOR_REGRESSION_RESULT=PASS"
   echo "MIGRATOR_REGRESSION_FAILED_RULES=[]"
+  echo "MIGRATOR_REGRESSION_FAILED_SAMPLES=[]"
   echo "MIGRATOR_REGRESSION_REPORT=tools/config-migrator/reports/samples-summary.json"
   exit 0
 else
   echo "MIGRATOR_REGRESSION_RESULT=FAIL"
   echo "MIGRATOR_REGRESSION_FAILED_RULES=$(IFS=,; echo "${failed_rules[*]}")"
+  echo "MIGRATOR_REGRESSION_FAILED_SAMPLES=$(IFS=,; echo "${failed_samples[*]}")"
   echo "MIGRATOR_REGRESSION_REPORT=tools/config-migrator/reports/samples-summary.json"
+  # fail-fast gate: any failed rule returns non-zero
   exit 1
 fi
