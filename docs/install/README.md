@@ -92,6 +92,9 @@ bash scripts/install/verify-rollback-flow.sh
 
 # P6-8D 证据归档自动化校验（latest + history）
 bash scripts/install/verify-evidence-archive.sh
+
+# P6-8E 3步试用 smoke + 对外摘要
+bash scripts/install/export-3step-summary.sh
 ```
 
 回归覆盖（最小集）：
@@ -258,3 +261,13 @@ bash scripts/install/verify-evidence-archive.sh
 - `INSTALL_SUMMARY=<human-readable summary>`
 - `ROLLBACK_REGRESSION_RESULT=PASS|FAIL`
 - `ROLLBACK_REGRESSION_REPORT=<summary.json path>`
+
+3步试用对外摘要输出：
+- `INSTALL_RESULT=PASS|FAIL`
+- `INSTALL_ACTION=3step-public-summary`
+- `INSTALL_REPORT=<3step summary.json path>`
+- `INSTALL_FAILED_STEP=<failed steps>`
+- `INSTALL_NEXT_STEP=<human hint + action>`
+- `INSTALL_SUMMARY=<smoke summary>`
+- `INSTALL_PUBLIC_SUMMARY=<public-summary.txt path>`
+- `INSTALL_PUBLIC_RESULT=PASS|FAIL`
