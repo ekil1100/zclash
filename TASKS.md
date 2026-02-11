@@ -23,6 +23,13 @@
   - [x] 形成并排对比表（功能、体验、稳定性、性能）
   - [x] 标注“必补项/增强项/可延后项”
 - 备注：已完成最终对齐检查（baseline vs gap-analysis）。剩余差异仅两点：① baseline 的“DNS/观测”仍为合并表达，尚未按验收项拆成独立维度；② P0/P1/P2 到 ROADMAP 的逐项可追溯链接未显式列出。满足“拆分 DNS/观测 + 补追溯映射”后可转 DONE。
+- P0-1 进入 DONE 验收清单（可打勾）：
+  - [ ] `baseline.md` 拆分 DNS 与观测为独立维度（满足“7 大维度”）
+  - [ ] `baseline.md` 每个维度均包含：基线现状 / zclash 现状 / 差距等级 / 下一步建议
+  - [ ] `baseline.md` 中 P0/P1/P2 分级项可追溯到 `docs/roadmap/gap-analysis.md`
+  - [ ] `TASKS.md` 中 P0-1 验收标准 3 项全部勾选
+- 验收责任人：Lan（执行自检）+ Like（最终确认）
+- 验收输入文档：`docs/benchmark/baseline.md`、`docs/roadmap/gap-analysis.md`、`TASKS.md`
 
 ### P0-2 标准测试场景与样例集
 - 状态：DONE
@@ -270,3 +277,4 @@
 - 2026-02-11 09:46（GMT+8）完成 P4-1C：收敛 3 个核心指标默认阈值+调整说明，新增失败后处理建议并同步 TASKS 进度。
 - 2026-02-11 09:49（GMT+8）完成 P4-1D：新增 `scripts/perf/run-baseline.sh` 占位入口（PASS/FAIL 协议 + exit code 约定），并记录后续实现边界。
 - 2026-02-11 09:55（GMT+8）执行 P0-1 收口检查：完成 `baseline.md` 与 `gap-analysis.md` 最终对齐复核，在 P0-1 备注记录剩余差异与可转 DONE 条件（不扩新范围）。
+- 2026-02-11 10:00（GMT+8）补齐 P0-1 进入 DONE 验收清单：新增可打勾项、验收责任人与验收输入文档路径。
