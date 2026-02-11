@@ -578,32 +578,19 @@
 
 ### P9 第一批任务（1.0 最终收口 + 1.1 继续）
 
-- [ ] P9-1A [1.0] 24h 长稳测试准备：真实配置 + 启动脚本
-  - 范围：`scripts/reliability/` + `docs/reliability/`
-  - DoD：准备可用的代理配置 + 24h soak 启动命令 + 监控采集脚本；可一键启动
-  - 预估：2h
-
-- [ ] P9-1B [1.1] 迁移规则扩展：external-controller 格式校验
-  - 范围：`tools/config-migrator/` + 回归
-  - DoD：检测 external-controller 格式（host:port）+ 回归通过
-  - 预估：1h
-
-- [ ] P9-1C [1.1] doctor 增加配置校验详情输出
-  - 范围：`src/doctor_cli.zig`
-  - DoD：`--json` 新增 `config_errors` 数组（从 validator 获取错误列表）；构建+测试通过
-  - 预估：2h
-
-- [ ] P9-1D [1.0] CI 增加 full-validation 步骤
-  - 范围：`.github/workflows/ci.yml`
-  - DoD：CI 中调用 `run-full-validation.sh`；本地验证通过
-  - 预估：0.5h
-
-- [ ] P9-1E [1.1] 迁移规则扩展：allow-lan + bind-address 语义检测
-  - 范围：`tools/config-migrator/` + 回归
-  - DoD：检测 allow-lan=false 时 bind-address 非 127.0.0.1 的矛盾配置；回归通过
-  - 预估：1h
-
-- NEXT（唯一）：P9-1A（1.0 唯一阻塞项：长稳测试准备）
+- [x] P9-1A [1.0] 24h 长稳测试准备
+  - 产出：`scripts/reliability/run-soak-real.sh`（真实 soak runner）+ `docs/reliability/soak-guide.md`
+  - 功能：一键启动 24h/72h 长稳，5 分钟采样，进程+端口监控，崩溃自动重启
+- [x] P9-1B [1.1] EXTERNAL_CONTROLLER_FORMAT 规则
+  - 产出：R8 规则 + 回归样例
+- [x] P9-1C [1.1] doctor config_errors/config_warnings
+  - 产出：`--json` 新增 `config_errors` + `config_warnings` 数组
+- [x] P9-1D [1.0] CI 增加 full-validation
+  - 产出：ci.yml 新增 `run-full-validation.sh` 步骤
+- [x] P9-1E [1.1] ALLOW_LAN_BIND_CONFLICT 规则
+  - 产出：R9 规则 + 回归样例
+- 回归：migrator 9/9 PASS，构建+测试通过
+- NEXT（唯一）：Like 决策是否启动 24h 长稳（`bash scripts/reliability/run-soak-real.sh 24 --config <path>`）
 
 ---
 
@@ -753,3 +740,8 @@
 - 2026-02-12 05:30（GMT+8）完成 P8-2C：三合一总验证脚本 run-full-validation.sh。
 - 2026-02-12 05:30（GMT+8）完成 P8-2D：doctor --json 新增 proxy_reachable。
 - 2026-02-12 05:30（GMT+8）完成 P8-2E：P8 close-ready + P9 首批 5 个任务拆解。
+- 2026-02-12 05:50（GMT+8）完成 P9-1A：真实 soak runner + 运行指南（24h/72h 一键启动）。
+- 2026-02-12 05:50（GMT+8）完成 P9-1B：R8 EXTERNAL_CONTROLLER_FORMAT 规则。
+- 2026-02-12 05:50（GMT+8）完成 P9-1C：doctor --json 新增 config_errors/config_warnings。
+- 2026-02-12 05:50（GMT+8）完成 P9-1D：CI 新增 full-validation 步骤。
+- 2026-02-12 05:50（GMT+8）完成 P9-1E：R9 ALLOW_LAN_BIND_CONFLICT 规则。
