@@ -942,8 +942,11 @@ pub const TuiManager = struct {
         
         for (self.state.log_messages.items[start..]) |msg| {
             try moveCursor(row, 4);
-            try setFgColor(theme.text);
-            
+
+            // Log level color highlighting
+            const log_color = logLevelColor(msg);
+            try setFgColor(log_color);
+
             if (msg.len > self.state.term_width - 8) {
                 try print(msg[0 .. self.state.term_width - 11]);
                 try setFgColor(theme.text_dim);
@@ -951,12 +954,41 @@ pub const TuiManager = struct {
             } else {
                 try print(msg);
             }
-            
+
             try resetStyles();
             row += 1;
         }
     }
     
+    fn logLevelColor(msg: []const u8) Color {
+        // Match common log prefixes: [error], [warn], [info], ERROR, WARN, INFO
+        const lower_bound = if (msg.len > 20) 20 else msg.len;
+        const prefix = msg[0..lower_bound];
+        if (containsCI(prefix, "error") or containsCI(prefix, "[err")) return theme.err;
+        if (containsCI(prefix, "warn")) return theme.warning;
+        if (containsCI(prefix, "info")) return theme.accent;
+        return theme.text;
+    }
+
+    fn containsCI(haystack: []const u8, needle: []const u8) bool {
+        if (haystack.len < needle.len) return false;
+        var i: usize = 0;
+        while (i <= haystack.len - needle.len) : (i += 1) {
+            var match = true;
+            for (needle, 0..) |nc, j| {
+                const hc = haystack[i + j];
+                const hlower = if (hc >= 'A' and hc <= 'Z') hc + 32 else hc;
+                const nlower = if (nc >= 'A' and nc <= 'Z') nc + 32 else nc;
+                if (hlower != nlower) {
+                    match = false;
+                    break;
+                }
+            }
+            if (match) return true;
+        }
+        return false;
+    }
+
     fn proxyTypeToString(proxy_type: ProxyType) []const u8 {
         return switch (proxy_type) {
             .direct => "Direct",
