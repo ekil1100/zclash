@@ -23,7 +23,7 @@ if [[ -z "$TARGET_DIR" ]]; then
 fi
 
 if ! mkdir -p "$TARGET_DIR" 2>/dev/null; then
-  emit_install_result "FAIL" "install" "" "mkdir" "check permission or use writable --target-dir"
+  emit_install_result "FAIL" "install" "" "mkdir" "这个目录当前不可写，请换到你有权限的目录（例如 /tmp/zclash-bin）后重试"
   exit 1
 fi
 

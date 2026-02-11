@@ -436,6 +436,11 @@
   - DoD：`README` 提供证据索引与复现实验命令
   - 预计时长：30 分钟
   - 产出：`docs/install/README.md` + `docs/install/evidence/`
+- [x] P6-7E 3步试用端到端自检与失败提示打磨（并行）
+  - 范围：新增 3-step smoke 脚本覆盖 install/verify/upgrade
+  - DoD：输出最小摘要 + 人话失败提示，同时保留机器字段
+  - 预计时长：30 分钟
+  - 产出：`scripts/install/run-3step-smoke.sh` + `docs/install/README.md`
 
 - 依赖关系：
   - 串行主线：P6-7A -> P6-7C
@@ -553,3 +558,4 @@
 - 2026-02-12 01:47（GMT+8）完成 P6-7B：新增多平台路径矩阵回归脚本（`/usr/local/bin` 风格、`~/.local/bin`、自定义路径），输出 PASS/FAIL 汇总与失败样例并保持 `INSTALL_*` 字段口径一致。
 - 2026-02-12 01:48（GMT+8）完成 P6-7C：新增 `oc-rollback.sh` 并接入 `oc-run.sh rollback`，固化回滚动作（清理标记/版本/shim）；成功/失败均输出统一 `INSTALL_*` 字段与 next-step。
 - 2026-02-12 01:48（GMT+8）完成 P6-7D：定义 Beta 证据归档规范（目录/命名/字段），并让 checklist runner 产物归档至 `docs/install/evidence/history/<run_id>`，`latest` 指向最新产物。
+- 2026-02-12 01:48（GMT+8）完成 P6-7E：新增 3 步试用端到端自检脚本 `run-3step-smoke.sh`，输出最小结果摘要；失败提示改为人话化并保留机器字段。

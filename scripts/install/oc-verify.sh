@@ -22,7 +22,7 @@ VERSION_FILE="$TARGET_DIR/.zclash_version"
 BIN_SHIM="$TARGET_DIR/zclash"
 
 if [[ ! -f "$MARKER" ]]; then
-  emit_install_result "FAIL" "verify" "" "marker-missing" "run install first: bash scripts/install/oc-run.sh install --target-dir $TARGET_DIR"
+  emit_install_result "FAIL" "verify" "" "marker-missing" "还没安装成功：先执行 install，再执行 verify（同一个 --target-dir）"
   exit 1
 fi
 

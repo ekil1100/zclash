@@ -83,6 +83,9 @@ bash scripts/install/oc-run.sh install --target-dir /var/root/zclash-install-tes
 
 # P6-7B 多平台路径矩阵（3类路径组合）
 bash scripts/install/verify-install-path-matrix.sh
+
+# P6-7E 三步试用端到端自检
+bash scripts/install/run-3step-smoke.sh
 ```
 
 回归覆盖（最小集）：
@@ -203,3 +206,13 @@ Beta checklist runner 输出（机器+人类摘要）：
 - `INSTALL_NEXT_STEP=<hint>`
 - `INSTALL_MATRIX_FAILED_SAMPLES=<comma-separated ids>`
 - `INSTALL_SUMMARY=<human-readable summary>`
+
+三步试用自检输出（最小摘要）：
+- `INSTALL_RESULT=PASS|FAIL`
+- `INSTALL_ACTION=3step-smoke`
+- `INSTALL_REPORT=<summary.json path>`
+- `INSTALL_FAILED_STEP=<failed steps>`
+- `INSTALL_NEXT_STEP=<hint>`
+- `INSTALL_SUMMARY=<human-readable summary>`
+- `INSTALL_3STEP_RESULT=PASS|FAIL`
+- `INSTALL_3STEP_REPORT=<summary.json path>`

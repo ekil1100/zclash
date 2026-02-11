@@ -23,7 +23,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$VERSION" ]]; then
-  emit_install_result "FAIL" "upgrade" "" "version-missing" "provide --version <ver>, e.g. --version v0.1.1"
+  emit_install_result "FAIL" "upgrade" "" "version-missing" "请带上版本号，例如：--version v0.1.1"
   exit 2
 fi
 
