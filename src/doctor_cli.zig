@@ -20,6 +20,8 @@ pub const DoctorData = struct {
     version: []const u8 = "v0.1.0",
     network_ok: bool = false,
     proxy_reachable: bool = false,
+    config_errors: []const []const u8 = &.{},
+    config_warnings: []const []const u8 = &.{},
 };
 
 pub fn runDoctorJson(allocator: std.mem.Allocator, config_path: ?[]const u8) !void {
@@ -50,9 +52,25 @@ pub fn runDoctorJson(allocator: std.mem.Allocator, config_path: ?[]const u8) !vo
         const p = data.ports[i];
         try out.writer(allocator).print("{{\"label\":\"{s}\",\"port\":{d},\"listening\":{s}}}", .{ p.label, p.port, if (p.listening) "true" else "false" });
     }
-    try out.writer(allocator).print("],\"proxy_reachable\":{s}}}}}\n", .{
-        if (data.proxy_reachable) "true" else "false",
-    });
+    try out.appendSlice(allocator, "],\"proxy_reachable\":");
+    try out.appendSlice(allocator, if (data.proxy_reachable) "true" else "false");
+
+    // config_errors array
+    try out.appendSlice(allocator, ",\"config_errors\":[");
+    for (data.config_errors, 0..) |err, idx| {
+        if (idx > 0) try out.appendSlice(allocator, ",");
+        try out.appendSlice(allocator, "\"");
+        try out.appendSlice(allocator, err);
+        try out.appendSlice(allocator, "\"");
+    }
+    try out.appendSlice(allocator, "],\"config_warnings\":[");
+    for (data.config_warnings, 0..) |w, idx| {
+        if (idx > 0) try out.appendSlice(allocator, ",");
+        try out.appendSlice(allocator, "\"");
+        try out.appendSlice(allocator, w);
+        try out.appendSlice(allocator, "\"");
+    }
+    try out.appendSlice(allocator, "]}}\n");
 
     std.debug.print("{s}", .{out.items});
 }
@@ -95,6 +113,23 @@ fn collectDoctorData(allocator: std.mem.Allocator, config_path: ?[]const u8) !Do
         defer vr.deinit();
 
         data.config_ok = vr.isValid();
+
+        // Capture config errors and warnings
+        if (vr.errors.items.len > 0) {
+            const errs = try allocator.alloc([]const u8, vr.errors.items.len);
+            for (vr.errors.items, 0..) |e, idx| {
+                errs[idx] = try allocator.dupe(u8, e.message);
+            }
+            data.config_errors = errs;
+        }
+        if (vr.warnings.items.len > 0) {
+            const warns = try allocator.alloc([]const u8, vr.warnings.items.len);
+            for (vr.warnings.items, 0..) |w, idx| {
+                warns[idx] = try allocator.dupe(u8, w.message);
+            }
+            data.config_warnings = warns;
+        }
+
         try fillEffectivePorts(allocator, loaded_cfg, &data);
     }
 
