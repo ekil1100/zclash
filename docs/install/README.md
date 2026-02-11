@@ -69,6 +69,9 @@ bash scripts/install/verify-install-flow.sh
 
 # 跨环境最小套件（路径/权限/已有安装覆盖/路径冲突）
 bash scripts/install/verify-install-env.sh
+
+# Beta 验收清单执行脚本（checklist runner）
+bash scripts/install/run-beta-checklist.sh
 ```
 
 回归覆盖（最小集）：
@@ -145,3 +148,11 @@ bash scripts/install/verify-install-env.sh
 - `INSTALL_FAILED_STEP=<step>`
 - `INSTALL_NEXT_STEP=<hint>`
 - `INSTALL_SUMMARY=<human-readable summary>`
+
+Beta checklist runner 输出（机器+人类摘要）：
+- `BETA_CHECKLIST_RESULT=PASS|FAIL`
+- `BETA_CHECKLIST_PASS_RATE=<0-100>`
+- `BETA_CHECKLIST_FAILED_ITEMS=<comma-separated ids>`
+- `BETA_CHECKLIST_REPORT=<summary.json path>`
+- `BETA_CHECKLIST_EVIDENCE=<comma-separated evidence roots>`
+- `BETA_CHECKLIST_SUMMARY=<human-readable summary>`

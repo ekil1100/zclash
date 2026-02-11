@@ -402,6 +402,9 @@
     - 回归：扩展权限不足/路径冲突场景（`verify-install-env.sh`）
     - 输出：`INSTALL_ENV_REGRESSION_RESULT` + `INSTALL_ENV_FAILED_SAMPLES`
     - 约束：字段与 runner 口径一致
+  - [x] P6-6D Beta 验收清单执行脚本（并行）
+    - 脚本：`scripts/install/run-beta-checklist.sh`
+    - 输出：通过率/失败项/证据路径（机器字段 + 人类摘要）
 - NEXT（唯一）：无（P6 安装链路当前项已收口，等待下一轮派发）
 
 ---
@@ -506,6 +509,7 @@
 - 2026-02-11 23:53（GMT+8）完成 P6-4D：安装 README 定稿“3步试用”并补 Beta 常见失败场景与 next-step，内容与 `verify-install-flow.sh` 回归输出保持一致。
 - 2026-02-12 01:05（GMT+8）完成 P6-6A：补齐重载反馈机器字段（状态/耗时/next-step），并保持失败可解析输出。
 - 2026-02-12 01:06（GMT+8）完成 P6-6C：扩展安装边界回归（权限不足/路径冲突），输出 PASS/FAIL 汇总与失败样例清单，字段与 runner 保持一致。
+- 2026-02-12 01:06（GMT+8）完成 P6-6D：新增 Beta 验收 checklist runner，输出通过率/失败项/证据路径（机器字段 + 人类摘要），并在 README 补充执行入口与字段说明。
 - 2026-02-12 01:06（GMT+8）完成 P6-6B：收口 P3-2 子任务5状态（重载反馈），并在 `docs/tui/keymap.md` 同步机器输出口径与验收命令。
 - 2026-02-12 00:30（GMT+8）完成 P6-5A：新增跨环境验证套件 `verify-install-env.sh`（普通路径/权限不足/已有安装覆盖），支持一键执行并输出 PASS/FAIL 汇总与失败样例清单。
 - 2026-02-12 00:31（GMT+8）完成 P6-5B：安装 README 增补 Beta 验收清单（安装/验证/升级/失败回滚），每项附验收命令与证据路径，并与 runner/回归脚本输出口径对齐。
