@@ -92,11 +92,30 @@
 ## 2.3 Logs（日志过滤）
 - `l`：切换日志级别过滤（all/info/warn/error）
 - `/`：关键字过滤
-- `e`：仅错误日志
-- `a`：恢复全部
+- `e`：仅错误日志（快捷设为 level=error）
+- `a`：恢复全部（清空级别+关键字过滤）
+
+### 日志过滤组合规则
+- 支持“级别 + 关键字”组合过滤：
+  - 先按级别过滤，再按关键字过滤（pipeline：level -> keyword -> render）
+- 级别集合：`all | info | warn | error`
+- 关键字匹配：大小写不敏感的包含匹配（contains）
+
+### 清空与恢复全量流程
+1. 任意过滤状态下按 `a`；
+2. 清空 level 与 keyword 两类条件；
+3. 列表恢复到全量日志流；
+4. 标题栏过滤标签同步消失。
+
+### 边界与冲突处理
+- 若关键字为空字符串，视为“无关键字过滤”；
+- 若级别为 `all` 且关键字为空，等价于全量；
+- 无匹配结果时显示：
+  - `No logs matched current filters`
+  - 建议动作：`Press a to clear filters`。
 
 反馈要求：
-- 当前过滤器在标题栏可见
+- 当前过滤器在标题栏可见（如 `level=warn keyword=timeout`）
 - 日志滚动定位稳定，不因刷新丢失上下文
 
 ## 2.4 Diagnose（重载反馈）
