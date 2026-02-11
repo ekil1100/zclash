@@ -75,11 +75,14 @@ docs/perf/reports/
 - `history/` 保存历史快照（用于趋势回看）
 - 每次执行流程建议：先写 `latest.json`，再拷贝到 `history/`
 
-可执行清理命令（占位）：
+可执行清理入口：
 ```bash
-# 保留最新30份，删除更旧归档
-ls -1t docs/perf/reports/history/*.json | tail -n +31 | xargs -r rm -f
+# 保留最新30份历史归档（latest.json 不受影响）
+bash scripts/perf/prune-history.sh 30
 ```
+注意事项：
+- 该清理入口仅处理 `docs/perf/reports/history/*.json`
+- 不会删除或改写 `docs/perf/reports/latest.json`
 
 ---
 
