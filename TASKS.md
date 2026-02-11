@@ -368,7 +368,12 @@
   - [x] P6-2C 一键安装脚手架首版（空实现+标准输出）
     - 输出：`scripts/install/common.sh` + `oc-{install,verify,upgrade,run}.sh`
     - 约束：统一机器字段 + next-step，保持可解析
-- NEXT（唯一）：无（P6-2 当前项已收口，等待下一轮派发）
+  - [x] P6-3A 一键安装最小闭环（高优先）
+    - install：创建目标目录并写入安装标记/版本文件
+    - verify：校验安装标记与版本文件存在
+    - upgrade：要求 `--version` 并写入新版本
+    - 约束：保留机器字段与失败 next-step
+- NEXT（唯一）：无（P6-2/P6-3 当前项已收口，等待下一轮派发）
 
 ---
 
@@ -464,3 +469,4 @@
 - 2026-02-11 22:51（GMT+8）完成 P6-2B：新增安装链路风险清单与回滚策略草案（权限/路径/依赖/平台），并在 TASKS 建立 P6-2 分组与 NEXT 指向 P6-2A。
 - 2026-02-11 23:03（GMT+8）完成 P6-2A：冻结 install/verify/upgrade 最小契约与脚本命名约定，补齐 3 条可执行验收命令；NEXT 切换为 P6-2C（统一一键入口）。
 - 2026-02-11 23:03（GMT+8）完成 P6-2C：新增一键安装脚手架首版（`oc-run.sh` 串联 install/verify/upgrade），并统一输出 PASS/FAIL + next-step 机器字段。
+- 2026-02-11 23:15（GMT+8）完成 P6-3A：在脚手架上接入最小真实闭环（install/verify/upgrade 各1条可执行路径），失败返回 next-step，机器字段保持兼容。

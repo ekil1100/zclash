@@ -3,5 +3,31 @@ set -euo pipefail
 
 source "$(cd "$(dirname "$0")" && pwd)/common.sh"
 
-# scaffold-only: no real verify yet
-emit_install_result "PASS" "verify" "docs/install/report-verify.json" "" "run upgrade or execute smoke test commands"
+TARGET_DIR="/usr/local/bin"
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --target-dir)
+      TARGET_DIR="${2:-}"
+      shift 2
+      ;;
+    *)
+      emit_install_result "FAIL" "verify" "" "arg-parse" "use: --target-dir <path>"
+      exit 2
+      ;;
+  esac
+done
+
+MARKER="$TARGET_DIR/.zclash_installed"
+VERSION_FILE="$TARGET_DIR/.zclash_version"
+
+if [[ ! -f "$MARKER" ]]; then
+  emit_install_result "FAIL" "verify" "" "marker-missing" "run install first: bash scripts/install/oc-run.sh install --target-dir $TARGET_DIR"
+  exit 1
+fi
+
+if [[ ! -f "$VERSION_FILE" ]]; then
+  emit_install_result "FAIL" "verify" "" "version-missing" "run install or upgrade to create version file"
+  exit 1
+fi
+
+emit_install_result "PASS" "verify" "$MARKER" "" "run upgrade to bump version when needed"
