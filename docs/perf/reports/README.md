@@ -62,7 +62,32 @@ docs/perf/reports/
 
 ---
 
-## 5) 脚本接入指导（下一步）
+## 5) 回归执行入口（本地 / CI 一致）
+
+### 5.1 本地入口
+- 命令：`bash scripts/perf/run-baseline.sh`
+- 约定：
+  - 读取本文件定义的指标阈值
+  - 输出 `docs/perf/reports/latest.json`
+  - 同步归档到 `docs/perf/reports/history/`
+
+### 5.2 CI 入口
+- 命令：`bash scripts/perf/run-baseline.sh`
+- 约定：
+  - 与本地完全同命令、同参数口径
+  - CI 仅负责执行与门禁，不维护另一套脚本逻辑
+
+### 5.3 通过 / 失败判定
+- **通过标准**：
+  1) 脚本退出码为 `0`
+  2) 关键指标全部满足阈值（`rule_eval_p95_ms` / `dns_resolve_p95_ms` / `throughput_rps`）
+- **失败判定**：
+  1) 脚本退出码非 `0`
+  2) 任一关键指标越阈值
+
+---
+
+## 6) 脚本接入指导（下一步）
 
 后续脚本（建议：`scripts/perf/run-baseline.sh`）需至少完成：
 1) 执行固定场景采样
@@ -85,7 +110,7 @@ docs/perf/reports/
 
 ---
 
-## 6) 验收对齐（P4-1.A）
+## 7) 验收对齐（P4-1.A）
 
 - [x] 定义 profiling 目标、采样口径、目录约定
 - [x] 至少 3 个核心指标 + 阈值占位

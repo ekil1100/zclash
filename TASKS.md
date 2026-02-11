@@ -187,10 +187,14 @@
 - 优先级：P4
 - 输出：`docs/perf/reports/`
 - 子任务：
-  - [ ] P4-1A profiling 脚手架（首个原子项）
+  - [x] P4-1A profiling 脚手架（首个原子项）
     - 范围：新增 `docs/perf/reports/README.md` + `scripts/perf/run-baseline.sh`（可运行占位）
     - DoD：脚本可执行并输出占位指标（`rule_eval_p95_ms` / `dns_p95_ms` / `throughput_rps`）与阈值占位
     - 预计时长：30-50 分钟
+  - [x] P4-1B 回归执行入口定义（本地/CI）
+    - 命令统一：`bash scripts/perf/run-baseline.sh`
+    - 判定标准：exit code + 关键指标阈值
+    - 引用：`docs/perf/reports/README.md` 第5节（入口）与第6节（脚本接入）
   - [ ] 热路径 profiling
   - [ ] 性能回归基线脚本
   - [ ] 回归门禁阈值
@@ -254,3 +258,4 @@
 - 2026-02-11 09:01（GMT+8）完成 P3-2 子任务 4 文档细化：补齐日志级别+关键字组合过滤、清空恢复全量流程与边界处理。
 - 2026-02-11 09:16（GMT+8）P3-2.4A/4B/4C 收敛：补齐日志过滤冲突优先级、一步恢复全量流程、空结果与失败示例；预拆子任务5（重载反馈）验收标准。
 - 2026-02-11 09:28（GMT+8）完成 P3-2.5A/5B/5C 文档收敛（状态流/耗时时间戳/失败建议）；完成 P3-2.5D 看板收敛并将 P3-2 更新为 DONE；完成 P3-2.5E 预拆 P4-1A 原子项（范围/DoD/预计时长）。
+- 2026-02-11 09:41（GMT+8）完成 P4-1B：定义 perf 回归本地/CI 统一入口与通过/失败判定，并在 TASKS 与 perf README 互相引用。
