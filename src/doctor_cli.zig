@@ -19,6 +19,7 @@ pub const DoctorData = struct {
     port_count: usize,
     version: []const u8 = "v0.1.0",
     network_ok: bool = false,
+    proxy_reachable: bool = false,
 };
 
 pub fn runDoctorJson(allocator: std.mem.Allocator, config_path: ?[]const u8) !void {
@@ -49,7 +50,9 @@ pub fn runDoctorJson(allocator: std.mem.Allocator, config_path: ?[]const u8) !vo
         const p = data.ports[i];
         try out.writer(allocator).print("{{\"label\":\"{s}\",\"port\":{d},\"listening\":{s}}}", .{ p.label, p.port, if (p.listening) "true" else "false" });
     }
-    try out.appendSlice(allocator, "]}}\n");
+    try out.writer(allocator).print("],\"proxy_reachable\":{s}}}}}\n", .{
+        if (data.proxy_reachable) "true" else "false",
+    });
 
     std.debug.print("{s}", .{out.items});
 }
@@ -97,6 +100,14 @@ fn collectDoctorData(allocator: std.mem.Allocator, config_path: ?[]const u8) !Do
 
     try fillDaemonStatus(allocator, &data);
     data.network_ok = checkNetworkConnectivity();
+    // Check if any configured proxy port is actually listening
+    var pi: usize = 0;
+    while (pi < data.port_count) : (pi += 1) {
+        if (data.ports[pi].listening) {
+            data.proxy_reachable = true;
+            break;
+        }
+    }
     return data;
 }
 
@@ -174,6 +185,7 @@ pub fn formatDoctorReport(allocator: std.mem.Allocator, data: *const DoctorData)
     }
 
     try w.print("Network: {s}\n", .{if (data.network_ok) "OK" else "UNREACHABLE"});
+    try w.print("Proxy reachable: {s}\n", .{if (data.proxy_reachable) "YES" else "NO"});
     try w.print("Effective ports:\n", .{});
     if (data.port_count == 0) {
         try w.print("  - none\n", .{});
