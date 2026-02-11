@@ -151,3 +151,27 @@ bash tools/config-migrator/run-regression.sh
 归档兼容：
 - 回归入口直接写 `samples-summary.json`，字段兼容统一格式：
   `sample_id/input/result/diff/hint`
+
+---
+
+## 8) 摘要输出 i18n/本地化占位（P6-1B）
+
+目标：
+- 在不改变机器字段的前提下，扩展人类可读摘要的多语言文案。
+
+兼容策略（关键）：
+- 机器字段保持不变：
+  - `MIGRATOR_REGRESSION_RESULT`
+  - `MIGRATOR_REGRESSION_FAILED_RULES`
+  - `MIGRATOR_REGRESSION_FAILED_SAMPLES`
+  - `MIGRATOR_REGRESSION_REPORT`
+- 人类可读字段可演进：
+  - `MIGRATOR_REGRESSION_SUMMARY`（当前）
+  - 后续可按 `lang` 选择文案模板，不影响机器解析。
+
+占位示例：
+- 文件：`tools/config-migrator/i18n.example.json`
+- 文案键：
+  - `regression.summary.pass`
+  - `regression.summary.fail`
+- 提供最小 `en` + `zh` 模板。
