@@ -9,14 +9,14 @@
 ## 当前冲刺：Phase 0（基线与差距分析）
 
 ### P0-1 能力矩阵对比（mihomo/clash vs zclash）
-- 状态：DOING
+- 状态：DONE
 - 优先级：P0
 - 负责人：Lan
 - 输出：`docs/benchmark/baseline.md`
 - 验收标准（Acceptance Criteria）：
-  - [ ] 覆盖 CLI/API/TUI/协议/规则/DNS/观测 7 大维度
-  - [ ] 每个维度包含“基线现状 + zclash 现状 + 差距等级 + 下一步建议”
-  - [ ] 差距分级明确为 P0/P1/P2 并可追溯到 ROADMAP
+  - [x] 覆盖 CLI/API/TUI/协议/规则/DNS/观测 7 大维度
+  - [x] 每个维度包含“基线现状 + zclash 现状 + 差距等级 + 下一步建议”
+  - [x] 差距分级明确为 P0/P1/P2 并可追溯到 ROADMAP
 - 子任务：
   - [x] 列出 mihomo/clash 功能矩阵（CLI/API/TUI/协议/规则/DNS/观测）
   - [x] 列出 zclash 当前能力矩阵（已实现/缺失/不稳定）
@@ -280,3 +280,4 @@
 - 2026-02-11 10:00（GMT+8）补齐 P0-1 进入 DONE 验收清单：新增可打勾项、验收责任人与验收输入文档路径。
 - 2026-02-11 10:05（GMT+8）完成 P0-1 收口差异修复A：`baseline.md` 已将 DNS 与观测拆分为独立维度，并补齐维度描述；P0-1 剩余差异收敛为“追溯映射待显式化”。
 - 2026-02-11 10:05（GMT+8）完成 P0-1 收口差异修复B：在 `gap-analysis.md` 显式补齐 P0/P1/P2→ROADMAP 逐项映射；P0-1 差异清零，满足转 DONE 条件。
+- 2026-02-11 10:11（GMT+8）完成 P0-1 最终验收收口：三条验收标准全部勾选，P0-1 状态由 DOING 更新为 DONE（保留验收输入文档与责任人）。
