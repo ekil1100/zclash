@@ -30,6 +30,32 @@ collect_issues() {
     fi
   done
 
+  # R6: PROXY_GROUP_EMPTY_PROXIES
+  if grep -Eq '^[[:space:]]*-[[:space:]]*name:' "$file" && grep -Eq '^[[:space:]]*proxy-groups:' "$file"; then
+    # Detect groups with empty proxies array or missing proxies key
+    local in_group=false group_name="" has_proxies=false
+    while IFS= read -r line; do
+      if echo "$line" | grep -Eq '^[[:space:]]*-[[:space:]]*name:[[:space:]]*'; then
+        # Close previous group check
+        if [[ "$in_group" == "true" && "$has_proxies" == "false" ]]; then
+          issues+=("{\"rule\":\"PROXY_GROUP_EMPTY_PROXIES\",\"level\":\"error\",\"path\":\"proxy-groups[$group_name].proxies\",\"message\":\"proxy group '$group_name' has no proxies\",\"fixable\":false}")
+        fi
+        in_group=true
+        group_name=$(echo "$line" | sed -E 's/^[[:space:]]*-[[:space:]]*name:[[:space:]]*"?([^"]*)"?[[:space:]]*$/\1/')
+        has_proxies=false
+      elif echo "$line" | grep -Eq '^[[:space:]]*proxies:[[:space:]]*\[' && echo "$line" | grep -Eq '\[\s*\]'; then
+        # proxies: [] on same line
+        has_proxies=false
+      elif echo "$line" | grep -Eq '^[[:space:]]*proxies:'; then
+        has_proxies=true
+      fi
+    done < <(awk '/^[[:space:]]*proxy-groups:/{found=1; next} found && /^[^[:space:]]/{exit} found{print}' "$file")
+    # Check last group
+    if [[ "$in_group" == "true" && "$has_proxies" == "false" ]]; then
+      issues+=("{\"rule\":\"PROXY_GROUP_EMPTY_PROXIES\",\"level\":\"error\",\"path\":\"proxy-groups[$group_name].proxies\",\"message\":\"proxy group '$group_name' has no proxies\",\"fixable\":false}")
+    fi
+  fi
+
   # R3: PROXY_GROUP_TYPE_CHECK
   local valid_types="select|url-test|fallback|load-balance|relay"
   if grep -Eq '^[[:space:]]*-[[:space:]]*name:' "$file" && grep -Eq '^[[:space:]]*type:' "$file"; then
@@ -57,6 +83,19 @@ collect_issues() {
     if grep -Eq '^[[:space:]]+enhanced-mode:' "$file"; then
       issues+=("{\"rule\":\"DNS_FIELD_CHECK\",\"level\":\"warn\",\"path\":\"dns.enhanced-mode\",\"message\":\"zclash ignores enhanced-mode\",\"fixable\":false}")
     fi
+  fi
+
+  # R5: DNS_NAMESERVER_FORMAT
+  if grep -Eq '^[[:space:]]+nameserver:' "$file"; then
+    while IFS= read -r line; do
+      ns=$(echo "$line" | sed -E 's/^[[:space:]]*-[[:space:]]*//')
+      if [[ -n "$ns" ]] && ! echo "$ns" | grep -Eq '^(https?://|tls://|quic://|tcp://|udp://)'; then
+        # Plain IP without protocol prefix
+        if echo "$ns" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$|^\[?[0-9a-fA-F:]+\]?$'; then
+          issues+=("{\"rule\":\"DNS_NAMESERVER_FORMAT\",\"level\":\"warn\",\"path\":\"dns.nameserver\",\"message\":\"plain IP without protocol: $ns (defaults to udp)\",\"fixable\":false,\"suggested\":\"udp://$ns\"}")
+        fi
+      fi
+    done < <(awk '/^[[:space:]]*nameserver:/{found=1; next} found && /^[[:space:]]*-/{print; next} found && /^[[:space:]]*[^-[:space:]]/{found=0}' "$file")
   fi
 
   # R2: LOG_LEVEL_ENUM

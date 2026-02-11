@@ -77,6 +77,43 @@ else
   results+=("{\"sample_id\":\"R4_DNS_FIELD_CHECK\",\"input\":\"tools/config-migrator/examples/r4-dns-fields.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"lint command failed\"}")
 fi
 
+# R5 validation (DNS_NAMESERVER_FORMAT)
+R5_OUT="$REPORT_DIR/r5-regression.lint.json"
+if bash "$BASE/run.sh" lint "$BASE/examples/r5-dns-nameserver-format.yaml" > "$R5_OUT" 2>/dev/null; then
+  if grep -q '"rule":"DNS_NAMESERVER_FORMAT"' "$R5_OUT"; then
+    results+=("{\"sample_id\":\"R5_DNS_NAMESERVER_FORMAT\",\"input\":\"tools/config-migrator/examples/r5-dns-nameserver-format.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"plain IP detected\"}")
+  else
+    failed_rules+=("DNS_NAMESERVER_FORMAT")
+    failed_samples+=("R5_DNS_NAMESERVER_FORMAT")
+    results+=("{\"sample_id\":\"R5_DNS_NAMESERVER_FORMAT\",\"input\":\"tools/config-migrator/examples/r5-dns-nameserver-format.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected DNS_NAMESERVER_FORMAT warn\"}")
+  fi
+else
+  # lint may exit 0 (only warns), check output
+  if grep -q '"rule":"DNS_NAMESERVER_FORMAT"' "$R5_OUT" 2>/dev/null; then
+    results+=("{\"sample_id\":\"R5_DNS_NAMESERVER_FORMAT\",\"input\":\"tools/config-migrator/examples/r5-dns-nameserver-format.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"plain IP detected\"}")
+  else
+    failed_rules+=("DNS_NAMESERVER_FORMAT")
+    failed_samples+=("R5_DNS_NAMESERVER_FORMAT")
+    results+=("{\"sample_id\":\"R5_DNS_NAMESERVER_FORMAT\",\"input\":\"tools/config-migrator/examples/r5-dns-nameserver-format.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected DNS_NAMESERVER_FORMAT warn\"}")
+  fi
+fi
+
+# R6 validation (PROXY_GROUP_EMPTY_PROXIES)
+R6_OUT="$REPORT_DIR/r6-regression.lint.json"
+if bash "$BASE/run.sh" lint "$BASE/examples/r6-proxy-group-empty.yaml" > "$R6_OUT" 2>/dev/null || true; then
+  if grep -q '"rule":"PROXY_GROUP_EMPTY_PROXIES"' "$R6_OUT"; then
+    results+=("{\"sample_id\":\"R6_PROXY_GROUP_EMPTY_PROXIES\",\"input\":\"tools/config-migrator/examples/r6-proxy-group-empty.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"empty proxies detected\"}")
+  else
+    failed_rules+=("PROXY_GROUP_EMPTY_PROXIES")
+    failed_samples+=("R6_PROXY_GROUP_EMPTY_PROXIES")
+    results+=("{\"sample_id\":\"R6_PROXY_GROUP_EMPTY_PROXIES\",\"input\":\"tools/config-migrator/examples/r6-proxy-group-empty.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected PROXY_GROUP_EMPTY_PROXIES error\"}")
+  fi
+else
+  failed_rules+=("PROXY_GROUP_EMPTY_PROXIES")
+  failed_samples+=("R6_PROXY_GROUP_EMPTY_PROXIES")
+  results+=("{\"sample_id\":\"R6_PROXY_GROUP_EMPTY_PROXIES\",\"input\":\"tools/config-migrator/examples/r6-proxy-group-empty.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"lint command failed\"}")
+fi
+
 pass_count=0
 for r in "${results[@]}"; do
   if echo "$r" | grep -q '"result":"PASS"'; then
