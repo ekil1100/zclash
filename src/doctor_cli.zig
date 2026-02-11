@@ -12,6 +12,7 @@ pub const PortEntry = struct {
 pub const DoctorData = struct {
     config_ok: bool,
     config_source: []const u8,
+    config_path: []const u8 = "(default)",
     daemon_running: bool,
     daemon_pid: ?i32,
     ports: [3]PortEntry,
@@ -26,8 +27,9 @@ pub fn runDoctorJson(allocator: std.mem.Allocator, config_path: ?[]const u8) !vo
     var out = std.ArrayList(u8).empty;
     defer out.deinit(allocator);
 
-    try out.writer(allocator).print("{{\"ok\":true,\"data\":{{\"action\":\"doctor\",\"version\":\"{s}\",\"config_ok\":{s},\"config_source\":\"{s}\",\"daemon_running\":{s},\"network_ok\":{s},\"daemon_pid\":", .{
+    try out.writer(allocator).print("{{\"ok\":true,\"data\":{{\"action\":\"doctor\",\"version\":\"{s}\",\"config_path\":\"{s}\",\"config_ok\":{s},\"config_source\":\"{s}\",\"daemon_running\":{s},\"network_ok\":{s},\"daemon_pid\":", .{
         data.version,
+        data.config_path,
         if (data.config_ok) "true" else "false",
         data.config_source,
         if (data.daemon_running) "true" else "false",
@@ -63,6 +65,7 @@ fn collectDoctorData(allocator: std.mem.Allocator, config_path: ?[]const u8) !Do
     var data = DoctorData{
         .config_ok = false,
         .config_source = if (config_path != null) "custom" else "default",
+        .config_path = config_path orelse "(default)",
         .daemon_running = false,
         .daemon_pid = null,
         .ports = undefined,
@@ -156,6 +159,7 @@ pub fn formatDoctorReport(allocator: std.mem.Allocator, data: *const DoctorData)
     try w.print("{s:-^60}\n", .{""});
 
     try w.print("Version: {s}\n", .{data.version});
+    try w.print("Config path: {s}\n", .{data.config_path});
     try w.print("Config: {s} ({s})\n", .{ if (data.config_ok) "OK" else "FAILED", data.config_source });
 
     if (data.daemon_running) {
