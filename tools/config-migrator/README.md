@@ -46,3 +46,22 @@
 - `bash tools/config-migrator/run.sh autofix <input_path> [output_path]`
 
 当前阶段先固定契约与规则，下一步再实现真实解析与修复逻辑。
+
+---
+
+## 4) 样例迁移验证（P5-1C 最小3例）
+
+样例输入：
+- `tools/config-migrator/examples/sample-1.yaml`
+- `tools/config-migrator/examples/sample-2.yaml`
+- `tools/config-migrator/examples/sample-3.yaml`
+
+复现命令：
+```bash
+bash tools/config-migrator/verify-samples.sh
+```
+
+输出：
+- 总结果：`MIGRATOR_SAMPLES_RESULT=PASS|FAIL`
+- 报告路径：`tools/config-migrator/reports/samples-report.json`
+- 每个样例均含 `status`（PASS/FAIL）与 `reason`

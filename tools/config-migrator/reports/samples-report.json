@@ -1,0 +1,30 @@
+{
+  "run_id": "migrator-samples-1770786923",
+  "status": "PASS",
+  "results": [
+    {
+      "sample": "sample-1",
+      "input": "tools/config-migrator/examples/sample-1.yaml",
+      "lint_output": "tools/config-migrator/reports/sample-1.lint.json",
+      "autofix_output": "tools/config-migrator/reports/sample-1.autofix.json",
+      "status": "PASS",
+      "reason": "ok"
+    },
+    {
+      "sample": "sample-2",
+      "input": "tools/config-migrator/examples/sample-2.yaml",
+      "lint_output": "tools/config-migrator/reports/sample-2.lint.json",
+      "autofix_output": "tools/config-migrator/reports/sample-2.autofix.json",
+      "status": "PASS",
+      "reason": "ok"
+    },
+    {
+      "sample": "sample-3",
+      "input": "tools/config-migrator/examples/sample-3.yaml",
+      "lint_output": "tools/config-migrator/reports/sample-3.lint.json",
+      "autofix_output": "tools/config-migrator/reports/sample-3.autofix.json",
+      "status": "PASS",
+      "reason": "ok"
+    }
+  ]
+}
