@@ -451,6 +451,11 @@
   - DoD：输出机读汇总字段 + 失败样例人话提示
   - 预计时长：35 分钟
   - 产出：`scripts/install/verify-install-path-matrix.sh` + `docs/install/README.md`
+- [x] P6-8C 回滚脚本验收补齐（失败分支，串行）
+  - 范围：新增 rollback 回归脚本，覆盖成功与失败分支
+  - DoD：统一 `INSTALL_*` 字段与 next-step，输出最小回归摘要
+  - 预计时长：30 分钟
+  - 产出：`scripts/install/verify-rollback-flow.sh` + `docs/install/README.md`
 
 - 依赖关系：
   - 串行主线：P6-7A -> P6-7C
@@ -571,3 +576,4 @@
 - 2026-02-12 01:48（GMT+8）完成 P6-7E：新增 3 步试用端到端自检脚本 `run-3step-smoke.sh`，输出最小结果摘要；失败提示改为人话化并保留机器字段。
 - 2026-02-12 02:22（GMT+8）完成 P6-8A：扩展非模拟权限失败场景到两类真实受限路径（`/var/root`、`/System`），并在 env 回归汇总中校验 `INSTALL_FAILED_STEP` + `INSTALL_NEXT_STEP` 字段。
 - 2026-02-12 02:22（GMT+8）完成 P6-8B：扩展路径矩阵覆盖异常路径冲突与已有安装覆盖，新增机读汇总字段 `INSTALL_MATRIX_FAILED_HINTS` 并提供失败样例人话提示。
+- 2026-02-12 02:23（GMT+8）完成 P6-8C：新增 `verify-rollback-flow.sh` 覆盖 rollback 成功/失败分支，统一输出 `INSTALL_*` + next-step 并产出最小摘要。

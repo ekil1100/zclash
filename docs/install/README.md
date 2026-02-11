@@ -86,6 +86,9 @@ bash scripts/install/verify-install-path-matrix.sh
 
 # P6-7E 三步试用端到端自检
 bash scripts/install/run-3step-smoke.sh
+
+# P6-8C 回滚失败分支验收
+bash scripts/install/verify-rollback-flow.sh
 ```
 
 回归覆盖（最小集）：
@@ -222,3 +225,13 @@ Beta checklist runner 输出（机器+人类摘要）：
 - `INSTALL_SUMMARY=<human-readable summary>`
 - `INSTALL_3STEP_RESULT=PASS|FAIL`
 - `INSTALL_3STEP_REPORT=<summary.json path>`
+
+回滚回归输出（含失败分支）：
+- `INSTALL_RESULT=PASS|FAIL`
+- `INSTALL_ACTION=rollback-regression`
+- `INSTALL_REPORT=<summary.json path>`
+- `INSTALL_FAILED_STEP=<failed cases>`
+- `INSTALL_NEXT_STEP=<hint>`
+- `INSTALL_SUMMARY=<human-readable summary>`
+- `ROLLBACK_REGRESSION_RESULT=PASS|FAIL`
+- `ROLLBACK_REGRESSION_REPORT=<summary.json path>`
