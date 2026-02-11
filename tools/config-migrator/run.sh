@@ -36,7 +36,7 @@ collect_issues() {
     case "$raw" in
       debug|info|warning|error|silent) ;;
       *)
-        issues+=("{\"rule\":\"LOG_LEVEL_ENUM\",\"level\":\"error\",\"path\":\"log-level\",\"message\":\"value out of enum\",\"fixable\":false}")
+        issues+=("{\"rule\":\"LOG_LEVEL_ENUM\",\"level\":\"error\",\"path\":\"log-level\",\"message\":\"value out of enum\",\"fixable\":false,\"suggested\":\"info\"}")
         ;;
     esac
   fi
@@ -55,7 +55,7 @@ if [[ "$MODE" == "lint" ]]; then
 
   if echo "$issues_json" | grep -q '"level":"error"'; then
     ok=false
-    hint="fix error-level issues first"
+    hint="fix error-level issues first; for LOG_LEVEL_ENUM use suggested value: info"
   else
     ok=true
     hint="run autofix for fixable issues"
