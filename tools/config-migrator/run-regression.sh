@@ -134,6 +134,46 @@ else
   fi
 fi
 
+# R8 validation (EXTERNAL_CONTROLLER_FORMAT)
+R8_OUT="$REPORT_DIR/r8-regression.lint.json"
+if bash "$BASE/run.sh" lint "$BASE/examples/r8-external-controller.yaml" > "$R8_OUT" 2>/dev/null; then
+  if grep -q '"rule":"EXTERNAL_CONTROLLER_FORMAT"' "$R8_OUT"; then
+    results+=("{\"sample_id\":\"R8_EXTERNAL_CONTROLLER_FORMAT\",\"input\":\"tools/config-migrator/examples/r8-external-controller.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"bad format detected\"}")
+  else
+    failed_rules+=("EXTERNAL_CONTROLLER_FORMAT")
+    failed_samples+=("R8_EXTERNAL_CONTROLLER_FORMAT")
+    results+=("{\"sample_id\":\"R8_EXTERNAL_CONTROLLER_FORMAT\",\"input\":\"tools/config-migrator/examples/r8-external-controller.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected EXTERNAL_CONTROLLER_FORMAT warn\"}")
+  fi
+else
+  if grep -q '"rule":"EXTERNAL_CONTROLLER_FORMAT"' "$R8_OUT" 2>/dev/null; then
+    results+=("{\"sample_id\":\"R8_EXTERNAL_CONTROLLER_FORMAT\",\"input\":\"tools/config-migrator/examples/r8-external-controller.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"bad format detected\"}")
+  else
+    failed_rules+=("EXTERNAL_CONTROLLER_FORMAT")
+    failed_samples+=("R8_EXTERNAL_CONTROLLER_FORMAT")
+    results+=("{\"sample_id\":\"R8_EXTERNAL_CONTROLLER_FORMAT\",\"input\":\"tools/config-migrator/examples/r8-external-controller.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected EXTERNAL_CONTROLLER_FORMAT warn\"}")
+  fi
+fi
+
+# R9 validation (ALLOW_LAN_BIND_CONFLICT)
+R9_OUT="$REPORT_DIR/r9-regression.lint.json"
+if bash "$BASE/run.sh" lint "$BASE/examples/r9-allow-lan-bind.yaml" > "$R9_OUT" 2>/dev/null; then
+  if grep -q '"rule":"ALLOW_LAN_BIND_CONFLICT"' "$R9_OUT"; then
+    results+=("{\"sample_id\":\"R9_ALLOW_LAN_BIND_CONFLICT\",\"input\":\"tools/config-migrator/examples/r9-allow-lan-bind.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"conflict detected\"}")
+  else
+    failed_rules+=("ALLOW_LAN_BIND_CONFLICT")
+    failed_samples+=("R9_ALLOW_LAN_BIND_CONFLICT")
+    results+=("{\"sample_id\":\"R9_ALLOW_LAN_BIND_CONFLICT\",\"input\":\"tools/config-migrator/examples/r9-allow-lan-bind.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected ALLOW_LAN_BIND_CONFLICT warn\"}")
+  fi
+else
+  if grep -q '"rule":"ALLOW_LAN_BIND_CONFLICT"' "$R9_OUT" 2>/dev/null; then
+    results+=("{\"sample_id\":\"R9_ALLOW_LAN_BIND_CONFLICT\",\"input\":\"tools/config-migrator/examples/r9-allow-lan-bind.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"conflict detected\"}")
+  else
+    failed_rules+=("ALLOW_LAN_BIND_CONFLICT")
+    failed_samples+=("R9_ALLOW_LAN_BIND_CONFLICT")
+    results+=("{\"sample_id\":\"R9_ALLOW_LAN_BIND_CONFLICT\",\"input\":\"tools/config-migrator/examples/r9-allow-lan-bind.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected ALLOW_LAN_BIND_CONFLICT warn\"}")
+  fi
+fi
+
 pass_count=0
 for r in "${results[@]}"; do
   if echo "$r" | grep -q '"result":"PASS"'; then

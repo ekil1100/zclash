@@ -30,6 +30,24 @@ collect_issues() {
     fi
   done
 
+  # R9: ALLOW_LAN_BIND_CONFLICT
+  if grep -Eq '^[[:space:]]*allow-lan:[[:space:]]*false' "$file"; then
+    if grep -Eq '^[[:space:]]*bind-address:' "$file"; then
+      bind_val=$(grep -E '^[[:space:]]*bind-address:' "$file" | head -n1 | sed -E 's/^[[:space:]]*bind-address:[[:space:]]*"?([^"]*)"?[[:space:]]*$/\1/')
+      if [[ "$bind_val" != "127.0.0.1" && "$bind_val" != "localhost" ]]; then
+        issues+=("{\"rule\":\"ALLOW_LAN_BIND_CONFLICT\",\"level\":\"warn\",\"path\":\"bind-address\",\"message\":\"allow-lan=false but bind-address=$bind_val (will be overridden to 127.0.0.1)\",\"fixable\":false,\"suggested\":\"127.0.0.1\"}")
+      fi
+    fi
+  fi
+
+  # R8: EXTERNAL_CONTROLLER_FORMAT
+  if grep -Eq '^[[:space:]]*external-controller:' "$file"; then
+    ec_val=$(grep -E '^[[:space:]]*external-controller:' "$file" | head -n1 | sed -E 's/^[[:space:]]*external-controller:[[:space:]]*"?([^"]*)"?[[:space:]]*$/\1/')
+    if [[ -n "$ec_val" ]] && ! echo "$ec_val" | grep -Eq '^[^:]+:[0-9]+$'; then
+      issues+=("{\"rule\":\"EXTERNAL_CONTROLLER_FORMAT\",\"level\":\"warn\",\"path\":\"external-controller\",\"message\":\"expected host:port format, got: $ec_val\",\"fixable\":false,\"suggested\":\"127.0.0.1:$ec_val\"}")
+    fi
+  fi
+
   # R7: TUN_ENABLE_CHECK
   if grep -Eq '^[[:space:]]*tun:' "$file"; then
     if grep -Eq '^[[:space:]]+enable:[[:space:]]*true' "$file"; then
