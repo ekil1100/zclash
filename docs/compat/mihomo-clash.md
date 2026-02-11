@@ -6,6 +6,26 @@
 
 - 基础配置字段（port/socks-port/mixed-port/mode/log-level）: **已支持**（P0）
 - DNS 基础字段（enable/nameserver/fallback）: **部分支持**（P0）
+
+#### DNS 字段映射表（设计文档，P7-2B-prep）
+
+| mihomo/clash 字段 | zclash 对应 | 状态 | 迁移规则 |
+|---|---|---|---|
+| `dns.enable` | `dns.enable` (bool) | 已支持 | DNS_FIELD_CHECK: 缺失时 warn + suggested=true |
+| `dns.nameserver` | `dns.nameserver` (string[]) | 已支持 | DNS_FIELD_CHECK: 空数组时 error + hint |
+| `dns.fallback` | `dns.fallback` (string[]) | 部分支持 | DNS_FIELD_CHECK: 缺失时 info（可选字段） |
+| `dns.enhanced-mode` | 不支持 | 未支持 | DNS_FIELD_CHECK: 出现时 warn + hint="zclash 暂不支持 enhanced-mode，将忽略" |
+| `dns.fallback-filter` | 不支持 | 未支持 | DNS_FIELD_CHECK: 出现时 info + hint="高级过滤暂不支持" |
+
+**DNS_FIELD_CHECK 规则设计**：
+- 输入：YAML 配置文件中 `dns:` 段
+- 触发条件：
+  - `dns.enable` 缺失或非 bool → warn, fixable=false, suggested=true
+  - `dns.nameserver` 空或缺失 → error, fixable=false, hint="至少配置一个 nameserver"
+  - `dns.enhanced-mode` 出现 → warn, fixable=false, hint="zclash 忽略此字段"
+- 输出：标准 issues 数组，与 R1/R2/R3 口径一致
+- 修复动作：仅提示，不自动修改（fixable=false）
+
 - Profile 多配置切换: **已支持**（P0）
 - 实验/扩展字段透传: **未支持**（P2）
 
