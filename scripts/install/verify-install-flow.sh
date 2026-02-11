@@ -53,5 +53,13 @@ if bash "$RUNNER" upgrade --target-dir "$TMP_DIR" > "$TMP_DIR/upgrade.fail.out" 
 fi
 fail_case "$TMP_DIR/upgrade.fail.out"
 
+# failure sample 3: upgrade before install on empty target
+if bash "$RUNNER" upgrade --target-dir "$TMP_DIR/empty" --version v0.2.1 > "$TMP_DIR/upgrade.notinstalled.fail.out" 2>&1; then
+  echo "INSTALL_FLOW_REGRESSION=FAIL"
+  echo "INSTALL_FLOW_REGRESSION_REASON=upgrade_before_install_should_fail"
+  exit 1
+fi
+fail_case "$TMP_DIR/upgrade.notinstalled.fail.out"
+
 echo "INSTALL_FLOW_REGRESSION=PASS"
 echo "INSTALL_FLOW_REGRESSION_REPORT=$TMP_DIR"

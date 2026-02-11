@@ -35,6 +35,11 @@ if [[ ! -f "$MARKER" ]]; then
   exit 1
 fi
 
+if [[ ! -f "$VERSION_FILE" ]]; then
+  emit_install_result "FAIL" "upgrade" "" "version-missing" "run verify or reinstall to restore version file"
+  exit 1
+fi
+
 echo "$VERSION" > "$VERSION_FILE"
 
 emit_install_result "PASS" "upgrade" "$VERSION_FILE" "" "run verify after upgrade to ensure compatibility"

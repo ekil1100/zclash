@@ -381,6 +381,9 @@
     - 实现：install 写入安装标记/版本文件并生成可执行 `zclash` shim
     - 验证：verify 额外校验可执行 shim 存在
     - 失败：保留 `INSTALL_FAILED_STEP` + `INSTALL_NEXT_STEP`
+  - [x] P6-4B 一键安装最小 verify+upgrade 实现与回归（并行）
+    - 实现：verify/upgrade 最小真实逻辑（含缺失前置条件失败分支）
+    - 回归：`verify-install-flow.sh` 覆盖成功/失败样例并校验统一输出字段
 - NEXT（唯一）：无（P6 安装链路当前项已收口，等待下一轮派发）
 
 ---
@@ -480,3 +483,4 @@
 - 2026-02-11 23:15（GMT+8）完成 P6-3A：在脚手架上接入最小真实闭环（install/verify/upgrade 各1条可执行路径），失败返回 next-step，机器字段保持兼容。
 - 2026-02-11 23:15（GMT+8）完成 P6-3B：新增 `verify-install-flow.sh` 覆盖成功/失败回归样例，并在安装 README 增加“3步安装试用”人话说明，输出字段与 runner 保持一致。
 - 2026-02-11 23:27（GMT+8）完成 P6-4A：install 接入最小真实路径（生成可执行 `zclash` shim），verify 增加 shim 存在校验；失败输出保留 next-step 字段。
+- 2026-02-11 23:27（GMT+8）完成 P6-4B：补齐 verify+upgrade 最小真实逻辑与失败分支（含未安装/缺版本），并扩展 `verify-install-flow.sh` 覆盖成功/失败回归样例，保持统一机器字段输出口径。

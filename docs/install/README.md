@@ -68,6 +68,10 @@ scripts/install/
 bash scripts/install/verify-install-flow.sh
 ```
 
+回归覆盖（最小集）：
+- 成功：install -> verify -> upgrade
+- 失败：verify before install / upgrade without version / upgrade before install
+
 标准输出字段（机器可解析）：
 - `INSTALL_RESULT=PASS|FAIL`
 - `INSTALL_ACTION=<install|verify|upgrade>`
