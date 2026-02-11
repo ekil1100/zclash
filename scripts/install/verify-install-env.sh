@@ -33,17 +33,36 @@ else
   add_result "case_normal_path" "FAIL" "check target-dir writability"
 fi
 
-# case2: permission denied (simulate by file-as-dir)
+# case2: permission denied (real non-simulated path)
+# try privileged root-owned location first; if writable in current env, fallback to /sys (linux-like readonly)
+REAL_DENIED_TARGET="/var/root/zclash-install-test"
+if mkdir -p "$REAL_DENIED_TARGET" 2>/dev/null; then
+  REAL_DENIED_TARGET="/sys/zclash-install-test"
+fi
+OUT2="$TMP_ROOT/case2.out"
+if bash "$RUNNER" install --target-dir "$REAL_DENIED_TARGET" > "$OUT2" 2>&1; then
+  add_result "case_permission_denied_real" "FAIL" "expected permission failure on protected path"
+else
+  if grep -q 'INSTALL_RESULT=FAIL' "$OUT2" \
+    && grep -q 'INSTALL_FAILED_STEP=' "$OUT2" \
+    && grep -q 'INSTALL_NEXT_STEP=' "$OUT2"; then
+    add_result "case_permission_denied_real" "PASS" "real permission failure produced machine fields"
+  else
+    add_result "case_permission_denied_real" "FAIL" "missing machine fields on permission failure"
+  fi
+fi
+
+# case2b: permission denied (simulate by file-as-dir)
 FAKE_TARGET="$TMP_ROOT/not-a-dir"
 echo "file" > "$FAKE_TARGET"
-OUT2="$TMP_ROOT/case2.out"
-if bash "$RUNNER" install --target-dir "$FAKE_TARGET" > "$OUT2" 2>&1; then
-  add_result "case_permission_denied" "FAIL" "expected failure for invalid target"
+OUT2B="$TMP_ROOT/case2b.out"
+if bash "$RUNNER" install --target-dir "$FAKE_TARGET" > "$OUT2B" 2>&1; then
+  add_result "case_permission_denied_simulated" "FAIL" "expected failure for invalid target"
 else
-  if grep -q 'INSTALL_NEXT_STEP=' "$OUT2" && grep -q 'INSTALL_FAILED_STEP=' "$OUT2"; then
-    add_result "case_permission_denied" "PASS" "machine fields + next-step provided"
+  if grep -q 'INSTALL_NEXT_STEP=' "$OUT2B" && grep -q 'INSTALL_FAILED_STEP=' "$OUT2B"; then
+    add_result "case_permission_denied_simulated" "PASS" "machine fields + next-step provided"
   else
-    add_result "case_permission_denied" "FAIL" "missing machine fields on failure"
+    add_result "case_permission_denied_simulated" "FAIL" "missing machine fields on failure"
   fi
 fi
 
