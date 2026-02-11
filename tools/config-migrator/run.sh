@@ -30,6 +30,15 @@ collect_issues() {
     fi
   done
 
+  # R7: TUN_ENABLE_CHECK
+  if grep -Eq '^[[:space:]]*tun:' "$file"; then
+    if grep -Eq '^[[:space:]]+enable:[[:space:]]*true' "$file"; then
+      issues+=("{\"rule\":\"TUN_ENABLE_CHECK\",\"level\":\"warn\",\"path\":\"tun.enable\",\"message\":\"tun mode is not supported by zclash, will be ignored\",\"fixable\":false}")
+    elif ! grep -Eq '^[[:space:]]+enable:' "$file"; then
+      issues+=("{\"rule\":\"TUN_ENABLE_CHECK\",\"level\":\"info\",\"path\":\"tun.enable\",\"message\":\"tun section present but enable not set, will be ignored\",\"fixable\":false}")
+    fi
+  fi
+
   # R6: PROXY_GROUP_EMPTY_PROXIES
   if grep -Eq '^[[:space:]]*-[[:space:]]*name:' "$file" && grep -Eq '^[[:space:]]*proxy-groups:' "$file"; then
     # Detect groups with empty proxies array or missing proxies key

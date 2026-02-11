@@ -84,6 +84,7 @@
 - `DNS_FIELD_CHECK`
 - `DNS_NAMESERVER_FORMAT`
 - `PROXY_GROUP_EMPTY_PROXIES`
+- `TUN_ENABLE_CHECK`
 
 ### P2（生态扩展）
 1. 实验字段透传与高级 provider 组合

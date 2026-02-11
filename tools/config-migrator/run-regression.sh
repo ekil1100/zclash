@@ -114,6 +114,26 @@ else
   results+=("{\"sample_id\":\"R6_PROXY_GROUP_EMPTY_PROXIES\",\"input\":\"tools/config-migrator/examples/r6-proxy-group-empty.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"lint command failed\"}")
 fi
 
+# R7 validation (TUN_ENABLE_CHECK)
+R7_OUT="$REPORT_DIR/r7-regression.lint.json"
+if bash "$BASE/run.sh" lint "$BASE/examples/r7-tun-enable.yaml" > "$R7_OUT" 2>/dev/null; then
+  if grep -q '"rule":"TUN_ENABLE_CHECK"' "$R7_OUT"; then
+    results+=("{\"sample_id\":\"R7_TUN_ENABLE_CHECK\",\"input\":\"tools/config-migrator/examples/r7-tun-enable.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"tun.enable detected\"}")
+  else
+    failed_rules+=("TUN_ENABLE_CHECK")
+    failed_samples+=("R7_TUN_ENABLE_CHECK")
+    results+=("{\"sample_id\":\"R7_TUN_ENABLE_CHECK\",\"input\":\"tools/config-migrator/examples/r7-tun-enable.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected TUN_ENABLE_CHECK warn\"}")
+  fi
+else
+  if grep -q '"rule":"TUN_ENABLE_CHECK"' "$R7_OUT" 2>/dev/null; then
+    results+=("{\"sample_id\":\"R7_TUN_ENABLE_CHECK\",\"input\":\"tools/config-migrator/examples/r7-tun-enable.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"tun.enable detected\"}")
+  else
+    failed_rules+=("TUN_ENABLE_CHECK")
+    failed_samples+=("R7_TUN_ENABLE_CHECK")
+    results+=("{\"sample_id\":\"R7_TUN_ENABLE_CHECK\",\"input\":\"tools/config-migrator/examples/r7-tun-enable.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected TUN_ENABLE_CHECK warn\"}")
+  fi
+fi
+
 pass_count=0
 for r in "${results[@]}"; do
   if echo "$r" | grep -q '"result":"PASS"'; then
