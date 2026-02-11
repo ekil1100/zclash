@@ -60,6 +60,7 @@
 ### 兼容规则声明（用于自动对账）
 - `PORT_TYPE_INT`
 - `LOG_LEVEL_ENUM`
+- `PROXY_GROUP_TYPE_CHECK`
 
 ### P2（生态扩展）
 1. 实验字段透传与高级 provider 组合

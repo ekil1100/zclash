@@ -1,0 +1,93 @@
+name: CD Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target_os: linux
+            target_arch: amd64
+          - os: macos-latest
+            target_os: macos
+            target_arch: arm64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Zig
+        uses: mlugg/setup-zig@v1
+        with:
+          version: 0.15.2
+
+      - name: Build
+        run: zig build
+
+      - name: Test
+        run: zig build test
+
+      - name: Smoke (migrator regression)
+        run: bash tools/config-migrator/run-all.sh
+
+      - name: Package
+        run: |
+          mkdir -p dist
+          PKG_NAME="zclash-${{ github.ref_name }}-${{ matrix.target_os }}-${{ matrix.target_arch }}"
+          PKG_DIR="dist/${PKG_NAME}"
+          mkdir -p "$PKG_DIR"
+          cp ./zig-out/bin/zclash "$PKG_DIR/"
+          cp ./README.md "$PKG_DIR/"
+          tar -czf "dist/${PKG_NAME}.tar.gz" -C dist "$PKG_NAME"
+          if command -v shasum >/dev/null 2>&1; then
+            shasum -a 256 "dist/${PKG_NAME}.tar.gz" > "dist/${PKG_NAME}.tar.gz.sha256"
+          else
+            sha256sum "dist/${PKG_NAME}.tar.gz" > "dist/${PKG_NAME}.tar.gz.sha256"
+          fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.target_os }}-${{ matrix.target_arch }}
+          path: dist/*.tar.gz*
+
+  publish:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Generate release notes
+        run: |
+          RANGE="HEAD~20..HEAD"
+          LOGS="$(git log --pretty=format:'- %h %s' "$RANGE" 2>/dev/null || echo '- (no commits in range)')"
+          cat > dist/release-notes.md <<EOF
+          # zclash ${{ github.ref_name }}
+
+          ## Changes
+          ${LOGS}
+          EOF
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          body_path: dist/release-notes.md
+          files: |
+            dist/*.tar.gz
+            dist/*.sha256

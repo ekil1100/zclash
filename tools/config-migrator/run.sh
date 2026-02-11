@@ -30,6 +30,17 @@ collect_issues() {
     fi
   done
 
+  # R3: PROXY_GROUP_TYPE_CHECK
+  local valid_types="select|url-test|fallback|load-balance|relay"
+  if grep -Eq '^[[:space:]]*-[[:space:]]*name:' "$file" && grep -Eq '^[[:space:]]*type:' "$file"; then
+    while IFS= read -r line; do
+      raw_type=$(echo "$line" | sed -E 's/^[[:space:]]*type:[[:space:]]*"?([^"[:space:]]+)"?[[:space:]]*$/\1/')
+      if [[ -n "$raw_type" ]] && ! echo "$raw_type" | grep -Eq "^($valid_types)$"; then
+        issues+=("{\"rule\":\"PROXY_GROUP_TYPE_CHECK\",\"level\":\"error\",\"path\":\"proxy-groups[].type\",\"message\":\"unknown proxy group type: $raw_type\",\"fixable\":false,\"suggested\":\"select\"}")
+      fi
+    done < <(grep -E '^[[:space:]]*type:[[:space:]]*"?[A-Za-z-]+"?' "$file")
+  fi
+
   # R2: LOG_LEVEL_ENUM
   if grep -Eq '^[[:space:]]*log-level:[[:space:]]*"?[A-Za-z-]+"?[[:space:]]*$' "$file"; then
     raw=$(grep -E '^[[:space:]]*log-level:[[:space:]]*"?[A-Za-z-]+"?[[:space:]]*$' "$file" | head -n1 | sed -E 's/^[[:space:]]*log-level:[[:space:]]*"?([^"[:space:]]+)"?[[:space:]]*$/\1/')

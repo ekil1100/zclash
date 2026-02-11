@@ -39,6 +39,22 @@ else
   results+=("{\"sample_id\":\"R2_LOG_LEVEL_ENUM\",\"input\":\"tools/config-migrator/examples/sample-2.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"lint command failed\"}")
 fi
 
+# R3 validation (PROXY_GROUP_TYPE_CHECK)
+R3_OUT="$REPORT_DIR/r3-regression.lint.json"
+if bash "$BASE/run.sh" lint "$BASE/examples/r3-proxy-group-type.yaml" > "$R3_OUT" 2>/dev/null || true; then
+  if grep -q '"rule":"PROXY_GROUP_TYPE_CHECK"' "$R3_OUT" && grep -q '"fixable":false' "$R3_OUT"; then
+    results+=("{\"sample_id\":\"R3_PROXY_GROUP_TYPE_CHECK\",\"input\":\"tools/config-migrator/examples/r3-proxy-group-type.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"invalid proxy group type detected\"}")
+  else
+    failed_rules+=("PROXY_GROUP_TYPE_CHECK")
+    failed_samples+=("R3_PROXY_GROUP_TYPE_CHECK")
+    results+=("{\"sample_id\":\"R3_PROXY_GROUP_TYPE_CHECK\",\"input\":\"tools/config-migrator/examples/r3-proxy-group-type.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected PROXY_GROUP_TYPE_CHECK error\"}")
+  fi
+else
+  failed_rules+=("PROXY_GROUP_TYPE_CHECK")
+  failed_samples+=("R3_PROXY_GROUP_TYPE_CHECK")
+  results+=("{\"sample_id\":\"R3_PROXY_GROUP_TYPE_CHECK\",\"input\":\"tools/config-migrator/examples/r3-proxy-group-type.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"lint command failed\"}")
+fi
+
 pass_count=0
 for r in "${results[@]}"; do
   if echo "$r" | grep -q '"result":"PASS"'; then
