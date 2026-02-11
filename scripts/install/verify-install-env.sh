@@ -40,10 +40,10 @@ OUT2="$TMP_ROOT/case2.out"
 if bash "$RUNNER" install --target-dir "$FAKE_TARGET" > "$OUT2" 2>&1; then
   add_result "case_permission_denied" "FAIL" "expected failure for invalid target"
 else
-  if grep -q 'INSTALL_NEXT_STEP=' "$OUT2"; then
-    add_result "case_permission_denied" "PASS" "next-step provided"
+  if grep -q 'INSTALL_NEXT_STEP=' "$OUT2" && grep -q 'INSTALL_FAILED_STEP=' "$OUT2"; then
+    add_result "case_permission_denied" "PASS" "machine fields + next-step provided"
   else
-    add_result "case_permission_denied" "FAIL" "missing next-step"
+    add_result "case_permission_denied" "FAIL" "missing machine fields on failure"
   fi
 fi
 
@@ -55,6 +55,20 @@ if bash "$RUNNER" install --target-dir "$TMP_ROOT/existing-bin" > "$OUT3B" 2>&1 
   add_result "case_existing_overwrite" "PASS" "re-install overwrite path ok"
 else
   add_result "case_existing_overwrite" "FAIL" "re-install should be idempotent"
+fi
+
+# case4: path conflict (target under existing file path)
+CONFLICT_PARENT="$TMP_ROOT/conflict-file"
+echo "x" > "$CONFLICT_PARENT"
+OUT4="$TMP_ROOT/case4.out"
+if bash "$RUNNER" install --target-dir "$CONFLICT_PARENT/subdir" > "$OUT4" 2>&1; then
+  add_result "case_path_conflict" "FAIL" "expected failure for path conflict"
+else
+  if grep -q 'INSTALL_FAILED_STEP=' "$OUT4" && grep -q 'INSTALL_NEXT_STEP=' "$OUT4"; then
+    add_result "case_path_conflict" "PASS" "path conflict failed with machine-readable next-step"
+  else
+    add_result "case_path_conflict" "FAIL" "missing failure metadata for path conflict"
+  fi
 fi
 
 pass_count=0
