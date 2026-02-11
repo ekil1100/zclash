@@ -29,8 +29,14 @@ fi
 
 MARKER="$TARGET_DIR/.zclash_installed"
 VERSION_FILE="$TARGET_DIR/.zclash_version"
+BIN_SHIM="$TARGET_DIR/zclash"
 
 echo "installed_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" > "$MARKER"
 echo "v0.1.0" > "$VERSION_FILE"
+cat > "$BIN_SHIM" <<'EOF'
+#!/usr/bin/env bash
+echo "zclash install shim: use project scripts in development mode"
+EOF
+chmod +x "$BIN_SHIM"
 
 emit_install_result "PASS" "install" "$MARKER" "" "run verify to confirm runtime prerequisites"
