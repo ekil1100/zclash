@@ -489,3 +489,4 @@
 - 2026-02-11 23:27（GMT+8）完成 P6-4A：install 接入最小真实路径（生成可执行 `zclash` shim），verify 增加 shim 存在校验；失败输出保留 next-step 字段。
 - 2026-02-11 23:27（GMT+8）完成 P6-4B：补齐 verify+upgrade 最小真实逻辑与失败分支（含未安装/缺版本），并扩展 `verify-install-flow.sh` 覆盖成功/失败回归样例，保持统一机器字段输出口径。
 - 2026-02-11 23:53（GMT+8）完成 P6-4C：统一单入口 `oc-run.sh` 覆盖 install/verify/upgrade，并补充 `INSTALL_SUMMARY` 人类摘要字段；失败保持 fail-fast 与 next-step 输出。
+- 2026-02-11 23:53（GMT+8）完成 P6-4D：安装 README 定稿“3步试用”并补 Beta 常见失败场景与 next-step，内容与 `verify-install-flow.sh` 回归输出保持一致。

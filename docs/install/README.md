@@ -44,7 +44,7 @@ scripts/install/
 
 ---
 
-## 4) 3步安装试用（人话版）
+## 4) 3步安装试用（人话版，Beta）
 
 1. **先安装**（把基础文件放到目标目录）
    ```bash
@@ -71,6 +71,26 @@ bash scripts/install/verify-install-flow.sh
 回归覆盖（最小集）：
 - 成功：install -> verify -> upgrade
 - 失败：verify before install / upgrade without version / upgrade before install
+
+## 6) Beta 试用注意事项（常见失败 + next-step）
+
+- `INSTALL_FAILED_STEP=arg-parse`
+  - 场景：命令参数不完整或 action 错误
+  - next-step：按提示使用 `bash scripts/install/oc-run.sh <install|verify|upgrade> ...`
+
+- `INSTALL_FAILED_STEP=marker-missing`
+  - 场景：未先执行 install 就 verify
+  - next-step：先执行 install，再 verify
+
+- `INSTALL_FAILED_STEP=version-missing`
+  - 场景：升级缺少 `--version` 或版本文件缺失
+  - next-step：补 `--version`，或先 install/verify 恢复版本文件
+
+- `INSTALL_FAILED_STEP=not-installed`
+  - 场景：未安装直接 upgrade
+  - next-step：先 install，再 upgrade
+
+以上失败场景与 `scripts/install/verify-install-flow.sh` 回归脚本保持一致。
 
 标准输出字段（机器可解析）：
 - `INSTALL_RESULT=PASS|FAIL`
