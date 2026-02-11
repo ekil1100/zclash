@@ -20,6 +20,7 @@ case "$ACTION" in
     echo "INSTALL_REPORT="
     echo "INSTALL_FAILED_STEP=arg-parse"
     echo "INSTALL_NEXT_STEP=use: bash scripts/install/oc-run.sh <install|verify|upgrade>"
+    echo "INSTALL_SUMMARY=unknown result=FAIL failed_step=arg-parse next_step=use: bash scripts/install/oc-run.sh <install|verify|upgrade>"
     exit 2
     ;;
 esac

@@ -13,4 +13,5 @@ emit_install_result() {
   echo "INSTALL_REPORT=$report"
   echo "INSTALL_FAILED_STEP=$failed_step"
   echo "INSTALL_NEXT_STEP=$next_step"
+  echo "INSTALL_SUMMARY=$action result=$result failed_step=${failed_step:-none} next_step=${next_step:-none}"
 }

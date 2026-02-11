@@ -384,6 +384,10 @@
   - [x] P6-4B 一键安装最小 verify+upgrade 实现与回归（并行）
     - 实现：verify/upgrade 最小真实逻辑（含缺失前置条件失败分支）
     - 回归：`verify-install-flow.sh` 覆盖成功/失败样例并校验统一输出字段
+  - [x] P6-4C 一键安装流程收口与单入口命令（高优先）
+    - 单入口：`oc-run.sh` 覆盖 install/verify/upgrade
+    - 输出：统一 `INSTALL_*` 机器字段 + `INSTALL_SUMMARY` 人类摘要
+    - 失败：fail-fast（任一阶段失败立即返回非0）
 - NEXT（唯一）：无（P6 安装链路当前项已收口，等待下一轮派发）
 
 ---
@@ -484,3 +488,4 @@
 - 2026-02-11 23:15（GMT+8）完成 P6-3B：新增 `verify-install-flow.sh` 覆盖成功/失败回归样例，并在安装 README 增加“3步安装试用”人话说明，输出字段与 runner 保持一致。
 - 2026-02-11 23:27（GMT+8）完成 P6-4A：install 接入最小真实路径（生成可执行 `zclash` shim），verify 增加 shim 存在校验；失败输出保留 next-step 字段。
 - 2026-02-11 23:27（GMT+8）完成 P6-4B：补齐 verify+upgrade 最小真实逻辑与失败分支（含未安装/缺版本），并扩展 `verify-install-flow.sh` 覆盖成功/失败回归样例，保持统一机器字段输出口径。
+- 2026-02-11 23:53（GMT+8）完成 P6-4C：统一单入口 `oc-run.sh` 覆盖 install/verify/upgrade，并补充 `INSTALL_SUMMARY` 人类摘要字段；失败保持 fail-fast 与 next-step 输出。

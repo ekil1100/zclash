@@ -78,3 +78,4 @@ bash scripts/install/verify-install-flow.sh
 - `INSTALL_REPORT=<path>`
 - `INSTALL_FAILED_STEP=<step>`
 - `INSTALL_NEXT_STEP=<hint>`
+- `INSTALL_SUMMARY=<human-readable summary>`
