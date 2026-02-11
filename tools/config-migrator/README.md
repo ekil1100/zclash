@@ -117,3 +117,25 @@ bash tools/config-migrator/summarize-results.sh
 - `pass_count` / `fail_count`
 - `failed_items[]`
 - `results[]`（使用统一字段：`sample_id/input/result/diff/hint`）
+
+---
+
+## 7) 首批规则回归统一入口（P5-2D）
+
+离线复现命令：
+```bash
+bash tools/config-migrator/run-regression.sh
+```
+
+覆盖范围：
+- R1 `PORT_TYPE_INT`（verify-r1）
+- R2 `LOG_LEVEL_ENUM`（lint + suggested=info）
+
+输出：
+- `MIGRATOR_REGRESSION_RESULT=PASS|FAIL`
+- `MIGRATOR_REGRESSION_FAILED_RULES=<rule list>`
+- `MIGRATOR_REGRESSION_REPORT=tools/config-migrator/reports/samples-summary.json`
+
+归档兼容：
+- 回归入口直接写 `samples-summary.json`，字段兼容统一格式：
+  `sample_id/input/result/diff/hint`
