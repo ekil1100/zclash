@@ -329,11 +329,12 @@
 - 优先级：P6
 - 输出：`tools/config-migrator/`, `docs/compat/`
 - 原子任务：
-  - [ ] P6-1A-1 migrator 回归报告 schema 校验（NEXT）
+  - [x] P6-1A-1 migrator 回归报告 schema 校验
     - 范围：为 `samples-summary.json` 增加 schema 校验脚本与最小校验规则
     - DoD：校验失败返回非0，输出缺失字段名；校验通过输出 PASS
     - 预计时长：30 分钟
-  - [ ] P6-1A-2 migrator 回归命令统一封装
+    - 产出：`tools/config-migrator/validate-summary-schema.sh`
+  - [ ] P6-1A-2 migrator 回归命令统一封装（NEXT）
     - 范围：统一 `verify-samples` / `summarize-results` / `run-regression` 入口
     - DoD：单命令完成全链路并输出最终 PASS/FAIL
     - 预计时长：35 分钟
@@ -432,5 +433,6 @@
 - 2026-02-11 14:38（GMT+8）完成 P5-4B：在 fail-fast 输出上新增人类友好摘要 `MIGRATOR_REGRESSION_SUMMARY`（总数/失败规则/失败样例），并保持机器字段向后兼容。
 - 2026-02-11 14:50（GMT+8）完成 P6-1A 第一批任务清单落地：新增 3 个原子任务（范围/DoD/预计时长），指定唯一 NEXT 为 `P6-1A-1`，并标注串行/并行依赖。
 - 2026-02-11 14:50（GMT+8）完成 P6-1B：新增 `i18n.example.json`（en/zh 占位文案键），并在 migrator README/TASKS 记录“机器字段不变”的兼容策略。
+- 2026-02-11 16:01（GMT+8）完成 P6-1A-1：新增 `validate-summary-schema.sh` 对 `samples-summary.json` 做 schema 校验（失败非0并输出缺失字段，成功输出 PASS）。
 - 2026-02-11 11:06（GMT+8）完成 P4-2A 预拆：在 perf README 增加 history 目录治理规则（命名/保留上限/清理方式），明确 latest 与 history 关系并提供可执行清理命令。
 - 2026-02-11 11:12（GMT+8）完成 P4-1H：在 perf README 明确热路径采样对象/窗口/样本量，补齐 3 个热路径指标采集方式，并声明 latest/history 字段兼容约束。
