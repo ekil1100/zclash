@@ -8,10 +8,10 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  bash scripts/perf-regression.sh [--help]
+  bash scripts/perf-regression.sh [--help] [--check-consistency]
 
 Description:
-  Run placeholder perf regression baseline and print PASS/FAIL protocol.
+  Run placeholder perf regression baseline or run README/script consistency check.
 
 Return codes:
   0  PASS (PERF_REGRESSION_RESULT=PASS)
@@ -25,13 +25,26 @@ if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
   exit 0
 fi
 
+ROOT="$(cd "$(dirname "$0")" && pwd)"
+
+if [[ "${1:-}" == "--check-consistency" ]]; then
+  shift
+  if [[ $# -gt 0 ]]; then
+    echo "Invalid argument: $1" >&2
+    usage >&2
+    exit 2
+  fi
+  "$ROOT/perf/check-readme-consistency.sh"
+  exit $?
+fi
+
 if [[ $# -gt 0 ]]; then
   echo "Invalid argument: $1" >&2
   usage >&2
   exit 2
 fi
 
-TARGET="$(cd "$(dirname "$0")" && pwd)/perf/run-baseline.sh"
+TARGET="$ROOT/perf/run-baseline.sh"
 if "$TARGET"; then
   # pass-through PASS semantics from baseline script
   exit 0

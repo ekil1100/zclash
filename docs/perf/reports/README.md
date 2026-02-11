@@ -98,14 +98,15 @@ docs/perf/reports/
 ### 5.4 本地执行与结果判读（最小）
 1) 查看帮助：`bash scripts/perf-regression.sh --help`
 2) 执行回归：`bash scripts/perf-regression.sh`
-3) 终端判读：
+3) 一键一致性回归检查：`bash scripts/perf-regression.sh --check-consistency`
+4) 终端判读：
    - `PERF_REGRESSION_RESULT=PASS` → 本轮通过
    - `PERF_REGRESSION_RESULT=FAIL` → 本轮失败
-4) 返回码语义：
+5) 返回码语义：
    - `0` = PASS
    - `1` = FAIL
    - `2` = 参数错误
-5) 文件判读：查看 `docs/perf/reports/latest.json` 中各指标的 `value/threshold/pass`。
+6) 文件判读：查看 `docs/perf/reports/latest.json` 中各指标的 `value/threshold/pass`。
 
 ---
 
