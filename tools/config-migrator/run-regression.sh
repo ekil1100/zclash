@@ -75,17 +75,21 @@ cat > "$OUT_SUMMARY" <<EOF
 }
 EOF
 
+total_count=${#results[@]}
+
 if [[ "$status" == "PASS" ]]; then
   echo "MIGRATOR_REGRESSION_RESULT=PASS"
   echo "MIGRATOR_REGRESSION_FAILED_RULES=[]"
   echo "MIGRATOR_REGRESSION_FAILED_SAMPLES=[]"
   echo "MIGRATOR_REGRESSION_REPORT=tools/config-migrator/reports/samples-summary.json"
+  echo "MIGRATOR_REGRESSION_SUMMARY=PASS total=${total_count} failed_rules=0 failed_samples=0"
   exit 0
 else
   echo "MIGRATOR_REGRESSION_RESULT=FAIL"
   echo "MIGRATOR_REGRESSION_FAILED_RULES=$(IFS=,; echo "${failed_rules[*]}")"
   echo "MIGRATOR_REGRESSION_FAILED_SAMPLES=$(IFS=,; echo "${failed_samples[*]}")"
   echo "MIGRATOR_REGRESSION_REPORT=tools/config-migrator/reports/samples-summary.json"
+  echo "MIGRATOR_REGRESSION_SUMMARY=FAIL total=${total_count} failed_rules=$(IFS=,; echo "${failed_rules[*]}") failed_samples=$(IFS=,; echo "${failed_samples[*]}")"
   # fail-fast gate: any failed rule returns non-zero
   exit 1
 fi

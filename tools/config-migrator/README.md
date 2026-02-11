@@ -144,7 +144,9 @@ bash tools/config-migrator/run-regression.sh
 输出：
 - `MIGRATOR_REGRESSION_RESULT=PASS|FAIL`
 - `MIGRATOR_REGRESSION_FAILED_RULES=<rule list>`
+- `MIGRATOR_REGRESSION_FAILED_SAMPLES=<sample id list>`
 - `MIGRATOR_REGRESSION_REPORT=tools/config-migrator/reports/samples-summary.json`
+- `MIGRATOR_REGRESSION_SUMMARY=...`（人类友好摘要：总数/失败规则/失败样例）
 
 归档兼容：
 - 回归入口直接写 `samples-summary.json`，字段兼容统一格式：

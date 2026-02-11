@@ -314,7 +314,10 @@
     - 规则：任一规则失败即返回非0
     - 输出：`MIGRATOR_REGRESSION_FAILED_RULES` + `MIGRATOR_REGRESSION_FAILED_SAMPLES`
     - 归档：与 `samples-summary.json` 字段兼容
-- 依赖：P5-1A（已完成） -> P5-1B（已完成） -> P5-1C（已完成） -> P5-1D（已完成） -> P5-1E（已完成） -> P5-1F（已完成） -> P5-1G（已完成） -> P5-2B（已完成） -> P5-2C（已完成） -> P5-2D（已完成） -> P5-3A（已完成）（串行）
+  - [x] P5-4B 门禁结果可读性优化（并行）
+    - 输出：新增 `MIGRATOR_REGRESSION_SUMMARY`（总数/失败规则/失败样例）
+    - 兼容：机器字段保持不变（向后兼容）
+- 依赖：P5-1A（已完成） -> P5-1B（已完成） -> P5-1C（已完成） -> P5-1D（已完成） -> P5-1E（已完成） -> P5-1F（已完成） -> P5-1G（已完成） -> P5-2B（已完成） -> P5-2C（已完成） -> P5-2D（已完成） -> P5-3A（已完成） -> P5-4B（已完成）（串行）
 - NEXT（唯一）：无（P5 首批规则与门禁收口已完成，等待下一轮派发）
 
 ---
@@ -398,5 +401,6 @@
 - 2026-02-11 14:14（GMT+8）完成 P5-3A：回归门禁收口为 fail-fast（任一规则失败返回非0），并补充失败规则列表与失败样例ID输出，保持与 `samples-summary.json` 字段兼容。
 - 2026-02-11 14:14（GMT+8）完成 P5-3B：在 migrator README 文档化 R1/R2 输入条件、修复策略与限制，补充 lint/autofix/regression 最小命令示例并对齐当前脚本行为。
 - 2026-02-11 14:25（GMT+8）重复派发确认：P5-3A/P5-3B 均已完成，回执对应 commit 为 `0de15ed` / `ec89df9`。
+- 2026-02-11 14:38（GMT+8）完成 P5-4B：在 fail-fast 输出上新增人类友好摘要 `MIGRATOR_REGRESSION_SUMMARY`（总数/失败规则/失败样例），并保持机器字段向后兼容。
 - 2026-02-11 11:06（GMT+8）完成 P4-2A 预拆：在 perf README 增加 history 目录治理规则（命名/保留上限/清理方式），明确 latest 与 history 关系并提供可执行清理命令。
 - 2026-02-11 11:12（GMT+8）完成 P4-1H：在 perf README 明确热路径采样对象/窗口/样本量，补齐 3 个热路径指标采集方式，并声明 latest/history 字段兼容约束。
