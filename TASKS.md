@@ -325,7 +325,7 @@
 ## 预备任务：Phase 6（迁移链路工程化）
 
 ### P6-1 迁移回归工程化（第一批3项原子任务）
-- 状态：DOING
+- 状态：DONE
 - 优先级：P6
 - 输出：`tools/config-migrator/`, `docs/compat/`
 - 原子任务：
@@ -347,9 +347,12 @@
   - [x] P6-1B migrator 摘要输出 i18n/本地化占位设计（并行）
     - DoD：定义可扩展文案键并提供 `en/zh` 占位示例
     - 兼容：机器字段不变，README/TASKS 记录兼容策略
+  - [x] P6-1B-2 run-all 门禁链路说明整合（并行）
+    - DoD：`run-all` 串联 schema-check + compat-parity + regression
+    - 兼容：fail-fast 保持 + 机器字段可解析（`MIGRATOR_ALL_*`）
 - 依赖：
   - 串行：P6-1A-1（已完成） -> P6-1A-2（已完成） -> P6-1A-3（已完成）
-  - 并行：P6-1B 可与 P6-1A 串行主线并行；Phase 5 历史维护可并行，不阻塞 P6-1 主线
+  - 并行：P6-1B / P6-1B-2 可与 P6-1A 串行主线并行；Phase 5 历史维护可并行，不阻塞 P6-1 主线
 
 ---
 
@@ -438,5 +441,6 @@
 - 2026-02-11 16:01（GMT+8）完成 P6-1A-1：新增 `validate-summary-schema.sh` 对 `samples-summary.json` 做 schema 校验（失败非0并输出缺失字段，成功输出 PASS）。
 - 2026-02-11 16:01（GMT+8）完成 P6-1A-2：新增统一回归入口 `run-all.sh`，整合 verify/summarize/regression，单命令输出最终 PASS/FAIL，并保持 fail-fast + 人类摘要字段兼容。
 - 2026-02-11 16:01（GMT+8）完成 P6-1A-3：新增 `check-compat-parity.sh` 自动对账脚本，输出缺失项清单并在差异存在时返回非0；README/TASKS 已补使用说明。
+- 2026-02-11 22:39（GMT+8）完成 P6-1B-2：`run-all.sh` 串联 schema 校验 + 兼容对账 + 回归门禁，保持 fail-fast 与机器字段可解析；README/TASKS 已补统一入口与结果字段说明。
 - 2026-02-11 11:06（GMT+8）完成 P4-2A 预拆：在 perf README 增加 history 目录治理规则（命名/保留上限/清理方式），明确 latest 与 history 关系并提供可执行清理命令。
 - 2026-02-11 11:12（GMT+8）完成 P4-1H：在 perf README 明确热路径采样对象/窗口/样本量，补齐 3 个热路径指标采集方式，并声明 latest/history 字段兼容约束。
