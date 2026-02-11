@@ -181,3 +181,21 @@ bash tools/config-migrator/run-all.sh
   - `regression.summary.pass`
   - `regression.summary.fail`
 - 提供最小 `en` + `zh` 模板。
+
+---
+
+## 9) 兼容清单与规则实现自动对账（P6-1A-3）
+
+离线复现命令：
+```bash
+bash tools/config-migrator/check-compat-parity.sh
+```
+
+输出：
+- `MIGRATOR_COMPAT_PARITY=PASS|FAIL`
+- `MIGRATOR_COMPAT_MISSING_IN_IMPL=<rule list>`
+- `MIGRATOR_COMPAT_UNDECLARED_IN_DOC=<rule list>`
+
+判定：
+- 任一缺失项存在即返回非0（FAIL）
+- 全部对齐返回 PASS

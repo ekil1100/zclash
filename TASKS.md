@@ -318,7 +318,7 @@
     - 输出：新增 `MIGRATOR_REGRESSION_SUMMARY`（总数/失败规则/失败样例）
     - 兼容：机器字段保持不变（向后兼容）
 - 依赖：P5-1A（已完成） -> P5-1B（已完成） -> P5-1C（已完成） -> P5-1D（已完成） -> P5-1E（已完成） -> P5-1F（已完成） -> P5-1G（已完成） -> P5-2B（已完成） -> P5-2C（已完成） -> P5-2D（已完成） -> P5-3A（已完成） -> P5-4B（已完成）（串行）
-- NEXT（唯一）：P6-1A-3 兼容清单与规则实现自动对账
+- NEXT（唯一）：无（P6-1 第一批原子任务已完成）
 
 ---
 
@@ -339,15 +339,16 @@
     - DoD：单命令完成全链路并输出最终 PASS/FAIL
     - 预计时长：35 分钟
     - 产出：`tools/config-migrator/run-all.sh`
-  - [ ] P6-1A-3 兼容清单与规则实现自动对账（NEXT）
+  - [x] P6-1A-3 兼容清单与规则实现自动对账
     - 范围：比对 `docs/compat/mihomo-clash.md` 与已实现规则清单
     - DoD：输出“已声明未实现 / 已实现未声明”差异列表
     - 预计时长：40 分钟
+    - 产出：`tools/config-migrator/check-compat-parity.sh`
   - [x] P6-1B migrator 摘要输出 i18n/本地化占位设计（并行）
     - DoD：定义可扩展文案键并提供 `en/zh` 占位示例
     - 兼容：机器字段不变，README/TASKS 记录兼容策略
 - 依赖：
-  - 串行：P6-1A-1（已完成） -> P6-1A-2（已完成） -> P6-1A-3（NEXT）
+  - 串行：P6-1A-1（已完成） -> P6-1A-2（已完成） -> P6-1A-3（已完成）
   - 并行：P6-1B 可与 P6-1A 串行主线并行；Phase 5 历史维护可并行，不阻塞 P6-1 主线
 
 ---
@@ -436,5 +437,6 @@
 - 2026-02-11 14:50（GMT+8）完成 P6-1B：新增 `i18n.example.json`（en/zh 占位文案键），并在 migrator README/TASKS 记录“机器字段不变”的兼容策略。
 - 2026-02-11 16:01（GMT+8）完成 P6-1A-1：新增 `validate-summary-schema.sh` 对 `samples-summary.json` 做 schema 校验（失败非0并输出缺失字段，成功输出 PASS）。
 - 2026-02-11 16:01（GMT+8）完成 P6-1A-2：新增统一回归入口 `run-all.sh`，整合 verify/summarize/regression，单命令输出最终 PASS/FAIL，并保持 fail-fast + 人类摘要字段兼容。
+- 2026-02-11 16:01（GMT+8）完成 P6-1A-3：新增 `check-compat-parity.sh` 自动对账脚本，输出缺失项清单并在差异存在时返回非0；README/TASKS 已补使用说明。
 - 2026-02-11 11:06（GMT+8）完成 P4-2A 预拆：在 perf README 增加 history 目录治理规则（命名/保留上限/清理方式），明确 latest 与 history 关系并提供可执行清理命令。
 - 2026-02-11 11:12（GMT+8）完成 P4-1H：在 perf README 明确热路径采样对象/窗口/样本量，补齐 3 个热路径指标采集方式，并声明 latest/history 字段兼容约束。
