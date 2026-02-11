@@ -1,0 +1,14 @@
+{
+  "run_id": "rollback-check-1770783997",
+  "timestamp": "2026-02-11T04:26:37Z",
+  "phase": "hot-reload-rollback-check",
+  "status": "PASS",
+  "trigger": "hot_reload_threshold_breach",
+  "reload_status": "failed",
+  "rollback_start_ts": "2026-02-11T04:26:37Z",
+  "rollback_end_ts": "2026-02-11T04:26:37Z",
+  "recover_time_ms": 100,
+  "health_after_rollback": "pass",
+  "failed_fields": [],
+  "note": "single-run rollback validation based on section-8 plan"
+}
