@@ -6,10 +6,16 @@
 </p>
 
 <p align="center">
+  <b>🚧 Beta</b> — 核心功能可用，安装链路已闭环，正在收集试用反馈
+</p>
+
+<p align="center">
+  <a href="#快速安装">快速安装</a> •
   <a href="#功能特性">功能特性</a> •
   <a href="#快速开始">快速开始</a> •
   <a href="#tui-界面">TUI 界面</a> •
-  <a href="#配置说明">配置说明</a>
+  <a href="#配置说明">配置说明</a> •
+  <a href="#反馈与问题">反馈</a>
 </p>
 
 ---
@@ -79,6 +85,38 @@
 当前限制：
 - 仅实现基础 TCP 流程；
 - `tls` / `ws-opts` 等高级传输参数已可解析，但尚未在 VLESS 出站链路中完整启用。
+
+---
+
+## 快速安装
+
+### 从 Release 安装（推荐）
+
+```bash
+# 下载最新 release
+# https://github.com/ekil1100/zclash/releases
+
+# 或使用安装脚本（3 步完成）
+bash scripts/install/oc-run.sh install --target-dir ~/.local/bin/zclash
+bash scripts/install/oc-run.sh verify  --target-dir ~/.local/bin/zclash
+```
+
+详见 [快速启动指南（3 分钟上手）](docs/install/quick-start.md)。
+
+### 一键健康检查
+
+```bash
+bash scripts/install/trial-healthcheck.sh --target-dir ~/.local/bin/zclash
+```
+
+---
+
+## 反馈与问题
+
+试用中遇到问题？请使用 [反馈模板](docs/install/trial-feedback-template.md) 提交：
+
+- 环境信息 + 复现步骤 + 严重等级
+- 一键诊断输出（`trial-healthcheck.sh`）
 
 ---
 
