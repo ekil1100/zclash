@@ -81,6 +81,7 @@
 - `PORT_TYPE_INT`
 - `LOG_LEVEL_ENUM`
 - `PROXY_GROUP_TYPE_CHECK`
+- `DNS_FIELD_CHECK`
 
 ### P2（生态扩展）
 1. 实验字段透传与高级 provider 组合

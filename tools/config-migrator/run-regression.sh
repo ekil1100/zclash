@@ -55,6 +55,28 @@ else
   results+=("{\"sample_id\":\"R3_PROXY_GROUP_TYPE_CHECK\",\"input\":\"tools/config-migrator/examples/r3-proxy-group-type.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"lint command failed\"}")
 fi
 
+# R4 validation (DNS_FIELD_CHECK)
+R4_OUT="$REPORT_DIR/r4-regression.lint.json"
+if bash "$BASE/run.sh" lint "$BASE/examples/r4-dns-fields.yaml" > "$R4_OUT" 2>/dev/null || true; then
+  r4_ok=true
+  # Must detect: dns.enable missing (warn), dns.nameserver empty (error), enhanced-mode (warn)
+  grep -q '"rule":"DNS_FIELD_CHECK"' "$R4_OUT" || r4_ok=false
+  grep -q '"path":"dns.enable"' "$R4_OUT" || r4_ok=false
+  grep -q '"path":"dns.nameserver"' "$R4_OUT" || r4_ok=false
+  grep -q '"path":"dns.enhanced-mode"' "$R4_OUT" || r4_ok=false
+  if [[ "$r4_ok" == "true" ]]; then
+    results+=("{\"sample_id\":\"R4_DNS_FIELD_CHECK\",\"input\":\"tools/config-migrator/examples/r4-dns-fields.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"dns field issues detected\"}")
+  else
+    failed_rules+=("DNS_FIELD_CHECK")
+    failed_samples+=("R4_DNS_FIELD_CHECK")
+    results+=("{\"sample_id\":\"R4_DNS_FIELD_CHECK\",\"input\":\"tools/config-migrator/examples/r4-dns-fields.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected DNS_FIELD_CHECK issues\"}")
+  fi
+else
+  failed_rules+=("DNS_FIELD_CHECK")
+  failed_samples+=("R4_DNS_FIELD_CHECK")
+  results+=("{\"sample_id\":\"R4_DNS_FIELD_CHECK\",\"input\":\"tools/config-migrator/examples/r4-dns-fields.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"lint command failed\"}")
+fi
+
 pass_count=0
 for r in "${results[@]}"; do
   if echo "$r" | grep -q '"result":"PASS"'; then

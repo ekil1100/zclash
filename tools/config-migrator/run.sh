@@ -41,6 +41,24 @@ collect_issues() {
     done < <(grep -E '^[[:space:]]*type:[[:space:]]*"?[A-Za-z-]+"?' "$file")
   fi
 
+  # R4: DNS_FIELD_CHECK
+  if grep -Eq '^[[:space:]]*dns:' "$file"; then
+    # Check dns.enable missing
+    if ! grep -Eq '^[[:space:]]+enable:' "$file"; then
+      issues+=("{\"rule\":\"DNS_FIELD_CHECK\",\"level\":\"warn\",\"path\":\"dns.enable\",\"message\":\"dns.enable missing, defaults to true\",\"fixable\":false,\"suggested\":\"true\"}")
+    fi
+    # Check dns.nameserver empty or missing
+    if ! grep -Eq '^[[:space:]]+nameserver:' "$file"; then
+      issues+=("{\"rule\":\"DNS_FIELD_CHECK\",\"level\":\"error\",\"path\":\"dns.nameserver\",\"message\":\"dns.nameserver missing\",\"fixable\":false}")
+    elif grep -A1 'nameserver:' "$file" | grep -Eq '^\s*nameserver:\s*\[\s*\]\s*$'; then
+      issues+=("{\"rule\":\"DNS_FIELD_CHECK\",\"level\":\"error\",\"path\":\"dns.nameserver\",\"message\":\"dns.nameserver is empty\",\"fixable\":false}")
+    fi
+    # Check dns.enhanced-mode (unsupported)
+    if grep -Eq '^[[:space:]]+enhanced-mode:' "$file"; then
+      issues+=("{\"rule\":\"DNS_FIELD_CHECK\",\"level\":\"warn\",\"path\":\"dns.enhanced-mode\",\"message\":\"zclash ignores enhanced-mode\",\"fixable\":false}")
+    fi
+  fi
+
   # R2: LOG_LEVEL_ENUM
   if grep -Eq '^[[:space:]]*log-level:[[:space:]]*"?[A-Za-z-]+"?[[:space:]]*$' "$file"; then
     raw=$(grep -E '^[[:space:]]*log-level:[[:space:]]*"?[A-Za-z-]+"?[[:space:]]*$' "$file" | head -n1 | sed -E 's/^[[:space:]]*log-level:[[:space:]]*"?([^"[:space:]]+)"?[[:space:]]*$/\1/')
