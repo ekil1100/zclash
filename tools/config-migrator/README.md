@@ -25,27 +25,37 @@
 
 ---
 
-## 2) 最小可验证规则（示例）
+## 2) 规则说明（R1 / R2）
 
-### 规则1：`PORT_TYPE_INT`
-- 说明：`port/socks-port/mixed-port` 必须是整数
-- 触发：字段为字符串或非法值
-- autofix：可将纯数字字符串转为整数
+### R1：`PORT_TYPE_INT`
+- 输入条件：`port/socks-port/mixed-port` 为数字字符串（如 `"7890"`）
+- 修复策略：autofix 将纯数字字符串转为整数（如 `7890`）
+- 限制：仅处理纯数字字符串；非数字字符串不会强制转换
 
-### 规则2：`LOG_LEVEL_ENUM`
-- 说明：`log-level` 仅允许 `debug|info|warning|error|silent`
-- 触发：值不在枚举范围
-- autofix：不可自动修复，给出建议值 `info`
+### R2：`LOG_LEVEL_ENUM`
+- 输入条件：`log-level` 不在 `debug|info|warning|error|silent`
+- 修复策略：不自动修复（`fixable=false`），输出建议值 `suggested=info`
+- 限制：仅做枚举校验，不改写源配置
 
 ---
 
-## 3) 最小执行入口（占位）
+## 3) 最小命令示例（lint / autofix / regression）
 
-建议入口：
-- `bash tools/config-migrator/run.sh lint <input_path>`
-- `bash tools/config-migrator/run.sh autofix <input_path> [output_path]`
+```bash
+# lint
+bash tools/config-migrator/run.sh lint tools/config-migrator/examples/r1-port-string.yaml
 
-当前阶段先固定契约与规则，下一步再实现真实解析与修复逻辑。
+# autofix
+bash tools/config-migrator/run.sh autofix tools/config-migrator/examples/r1-port-string.yaml tools/config-migrator/reports/r1-port-string.fixed.yaml
+
+# regression (R1+R2)
+bash tools/config-migrator/run-regression.sh
+```
+
+输出行为对齐当前脚本：
+- `run.sh lint`：返回 `issues[]`，R2 命中时含 `suggested=info`
+- `run.sh autofix`：仅修复 R1（数字字符串端口）
+- `run-regression.sh`：输出 `MIGRATOR_REGRESSION_RESULT` 与失败规则清单
 
 ---
 

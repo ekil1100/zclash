@@ -396,5 +396,6 @@
 - 2026-02-11 14:02（GMT+8）完成 P5-2C：执行 R1 验收补齐（verify-r1 + verify-samples + summarize-results），三字段修复与汇总结果一致为 PASS。
 - 2026-02-11 14:02（GMT+8）完成 P5-2D：新增统一回归入口 `run-regression.sh`，整合 R1/R2 校验并输出 PASS/FAIL 与失败规则清单，归档兼容 `samples-summary.json`。
 - 2026-02-11 14:14（GMT+8）完成 P5-3A：回归门禁收口为 fail-fast（任一规则失败返回非0），并补充失败规则列表与失败样例ID输出，保持与 `samples-summary.json` 字段兼容。
+- 2026-02-11 14:14（GMT+8）完成 P5-3B：在 migrator README 文档化 R1/R2 输入条件、修复策略与限制，补充 lint/autofix/regression 最小命令示例并对齐当前脚本行为。
 - 2026-02-11 11:06（GMT+8）完成 P4-2A 预拆：在 perf README 增加 history 目录治理规则（命名/保留上限/清理方式），明确 latest 与 history 关系并提供可执行清理命令。
 - 2026-02-11 11:12（GMT+8）完成 P4-1H：在 perf README 明确热路径采样对象/窗口/样本量，补齐 3 个热路径指标采集方式，并声明 latest/history 字段兼容约束。
