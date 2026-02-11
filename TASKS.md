@@ -143,28 +143,35 @@
 ## 预备任务：Phase 3（TUI 易用化）
 
 ### P3-1 信息架构重排
-- 状态：DOING
+- 状态：DONE
 - 优先级：P3
 - 输出：`docs/tui/interaction.md`
 - 验收标准（Acceptance Criteria / DoD）：
-  - [ ] 五区布局定义可评审且可实现（Overview/Proxies/Connections/Logs/Diagnose）
-  - [ ] 全局快捷键一致性原则明确（含冲突与提示约束）
-  - [ ] 首屏信息密度优化原则可执行（含优先级和展示边界）
+  - [x] 五区布局定义可评审且可实现（Overview/Proxies/Connections/Logs/Diagnose）
+  - [x] 全局快捷键一致性原则明确（含冲突与提示约束）
+  - [x] 首屏信息密度优化原则可执行（含优先级和展示边界）
 - 子任务：
   - [x] Overview/Proxies/Connections/Logs/Diagnose 五区布局
   - [x] 全局快捷键统一
   - [x] 首屏信息密度优化
-- 备注：`docs/tui/interaction.md` 初稿已完成，下一步进入 P3-2 键位与交互细化。
+- 备注：P3-1 已完成，已进入 P3-2 交互与键位细化。
 
 ### P3-2 核心交互增强
-- 状态：TODO
+- 状态：DOING
 - 优先级：P3
 - 输出：`docs/tui/keymap.md` + 功能实现
+- 验收标准（Acceptance Criteria / DoD）：
+  - [ ] 代理组切换具备可见反馈（成功/失败/建议）
+  - [ ] 连接筛选可按目标/入站/出站执行且可清空
+  - [ ] 日志过滤支持级别+关键字并可恢复全量
+  - [ ] 重载反馈包含结果与耗时
 - 子任务：
+  - [x] 键位草案文档（`docs/tui/keymap.md`）
   - [ ] 代理组切换 + 延迟对比
   - [ ] 连接筛选/排序
   - [ ] 日志过滤
   - [ ] 重载反馈
+- 备注：已完成文档草案，下一步按子任务顺序落地实现。
 
 ---
 
@@ -232,3 +239,4 @@
 - 2026-02-11 07:48（GMT+8）完成 P2-2 子任务 4：新增 `src/integration_error_test.zig`（profile/proxy/diag 各 1 个错误场景），断言 `code/message/hint` 结构通过。
 - 2026-02-11 08:00（GMT+8）启动 P3-1：新增 `docs/tui/interaction.md` 初稿（五区布局/快捷键一致性/首屏密度优化），并将 P3-1 更新为 DOING。
 - 2026-02-11 08:02（GMT+8）收敛看板状态：P1-1 验收子项已全量完成，状态更新为 DONE。
+- 2026-02-11 08:24（GMT+8）收敛 P3-1 并启动 P3-2：P3-1 更新为 DONE；新增 `docs/tui/keymap.md` 草案并将 P3-2 更新为 DOING。
