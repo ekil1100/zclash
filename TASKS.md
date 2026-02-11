@@ -194,14 +194,14 @@
 - 优先级：P4
 - 输出：`docs/perf/reports/`
 - 可执行项（最小化）：
-  - [ ] P4-1H 热路径 profiling 采样计划（NEXT）
-    - 范围：新增 `docs/perf/reports/profiling-plan.md`，定义规则匹配/DNS/握手 3 条采样链路与命令占位
-    - DoD：每条链路包含采样命令、样本数、输出字段、通过阈值占位
-- 唯一 NEXT（可独立验收）：P4-1H 热路径 profiling 采样计划
+  - [x] P4-1H 热路径 profiling 采样计划（NEXT）
+    - 范围：在 `docs/perf/reports/README.md` 定义规则匹配/DNS/握手 3 条采样链路、采样窗口与样本量
+    - DoD：每条链路包含采样对象、样本量、采集方式、字段兼容约束
+- 唯一 NEXT（可独立验收）：性能回归基线脚本
 - 依赖：
-  - 串行：P4-1H（NEXT） -> 性能回归基线脚本 -> 回归门禁阈值
+  - 串行：性能回归基线脚本（NEXT） -> 回归门禁阈值
   - 并行：P4-2 与 P4-1 可并行（不阻塞 P4-1 主线）
-- 已完成项（归档）：P4-1A / P4-1B / P4-1C / P4-1D / P4-1E / P4-1F / P4-1J / P4-1K / P4-1L / P4-1M。
+- 已完成项（归档）：P4-1A / P4-1B / P4-1C / P4-1D / P4-1E / P4-1F / P4-1H / P4-1J / P4-1K / P4-1L / P4-1M。
 - 参考入口命令：`bash scripts/perf-regression.sh --check-consistency`
 - 入口验证结果（2026-02-11 10:54 GMT+8）：`PERF_README_CONSISTENCY=PASS`（一致性检查已被统一入口实际调用）
 
@@ -284,3 +284,4 @@
 - 2026-02-11 10:43（GMT+8）完成 P4-1N：P4-1 最小化收口，仅保留可执行下一项（P4-1H）；完成项归档精简并保留依赖说明。
 - 2026-02-11 10:54（GMT+8）执行 P4-1M 入口验证：通过统一命令 `bash scripts/perf-regression.sh --check-consistency` 实测一致性检查链路，结果 `PERF_README_CONSISTENCY=PASS`。
 - 2026-02-11 11:06（GMT+8）完成 P4-2A 预拆：在 perf README 增加 history 目录治理规则（命名/保留上限/清理方式），明确 latest 与 history 关系并提供可执行清理命令。
+- 2026-02-11 11:12（GMT+8）完成 P4-1H：在 perf README 明确热路径采样对象/窗口/样本量，补齐 3 个热路径指标采集方式，并声明 latest/history 字段兼容约束。

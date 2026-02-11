@@ -16,7 +16,33 @@
 - 采样环境尽量固定（机器/网络/配置）
 - 指标统一记录到结构化文件（建议 JSON）
 
-### 2.2 统计字段建议
+### 2.2 热路径采样计划（P4-1H）
+- 采样对象（至少 3 条热路径）：
+  1) 规则匹配路径（rule eval）
+  2) DNS 解析路径（dns resolve）
+  3) 连接握手路径（handshake/connect）
+- 采样窗口：每条路径连续采样 **60s**
+- 样本量：每条路径每轮至少 **200** 样本；每次回归跑 **3 轮**
+
+### 2.3 热路径指标与采集方式
+1) `rule_eval_p95_ms`
+- 采集方式：在规则匹配关键路径打点，统计 p95（ms）
+- 写入字段：`metrics.rule_eval_p95_ms.{value,threshold,pass}`
+
+2) `dns_resolve_p95_ms`
+- 采集方式：DNS 请求发起/返回打点，统计 p95（ms）
+- 写入字段：`metrics.dns_resolve_p95_ms.{value,threshold,pass}`
+
+3) `handshake_p95_ms`
+- 采集方式：建立连接握手阶段打点，统计 p95（ms）
+- 写入字段：`metrics.handshake_p95_ms.{value,threshold,pass}`
+
+### 2.4 字段兼容约束（latest/history）
+- 顶层字段保持兼容：`run_id` / `timestamp` / `mode` / `metrics`
+- 新增指标仅追加在 `metrics` 对象内，不改已有键语义
+- `latest.json` 与 `history/*.json` 使用同一 schema，保证可直接归档
+
+### 2.5 统计字段建议
 - `run_id`
 - `timestamp`
 - `scenario`
