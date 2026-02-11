@@ -441,6 +441,11 @@
   - DoD：输出最小摘要 + 人话失败提示，同时保留机器字段
   - 预计时长：30 分钟
   - 产出：`scripts/install/run-3step-smoke.sh` + `docs/install/README.md`
+- [x] P6-8A 安装链路非模拟权限验证增强（高优先）
+  - 范围：扩展真实权限失败场景到至少 2 类（`/var/root` 与 `/System`）
+  - DoD：失败输出 `INSTALL_FAILED_STEP` + `INSTALL_NEXT_STEP`；汇总输出 PASS/FAIL
+  - 预计时长：30 分钟
+  - 产出：`scripts/install/verify-install-env.sh` + `docs/install/README.md`
 
 - 依赖关系：
   - 串行主线：P6-7A -> P6-7C
@@ -559,3 +564,4 @@
 - 2026-02-12 01:48（GMT+8）完成 P6-7C：新增 `oc-rollback.sh` 并接入 `oc-run.sh rollback`，固化回滚动作（清理标记/版本/shim）；成功/失败均输出统一 `INSTALL_*` 字段与 next-step。
 - 2026-02-12 01:48（GMT+8）完成 P6-7D：定义 Beta 证据归档规范（目录/命名/字段），并让 checklist runner 产物归档至 `docs/install/evidence/history/<run_id>`，`latest` 指向最新产物。
 - 2026-02-12 01:48（GMT+8）完成 P6-7E：新增 3 步试用端到端自检脚本 `run-3step-smoke.sh`，输出最小结果摘要；失败提示改为人话化并保留机器字段。
+- 2026-02-12 02:22（GMT+8）完成 P6-8A：扩展非模拟权限失败场景到两类真实受限路径（`/var/root`、`/System`），并在 env 回归汇总中校验 `INSTALL_FAILED_STEP` + `INSTALL_NEXT_STEP` 字段。

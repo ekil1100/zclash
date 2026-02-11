@@ -91,7 +91,7 @@ bash scripts/install/run-3step-smoke.sh
 回归覆盖（最小集）：
 - 成功：install -> verify -> upgrade
 - 失败：verify before install / upgrade without version / upgrade before install
-- 跨环境：普通用户路径 / 权限不足（真实受限路径） / 权限不足（模拟） / 已有安装覆盖 / 目标路径冲突
+- 跨环境：普通用户路径 / 权限不足（真实受限路径A: /var/root） / 权限不足（真实受限路径B: /System） / 权限不足（模拟） / 已有安装覆盖 / 目标路径冲突
 
 ## 6) Beta 试用验收清单（人话版 + 证据路径）
 

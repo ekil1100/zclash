@@ -33,22 +33,33 @@ else
   add_result "case_normal_path" "FAIL" "check target-dir writability"
 fi
 
-# case2: permission denied (real non-simulated path)
-# try privileged root-owned location first; if writable in current env, fallback to /sys (linux-like readonly)
-REAL_DENIED_TARGET="/var/root/zclash-install-test"
-if mkdir -p "$REAL_DENIED_TARGET" 2>/dev/null; then
-  REAL_DENIED_TARGET="/sys/zclash-install-test"
-fi
+# case2: permission denied (real non-simulated path type A: privileged root-owned dir)
+REAL_DENIED_TARGET_A="/var/root/zclash-install-test"
 OUT2="$TMP_ROOT/case2.out"
-if bash "$RUNNER" install --target-dir "$REAL_DENIED_TARGET" > "$OUT2" 2>&1; then
-  add_result "case_permission_denied_real" "FAIL" "expected permission failure on protected path"
+if bash "$RUNNER" install --target-dir "$REAL_DENIED_TARGET_A" > "$OUT2" 2>&1; then
+  add_result "case_permission_denied_real_root" "FAIL" "expected permission failure on /var/root"
 else
   if grep -q 'INSTALL_RESULT=FAIL' "$OUT2" \
     && grep -q 'INSTALL_FAILED_STEP=' "$OUT2" \
     && grep -q 'INSTALL_NEXT_STEP=' "$OUT2"; then
-    add_result "case_permission_denied_real" "PASS" "real permission failure produced machine fields"
+    add_result "case_permission_denied_real_root" "PASS" "real root path failure produced machine fields"
   else
-    add_result "case_permission_denied_real" "FAIL" "missing machine fields on permission failure"
+    add_result "case_permission_denied_real_root" "FAIL" "missing machine fields on /var/root failure"
+  fi
+fi
+
+# case2a2: permission denied (real non-simulated path type B: system protected path)
+REAL_DENIED_TARGET_B="/System/zclash-install-test"
+OUT2A2="$TMP_ROOT/case2a2.out"
+if bash "$RUNNER" install --target-dir "$REAL_DENIED_TARGET_B" > "$OUT2A2" 2>&1; then
+  add_result "case_permission_denied_real_system" "FAIL" "expected permission failure on /System"
+else
+  if grep -q 'INSTALL_RESULT=FAIL' "$OUT2A2" \
+    && grep -q 'INSTALL_FAILED_STEP=' "$OUT2A2" \
+    && grep -q 'INSTALL_NEXT_STEP=' "$OUT2A2"; then
+    add_result "case_permission_denied_real_system" "PASS" "real system path failure produced machine fields"
+  else
+    add_result "case_permission_denied_real_system" "FAIL" "missing machine fields on /System failure"
   fi
 fi
 
