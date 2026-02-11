@@ -193,18 +193,16 @@
 - 状态：DOING
 - 优先级：P4
 - 输出：`docs/perf/reports/`
-- 子任务（仅保留未完成项）：
+- 可执行项（最小化）：
   - [ ] P4-1H 热路径 profiling 采样计划（NEXT）
     - 范围：新增 `docs/perf/reports/profiling-plan.md`，定义规则匹配/DNS/握手 3 条采样链路与命令占位
     - DoD：每条链路包含采样命令、样本数、输出字段、通过阈值占位
-  - [ ] 性能回归基线脚本
-  - [ ] 回归门禁阈值
-- 已完成项归档：P4-1A / P4-1B / P4-1C / P4-1D / P4-1E / P4-1F / P4-1J / P4-1K / P4-1M。
-- 一键一致性回归入口命令：`bash scripts/perf-regression.sh --check-consistency`
-- 依赖顺序：
-  - 串行：P4-1H（NEXT） -> 性能回归基线脚本 -> 回归门禁阈值
-  - 并行：P4-2 与 P4-1 可并行（但不影响 P4-1 主线验收）
 - 唯一 NEXT（可独立验收）：P4-1H 热路径 profiling 采样计划
+- 依赖：
+  - 串行：P4-1H（NEXT） -> 性能回归基线脚本 -> 回归门禁阈值
+  - 并行：P4-2 与 P4-1 可并行（不阻塞 P4-1 主线）
+- 已完成项（归档）：P4-1A / P4-1B / P4-1C / P4-1D / P4-1E / P4-1F / P4-1J / P4-1K / P4-1L / P4-1M。
+- 参考入口命令：`bash scripts/perf-regression.sh --check-consistency`
 
 ### P4-2 长稳与故障注入
 - 状态：TODO
@@ -279,3 +277,4 @@
 - 2026-02-11 10:29（GMT+8）完成 P4-1J：固化 perf 回归成功/失败样例字段顺序，并与 `scripts/perf-regression.sh` 输出逐项对齐；同步 P4-1 依赖顺序与 NEXT。
 - 2026-02-11 10:34（GMT+8）完成 P4-1L：重排 P4-1 列表仅保留未完成项，已完成项归档到备注；保留唯一 NEXT 与并行/串行依赖，不扩新范围。
 - 2026-02-11 10:42（GMT+8）完成 P4-1M：将 README/脚本一致性检查接入统一入口 `scripts/perf-regression.sh --check-consistency`，输出 PASS/FAIL + 失败字段明细，并在 TASKS 记录入口命令。
+- 2026-02-11 10:43（GMT+8）完成 P4-1N：P4-1 最小化收口，仅保留可执行下一项（P4-1H）；完成项归档精简并保留依赖说明。
