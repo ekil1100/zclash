@@ -82,8 +82,61 @@
 - `LOG_LEVEL_ENUM`
 - `PROXY_GROUP_TYPE_CHECK`
 - `DNS_FIELD_CHECK`
+- `DNS_NAMESERVER_FORMAT`
+- `PROXY_GROUP_EMPTY_PROXIES`
 
 ### P2（生态扩展）
 1. 实验字段透传与高级 provider 组合
 2. 第三方面板深度兼容层
 3. 高级排障与冲突可视化
+
+---
+
+## 迁移边界：不能迁的场景与绕行建议
+
+以下场景在 zclash 当前版本中**无法自动迁移**，需用户手动处理。
+
+### 1. `enhanced-mode: fake-ip` / `redir-host`
+
+**现象**：mihomo/clash 支持 `dns.enhanced-mode` 实现 fake-ip 或 redir-host 透明代理模式。  
+**zclash 状态**：不支持，字段会被忽略。  
+**影响**：依赖 fake-ip 的透明代理场景无法工作。  
+**绕行**：
+- 改用 SOCKS5/HTTP 显式代理模式（配置浏览器/系统代理）
+- 若必须透明代理，暂继续使用 mihomo，等待 zclash 后续支持
+
+### 2. `rule-provider` 远程规则集自动更新
+
+**现象**：mihomo/clash 支持 `rule-providers` 从远程 URL 拉取规则集并定时更新。  
+**zclash 状态**：配置可解析但远程更新链路未完整实现。  
+**影响**：规则集不会自动刷新，停留在初始下载版本。  
+**绕行**：
+- 手动定期下载规则文件放到本地路径
+- 用 cron 脚本定期 `curl` 更新 + `zclash restart`
+
+### 3. 复杂 `proxy-provider` 组合策略
+
+**现象**：mihomo 支持通过 `proxy-providers` 从订阅 URL 动态拉取节点并按策略组合。  
+**zclash 状态**：不支持 proxy-provider，节点必须在配置文件中静态声明。  
+**影响**：多订阅聚合、节点动态更新场景不可用。  
+**绕行**：
+- 使用 `zclash config download <url>` 手动更新订阅
+- 写脚本定期下载订阅 → 合并节点 → 写入配置 → `zclash restart`
+
+### 4. 第三方面板（Yacd/Razord）完全兼容
+
+**现象**：mihomo/clash 的 API 被 Yacd 等面板深度依赖（WebSocket 实时推送、特定字段格式）。  
+**zclash 状态**：REST API 基础资源可用，但 WebSocket 推送和部分面板专用字段未实现。  
+**影响**：面板可能部分功能不可用（实时流量图、连接断开等）。  
+**绕行**：
+- 使用 zclash 内置 TUI 查看状态
+- 使用 `zclash doctor` / `zclash status` CLI 命令
+
+### 5. `tun` 模式透明代理
+
+**现象**：mihomo 支持 `tun` 模式实现系统级透明代理。  
+**zclash 状态**：不支持。  
+**影响**：无法实现系统全局代理（不经过浏览器/应用代理设置）。  
+**绕行**：
+- 使用系统代理设置指向 zclash 的 HTTP/SOCKS5 端口
+- macOS: 系统偏好设置 → 网络 → 代理
