@@ -193,41 +193,17 @@
 - 状态：DOING
 - 优先级：P4
 - 输出：`docs/perf/reports/`
-- 子任务：
-  - [x] P4-1A profiling 脚手架（首个原子项）
-    - 范围：新增 `docs/perf/reports/README.md` + `scripts/perf/run-baseline.sh`（可运行占位）
-    - DoD：脚本可执行并输出占位指标（`rule_eval_p95_ms` / `dns_p95_ms` / `throughput_rps`）与阈值占位
-    - 预计时长：30-50 分钟
-  - [x] P4-1B 回归执行入口定义（本地/CI）
-    - 命令统一：`bash scripts/perf-regression.sh`
-    - 判定标准：exit code + 关键指标阈值
-    - 引用：`docs/perf/reports/README.md` 第5节（入口）与第6节（脚本接入）
-  - [x] P4-1C 指标阈值占位收敛（可执行化）
-    - 覆盖：3 个核心指标默认阈值 + 调整说明
-    - 新增：失败后处理建议（定位路径/放宽阈值规则）
-    - 引用：`docs/perf/reports/README.md` 第4节与第7节
-  - [x] P4-1D perf 回归脚本入口占位
-    - 入口：`scripts/perf-regression.sh`（统一入口，转发到 `scripts/perf/run-baseline.sh`）
-    - 协议：输出 `PERF_REGRESSION_RESULT=PASS|FAIL`，exit code 0/非0 对应 PASS/FAIL
-    - 边界：仅占位，不实现真实采样与阈值计算逻辑
-  - [x] P4-1E 占位脚本与文档对齐校验
-    - 校验：脚本入口与 README 命令一致
-    - 新增：本地执行与结果判读最小说明
-  - [x] P4-1F 占位脚本最小可验收闭环
-    - 新增：`--help/-h`、参数校验、返回码语义（0/1/2）
-    - 对齐：README 示例命令与脚本行为一致
-  - [x] P4-1J perf 回归输出结果模板再收敛
-    - 固化：成功/失败示例字段顺序
-    - 对齐：与 `scripts/perf-regression.sh` 输出一一对应
+- 子任务（仅保留未完成项）：
   - [ ] P4-1H 热路径 profiling 采样计划（NEXT）
+    - 范围：新增 `docs/perf/reports/profiling-plan.md`，定义规则匹配/DNS/握手 3 条采样链路与命令占位
+    - DoD：每条链路包含采样命令、样本数、输出字段、通过阈值占位
   - [ ] 性能回归基线脚本
   - [ ] 回归门禁阈值
+- 已完成项归档：P4-1A / P4-1B / P4-1C / P4-1D / P4-1E / P4-1F / P4-1J。
 - 依赖顺序：
-  - 串行：P4-1J（已完成） -> P4-1H（NEXT） -> 性能回归基线脚本 -> 回归门禁阈值
+  - 串行：P4-1H（NEXT） -> 性能回归基线脚本 -> 回归门禁阈值
   - 并行：P4-2 与 P4-1 可并行（但不影响 P4-1 主线验收）
 - 唯一 NEXT（可独立验收）：P4-1H 热路径 profiling 采样计划
-  - 范围：新增 `docs/perf/reports/profiling-plan.md`，定义规则匹配/DNS/握手 3 条采样链路与命令占位
-  - DoD：每条链路包含采样命令、样本数、输出字段、通过阈值占位
 
 ### P4-2 长稳与故障注入
 - 状态：TODO
@@ -300,3 +276,4 @@
 - 2026-02-11 10:23（GMT+8）完成 P4-1G 收口：同步 P4-1 已完成项（含 P4-1F），明确依赖顺序，并指定唯一 NEXT 为 P4-1H（profiling 采样计划）。
 - 2026-02-11 10:29（GMT+8）完成 P4-1I：清理 P0-1 DONE 区块未勾选残留，验收清单与 DONE 状态对齐（保留验收责任人与输入路径）。
 - 2026-02-11 10:29（GMT+8）完成 P4-1J：固化 perf 回归成功/失败样例字段顺序，并与 `scripts/perf-regression.sh` 输出逐项对齐；同步 P4-1 依赖顺序与 NEXT。
+- 2026-02-11 10:34（GMT+8）完成 P4-1L：重排 P4-1 列表仅保留未完成项，已完成项归档到备注；保留唯一 NEXT 与并行/串行依赖，不扩新范围。
