@@ -190,7 +190,7 @@
 ## 预备任务：Phase 4（性能与稳定性）
 
 ### P4-1 Profiling 与性能回归
-- 状态：DOING
+- 状态：DONE
 - 优先级：P4
 - 输出：`docs/perf/reports/`
 - 可执行项（最小化）：
@@ -199,18 +199,18 @@
     - DoD：每条链路包含采样对象、样本量、采集方式、字段兼容约束
   - [x] P4-1 基线脚本（最小可执行）
     - 结果：`scripts/perf/run-baseline.sh` 已输出 PASS/FAIL + 关键指标，并兼容 latest/history 写入流程
-  - [ ] P4-1 回归门禁阈值（原子验收项）
+  - [x] P4-1 回归门禁阈值（原子验收项）
     - 阈值来源：`docs/perf/reports/README.md` 第4节默认阈值（rule_eval/dns/throughput/handshake）
     - 失败处理：输出 `PERF_REGRESSION_FAILED_FIELDS`，并按 README 第7节执行定位/阈值调整策略
     - 验收：
-      - [ ] 关键指标任一越阈值时返回非0
-      - [ ] 失败输出包含失败字段清单
-      - [ ] 成功/失败均可写入 latest/history 且结构不变
-- 唯一 NEXT（可独立验收）：P4-1 回归门禁阈值（原子验收项）
+      - [x] 关键指标任一越阈值时返回非0
+      - [x] 失败输出包含失败字段清单
+      - [x] 成功/失败均可写入 latest/history 且结构不变
+- 唯一 NEXT（可独立验收）：无（P4-1 已收口）
 - 依赖：
-  - 串行：P4-1 回归门禁阈值（NEXT）
+  - 串行：P4-2A（已完成） -> 24h/72h 长稳
   - 并行：P4-2 与 P4-1 可并行（不阻塞 P4-1 主线）
-- 已完成项（归档）：P4-1A / P4-1B / P4-1C / P4-1D / P4-1E / P4-1F / P4-1H / P4-1J / P4-1K / P4-1L / P4-1M / P4-1 基线脚本。
+- 已完成项（归档）：P4-1A / P4-1B / P4-1C / P4-1D / P4-1E / P4-1F / P4-1H / P4-1J / P4-1K / P4-1L / P4-1M / P4-1 基线脚本 / P4-1 回归门禁阈值。
 - 参考入口命令：`bash scripts/perf-regression.sh --check-consistency`
 - 入口验证结果（2026-02-11 10:54 GMT+8）：`PERF_README_CONSISTENCY=PASS`（一致性检查已被统一入口实际调用）
 
@@ -293,5 +293,6 @@
 - 2026-02-11 10:43（GMT+8）完成 P4-1N：P4-1 最小化收口，仅保留可执行下一项（P4-1H）；完成项归档精简并保留依赖说明。
 - 2026-02-11 10:54（GMT+8）执行 P4-1M 入口验证：通过统一命令 `bash scripts/perf-regression.sh --check-consistency` 实测一致性检查链路，结果 `PERF_README_CONSISTENCY=PASS`。
 - 2026-02-11 11:16（GMT+8）完成 P4-1 后续门禁阈值预拆：在 TASKS 增加“回归门禁阈值”原子验收项，明确阈值来源（README 第4节）与失败处理策略（README 第7节），并固化唯一 NEXT 与依赖顺序。
+- 2026-02-11 11:25（GMT+8）完成 P4-1 回归门禁阈值收口：实测越阈值返回非0、失败输出包含 `PERF_REGRESSION_FAILED_FIELDS`，且成功/失败均可写入 latest/history；P4-1 状态更新为 DONE。
 - 2026-02-11 11:06（GMT+8）完成 P4-2A 预拆：在 perf README 增加 history 目录治理规则（命名/保留上限/清理方式），明确 latest 与 history 关系并提供可执行清理命令。
 - 2026-02-11 11:12（GMT+8）完成 P4-1H：在 perf README 明确热路径采样对象/窗口/样本量，补齐 3 个热路径指标采集方式，并声明 latest/history 字段兼容约束。

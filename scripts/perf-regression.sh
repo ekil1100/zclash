@@ -46,9 +46,9 @@ fi
 
 TARGET="$ROOT/perf/run-baseline.sh"
 if "$TARGET"; then
-  # pass-through PASS semantics from baseline script
+  # pass-through semantics from baseline script
   exit 0
 else
-  echo "PERF_REGRESSION_RESULT=FAIL"
+  # baseline script already prints RESULT/FAILED_FIELDS/REPORT
   exit 1
 fi
