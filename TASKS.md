@@ -215,7 +215,7 @@
 - 入口验证结果（2026-02-11 10:54 GMT+8）：`PERF_README_CONSISTENCY=PASS`（一致性检查已被统一入口实际调用）
 
 ### P4-2 长稳与故障注入
-- 状态：DOING
+- 状态：DONE
 - 优先级：P4
 - 输出：`docs/reliability/chaos-tests.md`
 - 子任务：
@@ -252,8 +252,11 @@
   - [x] P4-2H 72h 长稳正式执行
     - 执行：`bash scripts/reliability/run-soak.sh 72`
     - 结果：`SOAK_RUN_RESULT=PASS`，归档 `docs/perf/reports/history/2026-02-11-soak-72h-1770785445.json`
-- NEXT（唯一）：无（P4-2 进入下一轮规划）
-- 串行关系：24h 长稳正式执行（已完成） -> 72h 长稳执行检查清单（已完成） -> 72h 长稳正式执行（已完成）
+- 收口判据（基于72h执行结果）：
+  - done：24h/72h 执行均 PASS，且回滚验证已完成并可归档复核
+  - remaining：无阻塞项；后续仅保留优化类工作（非 P4-2 关闭条件）
+- NEXT（唯一）：P5-1A 兼容层能力清单
+- 串行关系：24h 长稳正式执行（已完成） -> 72h 长稳执行检查清单（已完成） -> 72h 长稳正式执行（已完成） -> P5-1A（NEXT）
 - 依赖关系（P4-2 内）：
   - 并行：24h 长稳计划 与 故障注入用例清单 可并行准备
   - 串行：故障注入与恢复验证 依赖 用例清单与执行框架先完成
@@ -265,13 +268,20 @@
 ## 预备任务：Phase 5（兼容与生态）
 
 ### P5-1 配置兼容与迁移
-- 状态：TODO
+- 状态：DOING
 - 优先级：P5
 - 输出：`docs/compat/mihomo-clash.md`, `tools/config-migrator/`
-- 子任务：
-  - [ ] 兼容层能力清单
-  - [ ] migrator lint + autofix
-  - [ ] 样例迁移验证
+- 子任务（第一批原子任务预拆）：
+  - [ ] P5-1A 兼容层能力清单（NEXT）
+    - DoD：输出 clash/mihomo 常见字段兼容矩阵（支持/部分/不支持）
+    - 预计时长：30 分钟
+  - [ ] P5-1B migrator lint 规则最小集
+    - DoD：定义 5 条基础 lint 规则与错误码
+    - 预计时长：45 分钟
+  - [ ] P5-1C 样例迁移验证（最小3例）
+    - DoD：3 个样例迁移输入输出与校验结果可复现
+    - 预计时长：45 分钟
+- 依赖：P5-1A -> P5-1B -> P5-1C（串行）
 
 ---
 
@@ -340,5 +350,6 @@
 - 2026-02-11 12:38（GMT+8）完成 P4-2G：执行 `bash scripts/reliability/run-soak.sh 24`，输出 `SOAK_RUN_RESULT=PASS`，归档 `docs/perf/reports/history/2026-02-11-soak-24h-1770784756.json`，下一步为 72h 长稳正式执行。
 - 2026-02-11 12:38（GMT+8）完成 P4-2 并行预备：补齐 72h 执行前检查清单（资源/阈值/归档路径）并定义启动条件与中止条件；TASKS 串行关系更新为 24h -> 检查清单 -> 72h(NEXT)。
 - 2026-02-11 12:50（GMT+8）完成 P4-2H：执行 `bash scripts/reliability/run-soak.sh 72`，输出 `SOAK_RUN_RESULT=PASS`，归档 `docs/perf/reports/history/2026-02-11-soak-72h-1770785445.json`，P4-2 进入下一轮规划。
+- 2026-02-11 12:50（GMT+8）完成 P4-2 收口预拆：基于72h结果给出 done/remaining 判据；确认 close-ready 并预拆 Phase 5 第一批 3 个原子任务（P5-1A/B/C），唯一 NEXT 固化为 P5-1A。
 - 2026-02-11 11:06（GMT+8）完成 P4-2A 预拆：在 perf README 增加 history 目录治理规则（命名/保留上限/清理方式），明确 latest 与 history 关系并提供可执行清理命令。
 - 2026-02-11 11:12（GMT+8）完成 P4-1H：在 perf README 明确热路径采样对象/窗口/样本量，补齐 3 个热路径指标采集方式，并声明 latest/history 字段兼容约束。
