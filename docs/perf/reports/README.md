@@ -132,6 +132,13 @@ docs/perf/reports/
 
 ### 6.1 一次执行结果样例（与当前脚本输出一致）
 
+字段顺序（固定）：
+1) 终端输出顺序：
+   - `PERF_REGRESSION_RESULT=<PASS|FAIL>`
+   - `PERF_REGRESSION_REPORT=<path>`（仅 PASS 路径保证输出）
+2) `latest.json` 顶层字段顺序：`run_id` -> `timestamp` -> `mode` -> `metrics`
+3) `metrics` 子字段顺序：`rule_eval_p95_ms` -> `dns_resolve_p95_ms` -> `throughput_rps`
+
 #### 成功样例（PASS）
 终端输出：
 ```text
@@ -164,6 +171,11 @@ PERF_REGRESSION_RESULT=FAIL
 
 判定规则：出现 `PERF_REGRESSION_RESULT=FAIL` 或返回码非 `0` 即失败；
 若是参数错误（如未知参数），返回码为 `2`，同样按失败处理。
+
+对应关系说明（与 `scripts/perf-regression.sh` 一一对应）：
+- 成功路径：输出 `RESULT=PASS` + `REPORT=<path>`，返回 `0`
+- 失败路径：输出 `RESULT=FAIL`，返回 `1`
+- 参数错误：返回 `2`（可视为 FAIL）
 
 ---
 
