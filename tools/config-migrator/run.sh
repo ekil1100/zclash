@@ -15,12 +15,86 @@ if [[ -z "$INPUT" || ! -f "$INPUT" ]]; then
   exit 2
 fi
 
-# P5-1B scaffold only: emit contract-shaped placeholder output
+json_escape() {
+  echo "$1" | sed 's/"/\\"/g'
+}
+
+collect_issues() {
+  local file="$1"
+  local issues=()
+
+  # R1: PORT_TYPE_INT - numeric string should be int
+  for key in port socks-port mixed-port; do
+    if grep -Eq "^[[:space:]]*$key:[[:space:]]*\"[0-9]+\"[[:space:]]*$" "$file"; then
+      issues+=("{\"rule\":\"PORT_TYPE_INT\",\"level\":\"warn\",\"path\":\"$key\",\"message\":\"numeric string can be autofixed to int\",\"fixable\":true}")
+    fi
+  done
+
+  # R2: LOG_LEVEL_ENUM
+  if grep -Eq '^[[:space:]]*log-level:[[:space:]]*"?[A-Za-z-]+"?[[:space:]]*$' "$file"; then
+    raw=$(grep -E '^[[:space:]]*log-level:[[:space:]]*"?[A-Za-z-]+"?[[:space:]]*$' "$file" | head -n1 | sed -E 's/^[[:space:]]*log-level:[[:space:]]*"?([^"[:space:]]+)"?[[:space:]]*$/\1/')
+    case "$raw" in
+      debug|info|warning|error|silent) ;;
+      *)
+        issues+=("{\"rule\":\"LOG_LEVEL_ENUM\",\"level\":\"error\",\"path\":\"log-level\",\"message\":\"value out of enum\",\"fixable\":false}")
+        ;;
+    esac
+  fi
+
+  if [[ ${#issues[@]} -eq 0 ]]; then
+    echo "[]"
+  else
+    local joined
+    joined=$(IFS=,; echo "${issues[*]}")
+    echo "[$joined]"
+  fi
+}
+
 if [[ "$MODE" == "lint" ]]; then
-  echo '{"ok":true,"mode":"lint","issues":[{"rule":"PORT_TYPE_INT","level":"warn","path":"mixed-port","message":"string numeric can be autofixed to int","fixable":true},{"rule":"LOG_LEVEL_ENUM","level":"error","path":"log-level","message":"value out of enum","fixable":false}],"fixed":0,"hint":"run autofix for fixable issues"}'
-  exit 0
+  issues_json=$(collect_issues "$INPUT")
+
+  if echo "$issues_json" | grep -q '"level":"error"'; then
+    ok=false
+    hint="fix error-level issues first"
+  else
+    ok=true
+    hint="run autofix for fixable issues"
+  fi
+
+  echo "{\"ok\":$ok,\"mode\":\"lint\",\"issues\":$issues_json,\"fixed\":0,\"hint\":\"$(json_escape "$hint")\"}"
+  if [[ "$ok" == "true" ]]; then
+    exit 0
+  else
+    exit 1
+  fi
 fi
 
-# autofix placeholder
-cp "$INPUT" "${OUT:-$INPUT.bak}"
-echo '{"ok":true,"mode":"autofix","issues":[],"fixed":1,"hint":"placeholder autofix wrote backup/output"}'
+# autofix mode: apply R1 only (PORT_TYPE_INT)
+out_path="${OUT:-$INPUT.bak}"
+cp "$INPUT" "$out_path"
+
+fixed=0
+for key in port socks-port mixed-port; do
+  count=$(grep -Ec "^[[:space:]]*$key:[[:space:]]*\"[0-9]+\"[[:space:]]*$" "$out_path" || true)
+  if [[ "$count" -gt 0 ]]; then
+    fixed=$((fixed + count))
+    sed -E -i.bak "s|^([[:space:]]*$key:[[:space:]]*)\"([0-9]+)\"([[:space:]]*)$|\1\2\3|" "$out_path"
+    rm -f "$out_path.bak"
+  fi
+done
+
+issues_json=$(collect_issues "$out_path")
+if echo "$issues_json" | grep -q '"level":"error"'; then
+  ok=false
+  hint="autofix done for fixable issues; unresolved error-level issues remain"
+else
+  ok=true
+  hint="autofix applied"
+fi
+
+echo "{\"ok\":$ok,\"mode\":\"autofix\",\"issues\":$issues_json,\"fixed\":$fixed,\"hint\":\"$(json_escape "$hint")\"}"
+if [[ "$ok" == "true" ]]; then
+  exit 0
+else
+  exit 1
+fi
