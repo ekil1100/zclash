@@ -1,0 +1,10 @@
+{
+  "run_id": "p4d-placeholder-1770778488",
+  "timestamp": "2026-02-11T02:54:48Z",
+  "mode": "placeholder",
+  "metrics": {
+    "rule_eval_p95_ms": {"value": 0.0, "threshold": 1.0, "pass": true},
+    "dns_resolve_p95_ms": {"value": 0.0, "threshold": 80.0, "pass": true},
+    "throughput_rps": {"value": 0, "threshold": 800, "pass": true}
+  }
+}
