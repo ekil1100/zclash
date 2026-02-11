@@ -467,10 +467,27 @@
   - 预计时长：25 分钟
   - 产出：`scripts/install/export-3step-summary.sh` + `docs/install/README.md`
 
+### P6-9 安装链路规模化回归与准入门禁
+- [x] P6-9A 场景总入口（single command）
+  - 产出：`scripts/install/run-all-regression.sh`
+  - DoD：单命令覆盖 env/path/rollback/evidence/3step，统一 PASS/FAIL + 失败分类字段
+- [x] P6-9B next-step 词典标准化（并行）
+  - 产出：`scripts/install/next-step-dict.sh` + `scripts/install/verify-next-step-dict.sh`
+  - DoD：覆盖权限/路径/冲突/依赖缺失，关键脚本失败引用词典，回归覆盖 >=4 类失败
+- [x] P6-9C evidence 历史索引（并行）
+  - 产出：`scripts/install/generate-evidence-index.sh` + `scripts/install/verify-evidence-index.sh`
+  - DoD：生成 latest+timeline 索引并校验一致性
+- [x] P6-9D 跨脚本字段一致性校验（并行）
+  - 产出：`scripts/install/verify-schema-consistency.sh`
+  - DoD：字段集合不一致输出差异并非0退出，附最小人话摘要
+- [x] P6-9E Beta 退出检查清单 v1（串行收口）
+  - 产出：`ROADMAP.md` + `TASKS.md` + `docs/install/README.md`
+  - DoD：定义 1.0 准入硬条件 + 验证命令 + 证据路径，指定唯一 NEXT
+
 - 依赖关系：
-  - 串行主线：P6-7A -> P6-7C
-  - 并行支线：P6-7B / P6-7D 可并行，不阻塞主线
-- NEXT（唯一）：无（P6-7 本批已收口，等待下一轮派发）
+  - 串行主线：P6-9A -> P6-9E
+  - 并行支线：P6-9B / P6-9C / P6-9D
+- NEXT（唯一）：P7-1 进入 1.0 准入执行（按 Beta 退出检查清单逐项验收）
 
 ---
 
@@ -589,3 +606,8 @@
 - 2026-02-12 02:23（GMT+8）完成 P6-8C：新增 `verify-rollback-flow.sh` 覆盖 rollback 成功/失败分支，统一输出 `INSTALL_*` + next-step 并产出最小摘要。
 - 2026-02-12 02:23（GMT+8）完成 P6-8D：新增 `verify-evidence-archive.sh` 自动校验 evidence history/命名/latest 指针，输出 PASS/FAIL 与缺失项，并在 README 补运行方式。
 - 2026-02-12 02:23（GMT+8）完成 P6-8E：新增 `export-3step-summary.sh` 执行 3-step smoke 并导出对外简明摘要，失败提示人话化且保留 `INSTALL_*` 机读字段。
+- 2026-02-12 03:08（GMT+8）完成 P6-9A：新增 `run-all-regression.sh` 作为安装链路总入口，单命令串联 env/path/rollback/evidence/3step 回归并输出失败分类字段。
+- 2026-02-12 03:08（GMT+8）完成 P6-9B：新增 next-step 词典与回归（权限/路径/冲突/依赖缺失），关键安装脚本失败输出统一引用词典。
+- 2026-02-12 03:08（GMT+8）完成 P6-9C：新增 evidence 历史索引生成与 latest/index 一致性校验脚本，并提供 timeline 索引。
+- 2026-02-12 03:08（GMT+8）完成 P6-9D：新增跨脚本机读字段一致性校验，不一致输出差异清单并非0退出。
+- 2026-02-12 03:08（GMT+8）完成 P6-9E：补齐 Beta 退出检查清单 v1（稳定性窗口/通过率/证据完整性）并指定唯一 NEXT 为 P7-1。

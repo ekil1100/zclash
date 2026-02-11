@@ -191,17 +191,23 @@ CLI 首次使用可猜、可完成核心任务。
 提供“一键安装”最小可用链路（install/verify/upgrade），让新环境可快速落地并可验证。
 
 ### 任务
-- [ ] 设计安装脚本接口契约（输入/输出/失败 next-step）
-- [ ] 提供 install / verify / upgrade 三段式最小命令
-- [ ] 定义失败场景回执与恢复建议
+- [x] 设计安装脚本接口契约（输入/输出/失败 next-step）
+- [x] 提供 install / verify / upgrade / rollback 三段+回滚最小命令
+- [x] 定义失败场景回执与恢复建议（词典化）
+- [x] 建立全量回归总入口 + evidence 自动归档与索引
+- [x] 形成 Beta 退出检查清单 v1（含验证命令与证据路径）
 
 ### 交付物
-- `scripts/install/README.md`
-- `scripts/install/oc-install.sh`（后续实现）
+- `docs/install/README.md`
+- `scripts/install/oc-{install,verify,upgrade,rollback,run}.sh`
+- `scripts/install/run-all-regression.sh`
+- `scripts/install/next-step-dict.sh`
+- `scripts/install/generate-evidence-index.sh`
 
 ### 验收
-- 新机器可按文档执行 install -> verify -> upgrade 流程
-- 每步失败都给出可执行 next-step
+- 新机器可按文档执行 install -> verify -> upgrade（可选 rollback）流程
+- 每步失败都给出可执行 next-step（统一机读字段）
+- 单命令可执行全链路回归并输出失败分类
 
 ---
 
@@ -218,8 +224,6 @@ CLI 首次使用可猜、可完成核心任务。
 
 ## 当前优先级（Now）
 
-1. 完成 Phase 0 的能力对比与差距清单
-2. 同步产出 CLI 术语与命令规范草案
-3. 锁定 API v1 资源模型与错误码方案
-4. TUI 信息架构原型
-5. 建立基础 benchmark + 回归脚本
+1. 执行 P6 Beta 退出检查清单 v1（稳定性窗口/通过率/证据完整性）
+2. 满足准入后进入 P7（1.0 收口）
+3. 保持安装链路总入口与证据索引每日可复核

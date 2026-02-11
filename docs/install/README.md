@@ -95,6 +95,19 @@ bash scripts/install/verify-evidence-archive.sh
 
 # P6-8E 3步试用 smoke + 对外摘要
 bash scripts/install/export-3step-summary.sh
+
+# P6-9A 全量场景总入口（single command）
+bash scripts/install/run-all-regression.sh
+
+# P6-9B next-step 词典回归
+bash scripts/install/verify-next-step-dict.sh
+
+# P6-9C 证据索引生成 + 一致性校验
+bash scripts/install/generate-evidence-index.sh
+bash scripts/install/verify-evidence-index.sh
+
+# P6-9D 跨脚本机读字段一致性校验
+bash scripts/install/verify-schema-consistency.sh
 ```
 
 回归覆盖（最小集）：
@@ -226,6 +239,33 @@ bash scripts/install/verify-evidence-archive.sh
 - `EVIDENCE_ARCHIVE_RESULT=PASS|FAIL`
 - `EVIDENCE_ARCHIVE_MISSING=<comma-separated missing items>`
 - `EVIDENCE_ARCHIVE_LATEST_RUN_ID=<run_id>`
+
+总入口与一致性扩展输出：
+- `INSTALL_ACTION=all-regression` + `INSTALL_ALL_RESULT/INSTALL_ALL_FAILED_CATEGORIES`
+- `INSTALL_ACTION=next-step-dict-regression`（词典回归）
+- `INSTALL_ACTION=evidence-index` / `evidence-index-check`
+- `INSTALL_ACTION=schema-consistency`（字段差异时非0退出，查看 `/tmp/schema-diff.list`）
+
+next-step 词典覆盖（最小）：
+- permission（权限不足）
+- path（路径不可用）
+- conflict（路径冲突）
+- dependency_missing（依赖缺失）
+
+## 9) Beta 退出检查清单 v1（P6 -> P7 准入）
+
+- [ ] 稳定性窗口：连续 3 次 `run-all-regression.sh` 全部 PASS
+  - 验证命令：`bash scripts/install/run-all-regression.sh`
+  - 证据路径：`/tmp/zclash-install-all-summary.json`
+- [ ] 回归通过率：`run-beta-checklist.sh` 通过率 >= 95%
+  - 验证命令：`bash scripts/install/run-beta-checklist.sh`
+  - 证据路径：`docs/install/evidence/history/<run_id>/summary.json`
+- [ ] 证据完整性：latest/history/index 三者一致
+  - 验证命令：
+    - `bash scripts/install/generate-evidence-index.sh`
+    - `bash scripts/install/verify-evidence-index.sh`
+    - `bash scripts/install/verify-evidence-archive.sh`
+  - 证据路径：`docs/install/evidence/latest` + `docs/install/evidence/history/index.jsonl`
 
 路径矩阵回归输出（与 runner 字段口径对齐）：
 - `INSTALL_RESULT=PASS|FAIL`
