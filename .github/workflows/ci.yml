@@ -28,3 +28,6 @@ jobs:
 
       - name: Smoke (install regression)
         run: bash scripts/install/run-all-regression.sh
+
+      - name: Full validation
+        run: bash scripts/run-full-validation.sh
