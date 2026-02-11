@@ -222,7 +222,10 @@
   - [x] P4-2A perf history 目录治理规则
     - 范围：`docs/perf/reports/history/` 命名/保留上限/清理方式
     - 结果：明确 `latest.json` 与 history 关系，并落地清理入口 `bash scripts/perf/prune-history.sh 30`
-  - [ ] 24h/72h 长稳
+  - [x] P4-2B 24h 长稳测试计划（最小落地）
+    - 输出：`docs/reliability/chaos-tests.md`
+    - 内容：输入/监控指标/判定标准/中断恢复策略/失败归档字段
+  - [ ] 72h 长稳
   - [ ] 故障注入与恢复验证
   - [ ] 热重载回滚验证
 
@@ -295,5 +298,6 @@
 - 2026-02-11 11:16（GMT+8）完成 P4-1 后续门禁阈值预拆：在 TASKS 增加“回归门禁阈值”原子验收项，明确阈值来源（README 第4节）与失败处理策略（README 第7节），并固化唯一 NEXT 与依赖顺序。
 - 2026-02-11 11:25（GMT+8）完成 P4-1 回归门禁阈值收口：实测越阈值返回非0、失败输出包含 `PERF_REGRESSION_FAILED_FIELDS`，且成功/失败均可写入 latest/history；P4-1 状态更新为 DONE。
 - 2026-02-11 11:26（GMT+8）完成 P4-2A 执行化：新增 `scripts/perf/prune-history.sh` 清理入口并在 README/TASKS 记录命令与注意事项（latest.json 不受影响）。
+- 2026-02-11 11:38（GMT+8）完成 P4-2B：新增 `docs/reliability/chaos-tests.md`（24h 长稳测试输入/指标/判定标准），补充中断恢复策略与失败归档字段，并声明与 perf 字段兼容。
 - 2026-02-11 11:06（GMT+8）完成 P4-2A 预拆：在 perf README 增加 history 目录治理规则（命名/保留上限/清理方式），明确 latest 与 history 关系并提供可执行清理命令。
 - 2026-02-11 11:12（GMT+8）完成 P4-1H：在 perf README 明确热路径采样对象/窗口/样本量，补齐 3 个热路径指标采集方式，并声明 latest/history 字段兼容约束。
