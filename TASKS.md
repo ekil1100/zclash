@@ -199,6 +199,10 @@
     - 覆盖：3 个核心指标默认阈值 + 调整说明
     - 新增：失败后处理建议（定位路径/放宽阈值规则）
     - 引用：`docs/perf/reports/README.md` 第4节与第7节
+  - [x] P4-1D perf 回归脚本入口占位
+    - 入口：`scripts/perf/run-baseline.sh`（与文档命令一致）
+    - 协议：输出 `PERF_REGRESSION_RESULT=PASS|FAIL`，exit code 0/非0 对应 PASS/FAIL
+    - 边界：仅占位，不实现真实采样与阈值计算逻辑
   - [ ] 热路径 profiling
   - [ ] 性能回归基线脚本
   - [ ] 回归门禁阈值
@@ -264,3 +268,4 @@
 - 2026-02-11 09:28（GMT+8）完成 P3-2.5A/5B/5C 文档收敛（状态流/耗时时间戳/失败建议）；完成 P3-2.5D 看板收敛并将 P3-2 更新为 DONE；完成 P3-2.5E 预拆 P4-1A 原子项（范围/DoD/预计时长）。
 - 2026-02-11 09:41（GMT+8）完成 P4-1B：定义 perf 回归本地/CI 统一入口与通过/失败判定，并在 TASKS 与 perf README 互相引用。
 - 2026-02-11 09:46（GMT+8）完成 P4-1C：收敛 3 个核心指标默认阈值+调整说明，新增失败后处理建议并同步 TASKS 进度。
+- 2026-02-11 09:49（GMT+8）完成 P4-1D：新增 `scripts/perf/run-baseline.sh` 占位入口（PASS/FAIL 协议 + exit code 约定），并记录后续实现边界。
