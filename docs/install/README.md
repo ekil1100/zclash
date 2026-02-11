@@ -1,3 +1,14 @@
+# 安装与试用文档索引
+
+## 试用指南入口
+
+- **[快速启动（3分钟上手）](quick-start.md)** — 从零到可用最短路径
+- **[试用反馈模板](trial-feedback-template.md)** — 遇到问题时复制填写
+- **[1.0 功能候选清单](../roadmap/1.0-feature-candidates.md)** — 必须有 vs 锦上添花
+- **一键健康检查**：`bash scripts/install/trial-healthcheck.sh --target-dir <目录>`
+
+---
+
 # 一键安装最小方案契约（P6-2A）
 
 ## 1) 范围（install / verify / upgrade）
