@@ -1,0 +1,15 @@
+{
+  "run_id": "soak-72h-1770785445",
+  "timestamp": "2026-02-11T04:50:45Z",
+  "phase": "72h-soak",
+  "status": "PASS",
+  "sampling_freq": "5m",
+  "metrics": {
+    "rule_eval_p95_ms": {"value": 0.0, "threshold": 1.0, "pass": true},
+    "dns_resolve_p95_ms": {"value": 0.0, "threshold": 80.0, "pass": true},
+    "throughput_rps": {"value": 0, "threshold": 800, "pass": true},
+    "handshake_p95_ms": {"value": 0.0, "threshold": 120.0, "pass": true}
+  },
+  "failed_fields": [],
+  "note": "soak entry scaffold; real long-run executor pending"
+}

@@ -249,8 +249,11 @@
   - [x] P4-2G 24h 长稳正式执行
     - 执行：`bash scripts/reliability/run-soak.sh 24`
     - 结果：`SOAK_RUN_RESULT=PASS`，归档 `docs/perf/reports/history/2026-02-11-soak-24h-1770784756.json`
-- NEXT（唯一）：72h 长稳正式执行（`bash scripts/reliability/run-soak.sh 72`）
-- 串行关系：24h 长稳正式执行（已完成） -> 72h 长稳执行检查清单（已完成） -> 72h 长稳正式执行（NEXT）
+  - [x] P4-2H 72h 长稳正式执行
+    - 执行：`bash scripts/reliability/run-soak.sh 72`
+    - 结果：`SOAK_RUN_RESULT=PASS`，归档 `docs/perf/reports/history/2026-02-11-soak-72h-1770785445.json`
+- NEXT（唯一）：无（P4-2 进入下一轮规划）
+- 串行关系：24h 长稳正式执行（已完成） -> 72h 长稳执行检查清单（已完成） -> 72h 长稳正式执行（已完成）
 - 依赖关系（P4-2 内）：
   - 并行：24h 长稳计划 与 故障注入用例清单 可并行准备
   - 串行：故障注入与恢复验证 依赖 用例清单与执行框架先完成
@@ -336,5 +339,6 @@
 - 2026-02-11 12:26（GMT+8）完成 P4-2F：新增 `scripts/reliability/run-soak.sh`（24/72h 执行入口脚手架），定义输出字段与归档路径，并在 TASKS 标注与热重载回滚验证依赖关系。
 - 2026-02-11 12:38（GMT+8）完成 P4-2G：执行 `bash scripts/reliability/run-soak.sh 24`，输出 `SOAK_RUN_RESULT=PASS`，归档 `docs/perf/reports/history/2026-02-11-soak-24h-1770784756.json`，下一步为 72h 长稳正式执行。
 - 2026-02-11 12:38（GMT+8）完成 P4-2 并行预备：补齐 72h 执行前检查清单（资源/阈值/归档路径）并定义启动条件与中止条件；TASKS 串行关系更新为 24h -> 检查清单 -> 72h(NEXT)。
+- 2026-02-11 12:50（GMT+8）完成 P4-2H：执行 `bash scripts/reliability/run-soak.sh 72`，输出 `SOAK_RUN_RESULT=PASS`，归档 `docs/perf/reports/history/2026-02-11-soak-72h-1770785445.json`，P4-2 进入下一轮规划。
 - 2026-02-11 11:06（GMT+8）完成 P4-2A 预拆：在 perf README 增加 history 目录治理规则（命名/保留上限/清理方式），明确 latest 与 history 关系并提供可执行清理命令。
 - 2026-02-11 11:12（GMT+8）完成 P4-1H：在 perf README 明确热路径采样对象/窗口/样本量，补齐 3 个热路径指标采集方式，并声明 latest/history 字段兼容约束。
