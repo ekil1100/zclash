@@ -206,10 +206,13 @@
 - 入口验证结果（2026-02-11 10:54 GMT+8）：`PERF_README_CONSISTENCY=PASS`（一致性检查已被统一入口实际调用）
 
 ### P4-2 长稳与故障注入
-- 状态：TODO
+- 状态：DOING
 - 优先级：P4
 - 输出：`docs/reliability/chaos-tests.md`
 - 子任务：
+  - [x] P4-2A perf history 目录治理规则
+    - 范围：`docs/perf/reports/history/` 命名/保留上限/清理方式
+    - 结果：明确 `latest.json` 与 history 关系，并提供可执行清理命令占位
   - [ ] 24h/72h 长稳
   - [ ] 故障注入与恢复验证
   - [ ] 热重载回滚验证
@@ -280,3 +283,4 @@
 - 2026-02-11 10:42（GMT+8）完成 P4-1M：将 README/脚本一致性检查接入统一入口 `scripts/perf-regression.sh --check-consistency`，输出 PASS/FAIL + 失败字段明细，并在 TASKS 记录入口命令。
 - 2026-02-11 10:43（GMT+8）完成 P4-1N：P4-1 最小化收口，仅保留可执行下一项（P4-1H）；完成项归档精简并保留依赖说明。
 - 2026-02-11 10:54（GMT+8）执行 P4-1M 入口验证：通过统一命令 `bash scripts/perf-regression.sh --check-consistency` 实测一致性检查链路，结果 `PERF_README_CONSISTENCY=PASS`。
+- 2026-02-11 11:06（GMT+8）完成 P4-2A 预拆：在 perf README 增加 history 目录治理规则（命名/保留上限/清理方式），明确 latest 与 history 关系并提供可执行清理命令。

@@ -38,6 +38,23 @@ docs/perf/reports/
     YYYY-MM-DD-<run_id>.json # 历史归档（后续生成）
 ```
 
+### 3.1 history 目录治理规则（P4-2.A）
+- 命名规则：`YYYY-MM-DD-<run_id>.json`
+- 保留上限：默认保留最近 **30** 份归档（按文件修改时间）
+- 清理策略：超过上限时删除最旧文件（先清理 history，不影响 latest）
+- 清理频率：每次回归执行后可触发一次
+
+`latest.json` 与 `history/` 关系：
+- `latest.json` 仅表示“最新一次执行结果”（可被覆盖）
+- `history/` 保存历史快照（用于趋势回看）
+- 每次执行流程建议：先写 `latest.json`，再拷贝到 `history/`
+
+可执行清理命令（占位）：
+```bash
+# 保留最新30份，删除更旧归档
+ls -1t docs/perf/reports/history/*.json | tail -n +31 | xargs -r rm -f
+```
+
 ---
 
 ## 4) 核心指标（含阈值占位）
