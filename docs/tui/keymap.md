@@ -143,6 +143,37 @@
 - `v`：触发配置校验
 - `p`：触发端口检测
 
+### 重载状态流（P3-2.5A）
+- 状态机：`idle -> running -> done | failed -> idle`
+- 触发时机：
+  - 用户按 `R` 后立即进入 `running`
+  - 底层返回成功事件进入 `done`
+  - 底层返回错误事件进入 `failed`
+- 退出条件：
+  - `done` 保留 2 秒后自动回到 `idle`
+  - `failed` 保留到用户确认（`Enter`/`Esc`）后回到 `idle`
+
+### 耗时与时间戳展示（P3-2.5B）
+- 展示位置：
+  1) 状态条（短摘要）
+  2) 日志区（完整记录）
+- 固定字段：
+  - `action=reload`
+  - `status=running|done|failed`
+  - `cost_ms=<number>`
+  - `at=<ISO8601>`
+- 格式示例：
+  - 状态条：`Reload done in 182ms @ 2026-02-11T09:28:10+08:00`
+  - 日志区：`[reload] status=done cost_ms=182 at=2026-02-11T09:28:10+08:00`
+
+### 失败提示与建议（P3-2.5C）
+- 统一失败结构：`code/message/hint`
+- 最小建议集（至少两类）：
+  1) 配置错误类（`VALIDATION_*` / `CONFIG_*`）
+     - hint: `run validate and fix config syntax/fields, then retry reload`
+  2) 运行时错误类（`NETWORK_*` / `PROVIDER_*`）
+     - hint: `check upstream/network health and retry reload`
+
 反馈要求：
 - 每个动作给出结果：成功/失败/耗时
 - 失败时必须给 `下一步动作`（修复建议）
