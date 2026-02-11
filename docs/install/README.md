@@ -81,7 +81,7 @@ bash scripts/install/run-beta-checklist.sh
 # P6-7A 非模拟权限验证（真实受限路径，预期 FAIL 且含 next-step）
 bash scripts/install/oc-run.sh install --target-dir /var/root/zclash-install-test
 
-# P6-7B 多平台路径矩阵（3类路径组合）
+# P6-8B 多平台路径矩阵扩展（含异常路径/已有安装覆盖）
 bash scripts/install/verify-install-path-matrix.sh
 
 # P6-7E 三步试用端到端自检
@@ -205,7 +205,13 @@ Beta checklist runner 输出（机器+人类摘要）：
 - `INSTALL_FAILED_STEP=<failed case ids>`
 - `INSTALL_NEXT_STEP=<hint>`
 - `INSTALL_MATRIX_FAILED_SAMPLES=<comma-separated ids>`
+- `INSTALL_MATRIX_FAILED_HINTS=<id:hint|id:hint>`
 - `INSTALL_SUMMARY=<human-readable summary>`
+
+覆盖场景（扩展后）：
+- 正常路径：`/usr/local/bin` 风格、`~/.local/bin`、自定义路径
+- 异常路径：目标路径冲突（父路径为文件，预期失败）
+- 已有安装覆盖：同路径重复 install + verify
 
 三步试用自检输出（最小摘要）：
 - `INSTALL_RESULT=PASS|FAIL`

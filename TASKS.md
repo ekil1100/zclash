@@ -446,6 +446,11 @@
   - DoD：失败输出 `INSTALL_FAILED_STEP` + `INSTALL_NEXT_STEP`；汇总输出 PASS/FAIL
   - 预计时长：30 分钟
   - 产出：`scripts/install/verify-install-env.sh` + `docs/install/README.md`
+- [x] P6-8B 多平台路径矩阵扩展（并行）
+  - 范围：覆盖异常路径（冲突）与已有安装覆盖场景
+  - DoD：输出机读汇总字段 + 失败样例人话提示
+  - 预计时长：35 分钟
+  - 产出：`scripts/install/verify-install-path-matrix.sh` + `docs/install/README.md`
 
 - 依赖关系：
   - 串行主线：P6-7A -> P6-7C
@@ -565,3 +570,4 @@
 - 2026-02-12 01:48（GMT+8）完成 P6-7D：定义 Beta 证据归档规范（目录/命名/字段），并让 checklist runner 产物归档至 `docs/install/evidence/history/<run_id>`，`latest` 指向最新产物。
 - 2026-02-12 01:48（GMT+8）完成 P6-7E：新增 3 步试用端到端自检脚本 `run-3step-smoke.sh`，输出最小结果摘要；失败提示改为人话化并保留机器字段。
 - 2026-02-12 02:22（GMT+8）完成 P6-8A：扩展非模拟权限失败场景到两类真实受限路径（`/var/root`、`/System`），并在 env 回归汇总中校验 `INSTALL_FAILED_STEP` + `INSTALL_NEXT_STEP` 字段。
+- 2026-02-12 02:22（GMT+8）完成 P6-8B：扩展路径矩阵覆盖异常路径冲突与已有安装覆盖，新增机读汇总字段 `INSTALL_MATRIX_FAILED_HINTS` 并提供失败样例人话提示。
