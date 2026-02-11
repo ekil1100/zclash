@@ -33,13 +33,14 @@
 
 ```text
 scripts/install/
-  oc-install.sh      # install
-  oc-verify.sh       # verify
-  oc-upgrade.sh      # upgrade
-  oc-run.sh          # 统一入口（后续）
+  common.sh          # 统一机器输出函数
+  oc-install.sh      # install（脚手架）
+  oc-verify.sh       # verify（脚手架）
+  oc-upgrade.sh      # upgrade（脚手架）
+  oc-run.sh          # 统一入口
 ```
 
-说明：当前阶段先冻结命名与契约，不做重实现。
+说明：当前阶段先冻结命名与契约，脚手架允许空实现，但必须输出标准机器字段。
 
 ---
 
@@ -47,11 +48,18 @@ scripts/install/
 
 ```bash
 # 1) install
-bash scripts/install/oc-install.sh --target-dir /tmp/zclash-bin
+bash scripts/install/oc-run.sh install --target-dir /tmp/zclash-bin
 
 # 2) verify
-bash scripts/install/oc-verify.sh --target-dir /tmp/zclash-bin
+bash scripts/install/oc-run.sh verify --target-dir /tmp/zclash-bin
 
 # 3) upgrade
-bash scripts/install/oc-upgrade.sh --target-dir /tmp/zclash-bin --version v0.1.0
+bash scripts/install/oc-run.sh upgrade --target-dir /tmp/zclash-bin --version v0.1.0
 ```
+
+标准输出字段（机器可解析）：
+- `INSTALL_RESULT=PASS|FAIL`
+- `INSTALL_ACTION=<install|verify|upgrade>`
+- `INSTALL_REPORT=<path>`
+- `INSTALL_FAILED_STEP=<step>`
+- `INSTALL_NEXT_STEP=<hint>`

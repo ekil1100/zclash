@@ -365,7 +365,10 @@
   - [x] P6-2B 安装链路风险清单与回滚策略草案（并行）
     - 输出：`docs/install/risk-rollback.md`
     - 口径：问题 -> next-step -> 回滚建议（与现有排障口径一致）
-- NEXT（唯一）：P6-2C 一键入口 `oc-run.sh` 串联 install/verify/upgrade
+  - [x] P6-2C 一键安装脚手架首版（空实现+标准输出）
+    - 输出：`scripts/install/common.sh` + `oc-{install,verify,upgrade,run}.sh`
+    - 约束：统一机器字段 + next-step，保持可解析
+- NEXT（唯一）：无（P6-2 当前项已收口，等待下一轮派发）
 
 ---
 
@@ -460,3 +463,4 @@
 - 2026-02-11 11:12（GMT+8）完成 P4-1H：在 perf README 明确热路径采样对象/窗口/样本量，补齐 3 个热路径指标采集方式，并声明 latest/history 字段兼容约束。
 - 2026-02-11 22:51（GMT+8）完成 P6-2B：新增安装链路风险清单与回滚策略草案（权限/路径/依赖/平台），并在 TASKS 建立 P6-2 分组与 NEXT 指向 P6-2A。
 - 2026-02-11 23:03（GMT+8）完成 P6-2A：冻结 install/verify/upgrade 最小契约与脚本命名约定，补齐 3 条可执行验收命令；NEXT 切换为 P6-2C（统一一键入口）。
+- 2026-02-11 23:03（GMT+8）完成 P6-2C：新增一键安装脚手架首版（`oc-run.sh` 串联 install/verify/upgrade），并统一输出 PASS/FAIL + next-step 机器字段。
