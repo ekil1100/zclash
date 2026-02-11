@@ -2,6 +2,7 @@
 set -euo pipefail
 
 source "$(cd "$(dirname "$0")" && pwd)/common.sh"
+source "$(cd "$(dirname "$0")" && pwd)/next-step-dict.sh"
 
 TARGET_DIR="/usr/local/bin"
 while [[ $# -gt 0 ]]; do
@@ -11,19 +12,19 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     *)
-      emit_install_result "FAIL" "install" "" "arg-parse" "use: --target-dir <path>"
+      emit_install_result "FAIL" "install" "" "arg-parse" "$(install_next_step arg_parse)"
       exit 2
       ;;
   esac
 done
 
 if [[ -z "$TARGET_DIR" ]]; then
-  emit_install_result "FAIL" "install" "" "arg-parse" "target dir is empty"
+  emit_install_result "FAIL" "install" "" "arg-parse" "$(install_next_step path)"
   exit 2
 fi
 
 if ! mkdir -p "$TARGET_DIR" 2>/dev/null; then
-  emit_install_result "FAIL" "install" "" "mkdir" "这个目录当前不可写，请换到你有权限的目录（例如 /tmp/zclash-bin）后重试"
+  emit_install_result "FAIL" "install" "" "mkdir" "$(install_next_step permission)"
   exit 1
 fi
 

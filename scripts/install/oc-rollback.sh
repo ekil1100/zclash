@@ -2,6 +2,7 @@
 set -euo pipefail
 
 source "$(cd "$(dirname "$0")" && pwd)/common.sh"
+source "$(cd "$(dirname "$0")" && pwd)/next-step-dict.sh"
 
 TARGET_DIR="/usr/local/bin"
 while [[ $# -gt 0 ]]; do
@@ -11,14 +12,14 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     *)
-      emit_install_result "FAIL" "rollback" "" "arg-parse" "use: --target-dir <path>"
+      emit_install_result "FAIL" "rollback" "" "arg-parse" "$(install_next_step arg_parse)"
       exit 2
       ;;
   esac
 done
 
 if [[ -z "$TARGET_DIR" ]]; then
-  emit_install_result "FAIL" "rollback" "" "arg-parse" "target dir is empty"
+  emit_install_result "FAIL" "rollback" "" "arg-parse" "$(install_next_step path)"
   exit 2
 fi
 
@@ -39,7 +40,7 @@ for path in "${TARGETS[@]}"; do
     if rm -f "$path" 2>/dev/null; then
       removed=$((removed+1))
     else
-      emit_install_result "FAIL" "rollback" "$path" "remove" "check permissions then rerun rollback"
+      emit_install_result "FAIL" "rollback" "$path" "remove" "$(install_next_step remove_failed)"
       exit 1
     fi
   fi
