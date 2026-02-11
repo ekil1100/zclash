@@ -166,7 +166,34 @@ Beta checklist runner 输出（机器+人类摘要）：
 - `BETA_CHECKLIST_FAILED_ITEMS=<comma-separated ids>`
 - `BETA_CHECKLIST_REPORT=<summary.json path>`
 - `BETA_CHECKLIST_EVIDENCE=<comma-separated evidence roots>`
+- `BETA_CHECKLIST_ARCHIVE_DIR=<archive dir>`
 - `BETA_CHECKLIST_SUMMARY=<human-readable summary>`
+
+## 8) Beta 证据归档规范
+
+归档根目录：`docs/install/evidence/`
+- `history/<run_id>/`：每次 checklist 运行的归档
+- `latest`：指向最近一次运行的软链接
+
+命名规范：
+- `run_id = beta-checklist-YYYYMMDD-HHMMSS`
+
+每次归档最小文件集：
+- `summary.json`（汇总结果）
+- `A.install.out`
+- `B.verify.out`
+- `C.upgrade.out`
+- `D.flow.out`
+- `D.env.out`
+
+`summary.json` 字段规范（最小）：
+- `run_id`
+- `result` (`PASS|FAIL`)
+- `pass_count`
+- `total_count`
+- `pass_rate`
+- `failed_items` (array)
+- `items` (array, each includes `id/result/evidence/note`)
 
 路径矩阵回归输出（与 runner 字段口径对齐）：
 - `INSTALL_RESULT=PASS|FAIL`

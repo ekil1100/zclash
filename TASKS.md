@@ -431,16 +431,16 @@
   - DoD：成功/失败均输出机器字段与 next-step
   - 预计时长：45 分钟
   - 产出：`scripts/install/oc-rollback.sh` + 回归补充
-- [ ] P6-7D Beta 证据归档规范（并行）
+- [x] P6-7D Beta 证据归档规范（并行）
   - 范围：统一 checklist/env/flow 报告归档到项目内固定目录
   - DoD：`README` 提供证据索引与复现实验命令
   - 预计时长：30 分钟
-  - 产出：`docs/install/README.md` + `docs/perf/reports/history/` 索引
+  - 产出：`docs/install/README.md` + `docs/install/evidence/`
 
 - 依赖关系：
   - 串行主线：P6-7A -> P6-7C
   - 并行支线：P6-7B / P6-7D 可并行，不阻塞主线
-- NEXT（唯一）：P6-7D Beta 证据归档规范（并行）
+- NEXT（唯一）：无（P6-7 本批已收口，等待下一轮派发）
 
 ---
 
@@ -552,3 +552,4 @@
 - 2026-02-12 01:47（GMT+8）完成 P6-7A：新增非模拟权限验证（真实受限路径）并保留模拟兜底场景；失败输出 `INSTALL_RESULT=FAIL` + `INSTALL_FAILED_STEP` + `INSTALL_NEXT_STEP`。
 - 2026-02-12 01:47（GMT+8）完成 P6-7B：新增多平台路径矩阵回归脚本（`/usr/local/bin` 风格、`~/.local/bin`、自定义路径），输出 PASS/FAIL 汇总与失败样例并保持 `INSTALL_*` 字段口径一致。
 - 2026-02-12 01:48（GMT+8）完成 P6-7C：新增 `oc-rollback.sh` 并接入 `oc-run.sh rollback`，固化回滚动作（清理标记/版本/shim）；成功/失败均输出统一 `INSTALL_*` 字段与 next-step。
+- 2026-02-12 01:48（GMT+8）完成 P6-7D：定义 Beta 证据归档规范（目录/命名/字段），并让 checklist runner 产物归档至 `docs/install/evidence/history/<run_id>`，`latest` 指向最新产物。

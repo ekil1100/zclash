@@ -8,7 +8,32 @@ ENV_REG="$ROOT_DIR/scripts/install/verify-install-env.sh"
 
 TARGET_DIR="/tmp/zclash-beta"
 OUT_DIR="/tmp/zclash-beta-checklist"
-mkdir -p "$OUT_DIR"
+ARCHIVE_ROOT="$ROOT_DIR/docs/install/evidence/history"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --target-dir)
+      TARGET_DIR="${2:-}"
+      shift 2
+      ;;
+    --archive-root)
+      ARCHIVE_ROOT="${2:-}"
+      shift 2
+      ;;
+    *)
+      echo "BETA_CHECKLIST_RESULT=FAIL"
+      echo "BETA_CHECKLIST_FAILED_STEP=arg-parse"
+      echo "BETA_CHECKLIST_NEXT_STEP=use: run-beta-checklist.sh [--target-dir <path>] [--archive-root <path>]"
+      exit 2
+      ;;
+  esac
+done
+
+mkdir -p "$OUT_DIR" "$ARCHIVE_ROOT"
+
+RUN_ID="beta-checklist-$(date +%Y%m%d-%H%M%S)"
+ARCHIVE_DIR="$ARCHIVE_ROOT/$RUN_ID"
+mkdir -p "$ARCHIVE_DIR"
 
 items=()
 failed=()
@@ -69,17 +94,29 @@ result="PASS"
 [[ ${#failed[@]} -eq 0 ]] || result="FAIL"
 
 REPORT="$OUT_DIR/summary.json"
-printf '{\n  "result": "%s",\n  "pass_count": %d,\n  "total_count": %d,\n  "pass_rate": %d,\n  "failed_items": ["%s"],\n  "items": [\n    %s\n  ]\n}\n' \
-  "$result" "$pass" "$total" "$rate" "$(IFS='","'; echo "${failed[*]:-}")" "$(IFS=,; echo "${items[*]}")" > "$REPORT"
+printf '{\n  "run_id": "%s",\n  "result": "%s",\n  "pass_count": %d,\n  "total_count": %d,\n  "pass_rate": %d,\n  "failed_items": ["%s"],\n  "items": [\n    %s\n  ]\n}\n' \
+  "$RUN_ID" "$result" "$pass" "$total" "$rate" "$(IFS='\",\"'; echo "${failed[*]:-}")" "$(IFS=,; echo "${items[*]}")" > "$REPORT"
+
+cp "$A_OUT" "$ARCHIVE_DIR/"
+cp "$B_OUT" "$ARCHIVE_DIR/"
+cp "$C_OUT" "$ARCHIVE_DIR/"
+cp "$D1_OUT" "$ARCHIVE_DIR/"
+cp "$D2_OUT" "$ARCHIVE_DIR/"
+cp "$REPORT" "$ARCHIVE_DIR/summary.json"
+
+LATEST_LINK="$ROOT_DIR/docs/install/evidence/latest"
+rm -rf "$LATEST_LINK"
+ln -s "$ARCHIVE_DIR" "$LATEST_LINK"
 
 # machine fields
 echo "BETA_CHECKLIST_RESULT=$result"
 echo "BETA_CHECKLIST_PASS_RATE=$rate"
 echo "BETA_CHECKLIST_FAILED_ITEMS=$(IFS=,; echo "${failed[*]:-}")"
-echo "BETA_CHECKLIST_REPORT=$REPORT"
+echo "BETA_CHECKLIST_REPORT=$ARCHIVE_DIR/summary.json"
 echo "BETA_CHECKLIST_EVIDENCE=$TARGET_DIR,/tmp/zclash-install-regression,/tmp/zclash-install-env/install-env-summary.json"
+echo "BETA_CHECKLIST_ARCHIVE_DIR=$ARCHIVE_DIR"
 
 # human summary
-echo "BETA_CHECKLIST_SUMMARY=beta checklist $pass/$total passed (${rate}%), failed_items=${failed[*]:-none}"
+echo "BETA_CHECKLIST_SUMMARY=beta checklist $pass/$total passed (${rate}%), failed_items=${failed[*]:-none}, archive=$ARCHIVE_DIR"
 
 [[ "$result" == "PASS" ]]
