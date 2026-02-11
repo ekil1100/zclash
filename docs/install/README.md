@@ -66,11 +66,15 @@ scripts/install/
 ```bash
 # install/verify/upgrade 成功+失败样例回归
 bash scripts/install/verify-install-flow.sh
+
+# 跨环境最小套件（路径/权限/已有安装覆盖）
+bash scripts/install/verify-install-env.sh
 ```
 
 回归覆盖（最小集）：
 - 成功：install -> verify -> upgrade
 - 失败：verify before install / upgrade without version / upgrade before install
+- 跨环境：普通用户路径 / 权限不足（模拟） / 已有安装覆盖
 
 ## 6) Beta 试用注意事项（常见失败 + next-step）
 

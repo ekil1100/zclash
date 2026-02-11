@@ -388,6 +388,10 @@
     - 单入口：`oc-run.sh` 覆盖 install/verify/upgrade
     - 输出：统一 `INSTALL_*` 机器字段 + `INSTALL_SUMMARY` 人类摘要
     - 失败：fail-fast（任一阶段失败立即返回非0）
+  - [x] P6-5A 跨环境验证最小套件（高优先）
+    - 回归：`verify-install-env.sh` 覆盖普通路径/权限不足/已有安装覆盖
+    - 输出：`INSTALL_ENV_REGRESSION_*` 机器字段 + 汇总 JSON
+    - 失败：输出失败样例清单并返回非0
 - NEXT（唯一）：无（P6 安装链路当前项已收口，等待下一轮派发）
 
 ---
@@ -490,3 +494,4 @@
 - 2026-02-11 23:27（GMT+8）完成 P6-4B：补齐 verify+upgrade 最小真实逻辑与失败分支（含未安装/缺版本），并扩展 `verify-install-flow.sh` 覆盖成功/失败回归样例，保持统一机器字段输出口径。
 - 2026-02-11 23:53（GMT+8）完成 P6-4C：统一单入口 `oc-run.sh` 覆盖 install/verify/upgrade，并补充 `INSTALL_SUMMARY` 人类摘要字段；失败保持 fail-fast 与 next-step 输出。
 - 2026-02-11 23:53（GMT+8）完成 P6-4D：安装 README 定稿“3步试用”并补 Beta 常见失败场景与 next-step，内容与 `verify-install-flow.sh` 回归输出保持一致。
+- 2026-02-12 00:30（GMT+8）完成 P6-5A：新增跨环境验证套件 `verify-install-env.sh`（普通路径/权限不足/已有安装覆盖），支持一键执行并输出 PASS/FAIL 汇总与失败样例清单。
