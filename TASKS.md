@@ -551,32 +551,18 @@
 
 ### P8 第一批任务（1.0 收口 + 1.1 功能推进）
 
-- [ ] P8-1A [1.0] 迁移边界文档补齐
-  - 范围：`docs/compat/mihomo-clash.md`
-  - DoD：补齐 3+ 个"不能迁"的边界场景（含绕行建议）；与能力清单一致
-  - 预估：2h
-
-- [ ] P8-1B [1.1] 迁移规则扩展：dns.nameserver 格式校验
-  - 范围：`tools/config-migrator/` + 回归
-  - DoD：检测 nameserver 中无效格式（如纯 IP 缺少协议前缀）；回归通过
-  - 预估：1-2h
-
-- [ ] P8-1C [1.1] `zclash doctor` 增加配置路径输出
-  - 范围：`src/doctor_cli.zig`
-  - DoD：`--json` 输出新增 `config_path` 字段（实际使用的配置文件绝对路径）；构建+测试通过
-  - 预估：1h
-
-- [ ] P8-1D [1.0] Beta gate 增加 zig build test 失败详情
-  - 范围：`scripts/run-beta-gate.sh`
-  - DoD：失败时输出具体 test 名称和错误信息（不止 FAIL）
-  - 预估：1h
-
-- [ ] P8-1E [1.1] 迁移规则扩展：proxy-groups 空 proxies 检测
-  - 范围：`tools/config-migrator/` + 回归
-  - DoD：检测 proxy-groups 中 proxies 为空或缺失的组；回归通过
-  - 预估：1h
-
-- NEXT（唯一）：P8-1A（1.0 迁移边界文档，优先收敛 1.0 准入条件）
+- [x] P8-1A [1.0] 迁移边界文档补齐
+  - 产出：5 个"不能迁"边界场景（enhanced-mode/rule-provider/proxy-provider/面板兼容/tun），含绕行建议
+- [x] P8-1B [1.1] dns.nameserver 格式校验
+  - 产出：R5 `DNS_NAMESERVER_FORMAT` 规则 + 回归样例
+- [x] P8-1C [1.1] doctor 增加 config_path
+  - 产出：`--json` 新增 `config_path` 字段 + 文本报告同步
+- [x] P8-1D [1.0] Beta gate 失败详情
+  - 产出：失败时输出 error/fail 相关行（最多 20 行）
+- [x] P8-1E [1.1] proxy-groups 空 proxies 检测
+  - 产出：R6 `PROXY_GROUP_EMPTY_PROXIES` 规则 + 回归样例
+- 回归：`run-all.sh` 6/6 PASS，`run-beta-gate.sh` 4/4 PASS
+- NEXT（唯一）：P8-2（继续 1.0 收敛 + 1.1 功能推进，等待下一轮派发）
 
 ---
 
@@ -716,3 +702,8 @@
 - 2026-02-12 04:48（GMT+8）完成 P7-3B：新增 Beta 准入自检脚本 run-beta-gate.sh，4/4 PASS。
 - 2026-02-12 04:48（GMT+8）完成 P7-3C：README 补充 Beta 状态、安装入口、反馈入口。
 - 2026-02-12 04:48（GMT+8）完成 P7-3D：P7 close-ready + P8 第一批 5 个原子任务拆解。
+- 2026-02-12 05:10（GMT+8）完成 P8-1A：5 个迁移边界场景（enhanced-mode/rule-provider/proxy-provider/面板/tun）。
+- 2026-02-12 05:10（GMT+8）完成 P8-1B：R5 DNS_NAMESERVER_FORMAT 规则（纯 IP 缺协议前缀检测）。
+- 2026-02-12 05:10（GMT+8）完成 P8-1C：doctor --json 新增 config_path 字段。
+- 2026-02-12 05:10（GMT+8）完成 P8-1D：Beta gate 失败时输出错误详情。
+- 2026-02-12 05:10（GMT+8）完成 P8-1E：R6 PROXY_GROUP_EMPTY_PROXIES 规则。
