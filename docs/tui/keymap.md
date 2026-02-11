@@ -90,29 +90,49 @@
 - 标题栏显示当前排序键与方向
 
 ## 2.3 Logs（日志过滤）
-- `l`：切换日志级别过滤（all/info/warn/error）
+- `l`：切换日志级别过滤（all/debug/info/warn/error）
 - `/`：关键字过滤
 - `e`：仅错误日志（快捷设为 level=error）
 - `a`：恢复全部（清空级别+关键字过滤）
 
 ### 日志过滤组合规则
 - 支持“级别 + 关键字”组合过滤：
-  - 先按级别过滤，再按关键字过滤（pipeline：level -> keyword -> render）
-- 级别集合：`all | info | warn | error`
-- 关键字匹配：大小写不敏感的包含匹配（contains）
+  - 固定 pipeline：`level -> keyword -> render`
+- 级别集合：`all | debug | info | warn | error`
+- 关键字匹配：大小写不敏感 contains
 
-### 清空与恢复全量流程
+### 冲突优先级
+1. 显式级别快捷键（`e`）优先于当前轮询级别（`l`）；
+2. 关键字过滤永远在级别过滤之后执行；
+3. 若级别为 `all`，则仅由关键字过滤决定结果；
+4. 若关键字为空，退化为“仅级别过滤”。
+
+### 清空与恢复全量流程（一步恢复）
 1. 任意过滤状态下按 `a`；
-2. 清空 level 与 keyword 两类条件；
-3. 列表恢复到全量日志流；
-4. 标题栏过滤标签同步消失。
+2. 同时清空 level 与 keyword；
+3. 立即恢复默认全量日志视图；
+4. 底部状态条提示：`Logs reset to full stream`。
 
-### 边界与冲突处理
+### 边界与空结果处理
 - 若关键字为空字符串，视为“无关键字过滤”；
 - 若级别为 `all` 且关键字为空，等价于全量；
 - 无匹配结果时显示：
   - `No logs matched current filters`
+  - 当前过滤条件回显（level/keyword）
   - 建议动作：`Press a to clear filters`。
+
+### 用户操作示例（可映射实现/测试）
+1. **组合过滤命中**
+   - 操作：`l` 切到 `warn` -> `/` 输入 `timeout`
+   - 预期：仅显示 warn 且包含 timeout 的日志
+
+2. **空结果场景**
+   - 操作：`l` 切到 `error` -> `/` 输入 `heartbeat-ok`
+   - 预期：显示空结果提示 + `Press a to clear filters`
+
+3. **一键恢复全量**
+   - 操作：在任意过滤状态下按 `a`
+   - 预期：恢复全量日志，状态条出现 `Logs reset to full stream`
 
 反馈要求：
 - 当前过滤器在标题栏可见（如 `level=warn keyword=timeout`）
