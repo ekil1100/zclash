@@ -52,6 +52,36 @@ collect_issues() {
     fi
   done
 
+  # R14: MIXED_PORT_CONFLICT_CHECK
+  local has_mixed=false has_port=false has_socks=false
+  grep -Eq '^[[:space:]]*mixed-port:' "$file" && has_mixed=true
+  grep -Eq '^[[:space:]]*port:' "$file" && has_port=true
+  grep -Eq '^[[:space:]]*socks-port:' "$file" && has_socks=true
+  if [[ "$has_mixed" == "true" ]] && [[ "$has_port" == "true" || "$has_socks" == "true" ]]; then
+    issues+=("{\"rule\":\"MIXED_PORT_CONFLICT_CHECK\",\"level\":\"warn\",\"path\":\"port/socks-port\",\"message\":\"mixed-port is set, port/socks-port will be ignored\",\"fixable\":false,\"suggested\":\"remove port/socks-port when using mixed-port\"}")
+  fi
+
+  # R13: VMESS_UUID_FORMAT_CHECK
+  local in_vmess=false vmess_name=""
+  while IFS= read -r line; do
+    if echo "$line" | grep -Eq 'type:[[:space:]]*vmess'; then
+      in_vmess=true
+      vmess_name=""
+    elif [[ "$in_vmess" == "true" ]] && echo "$line" | grep -Eq 'name:'; then
+      vmess_name=$(echo "$line" | sed -E 's/.*name:[[:space:]]*"?([^"]*)"?.*/\1/')
+    elif [[ "$in_vmess" == "true" ]] && echo "$line" | grep -Eq 'uuid:'; then
+      uuid_val=$(echo "$line" | sed -E 's/.*uuid:[[:space:]]*"?([^"]*)"?.*/\1/')
+      # UUID v4 pattern: 8-4-4-4-12 hex digits
+      if ! echo "$uuid_val" | grep -Eq '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'; then
+        issues+=("{\"rule\":\"VMESS_UUID_FORMAT_CHECK\",\"level\":\"error\",\"path\":\"proxies[$vmess_name].uuid\",\"message\":\"invalid UUID format: $uuid_val\",\"fixable\":false}")
+      fi
+      in_vmess=false
+    elif [[ "$in_vmess" == "true" ]] && echo "$line" | grep -Eq '^[[:space:]]*-[[:space:]]*(name|type|server|port):'; then
+      # Next proxy or end of vmess block
+      in_vmess=false
+    fi
+  done < <(grep -E '^[[:space:]]*(name:|type:|uuid:|server:|port:|-[[:space:]]*name:)' "$file")
+
   # R12: SS_CIPHER_ENUM_CHECK
   local valid_ciphers="aes-128-gcm|aes-192-gcm|aes-256-gcm|aes-128-cfb|aes-192-cfb|aes-256-cfb|chacha20-ietf-poly1305|chacha20-poly1305|rc4-md5|none"
   while IFS= read -r line; do

@@ -210,6 +210,46 @@ if bash "$BASE/run.sh" lint "$BASE/examples/r12-cipher-enum.yaml" > "$R12_OUT" 2
   fi
 fi
 
+# R13 validation (VMESS_UUID_FORMAT_CHECK)
+R13_OUT="$REPORT_DIR/r13-regression.lint.json"
+if bash "$BASE/run.sh" lint "$BASE/examples/r13-vmess-uuid.yaml" > "$R13_OUT" 2>/dev/null || true; then
+  if grep -q '"rule":"VMESS_UUID_FORMAT_CHECK"' "$R13_OUT" && grep -q 'not-a-valid-uuid' "$R13_OUT"; then
+    results+=("{\"sample_id\":\"R13_VMESS_UUID_FORMAT_CHECK\",\"input\":\"tools/config-migrator/examples/r13-vmess-uuid.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"invalid UUID detected\"}")
+  else
+    failed_rules+=("VMESS_UUID_FORMAT_CHECK")
+    failed_samples+=("R13_VMESS_UUID_FORMAT_CHECK")
+    results+=("{\"sample_id\":\"R13_VMESS_UUID_FORMAT_CHECK\",\"input\":\"tools/config-migrator/examples/r13-vmess-uuid.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected VMESS_UUID_FORMAT_CHECK error\"}")
+  fi
+else
+  if grep -q '"rule":"VMESS_UUID_FORMAT_CHECK"' "$R13_OUT" && grep -q 'not-a-valid-uuid' "$R13_OUT" 2>/dev/null; then
+    results+=("{\"sample_id\":\"R13_VMESS_UUID_FORMAT_CHECK\",\"input\":\"tools/config-migrator/examples/r13-vmess-uuid.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"invalid UUID detected\"}")
+  else
+    failed_rules+=("VMESS_UUID_FORMAT_CHECK")
+    failed_samples+=("R13_VMESS_UUID_FORMAT_CHECK")
+    results+=("{\"sample_id\":\"R13_VMESS_UUID_FORMAT_CHECK\",\"input\":\"tools/config-migrator/examples/r13-vmess-uuid.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected VMESS_UUID_FORMAT_CHECK error\"}")
+  fi
+fi
+
+# R14 validation (MIXED_PORT_CONFLICT_CHECK)
+R14_OUT="$REPORT_DIR/r14-regression.lint.json"
+if bash "$BASE/run.sh" lint "$BASE/examples/r14-port-conflict.yaml" > "$R14_OUT" 2>/dev/null; then
+  if grep -q '"rule":"MIXED_PORT_CONFLICT_CHECK"' "$R14_OUT"; then
+    results+=("{\"sample_id\":\"R14_MIXED_PORT_CONFLICT_CHECK\",\"input\":\"tools/config-migrator/examples/r14-port-conflict.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"port conflict detected\"}")
+  else
+    failed_rules+=("MIXED_PORT_CONFLICT_CHECK")
+    failed_samples+=("R14_MIXED_PORT_CONFLICT_CHECK")
+    results+=("{\"sample_id\":\"R14_MIXED_PORT_CONFLICT_CHECK\",\"input\":\"tools/config-migrator/examples/r14-port-conflict.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected MIXED_PORT_CONFLICT_CHECK warn\"}")
+  fi
+else
+  if grep -q '"rule":"MIXED_PORT_CONFLICT_CHECK"' "$R14_OUT" 2>/dev/null; then
+    results+=("{\"sample_id\":\"R14_MIXED_PORT_CONFLICT_CHECK\",\"input\":\"tools/config-migrator/examples/r14-port-conflict.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"port conflict detected\"}")
+  else
+    failed_rules+=("MIXED_PORT_CONFLICT_CHECK")
+    failed_samples+=("R14_MIXED_PORT_CONFLICT_CHECK")
+    results+=("{\"sample_id\":\"R14_MIXED_PORT_CONFLICT_CHECK\",\"input\":\"tools/config-migrator/examples/r14-port-conflict.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected MIXED_PORT_CONFLICT_CHECK warn\"}")
+  fi
+fi
+
 pass_count=0
 for r in "${results[@]}"; do
   if echo "$r" | grep -q '"result":"PASS"'; then
