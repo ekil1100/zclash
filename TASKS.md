@@ -1008,3 +1008,43 @@ R1 PORT_TYPE_INT | R2 LOG_LEVEL_ENUM | R3 PROXY_GROUP_TYPE_CHECK | R4 DNS_FIELD_
   - 预估：1h
 
 - NEXT（唯一）：P16-1C（v1.0.0 发布，等确认）或 P16-1A（继续规则扩展）
+
+### P16-1 完成状态
+
+- [x] P16-1A [1.1] ws-opts 格式校验（R26）— **tagged** `task-done/P16-1A`
+- [x] P16-1B [1.1] tls 配置完整性校验（R27）— **tagged** `task-done/P16-1B`
+- [x] P16-1C [1.0] v1.0.0 正式发布 — **✅ 已完成**（tag: v1.0.0）
+- [x] P16-1D [1.1] 更新速查表到 R27 — **tagged** `task-done/P16-1D`
+- [x] P16-1E [1.1] 收口 P16-1 — **tagging now**
+- P16-1 结论：close-ready（27 条规则，v1.0.0 已发布）
+- **迁移规则总览：R1-R27（27 条）全部回归通过 ✅**
+- **v1.0.0 GA 状态：已发布** https://github.com/ekil1100/zclash/releases/tag/v1.0.0
+
+### P16-2/P17 第一批任务（1.2 规划 + 生态扩展）
+
+- [ ] P17-1A [1.2] homebrew formula 准备
+  - 范围：`homebrew-zclash/` 或提交到 homebrew-core
+  - DoD：`brew install zclash` 可用；提供安装说明
+  - 预估：2h
+
+- [ ] P17-1B [1.2] debian 包构建脚本
+  - 范围：`scripts/build-deb.sh` + 文档
+  - DoD：可构建 .deb 包；提供安装说明
+  - 预估：2h
+
+- [ ] P17-1C [1.2] systemd 服务文件
+  - 范围：`scripts/zclash.service` + 文档
+  - DoD：提供 systemd 服务配置；支持 `systemctl enable/start zclash`
+  - 预估：1h
+
+- [ ] P17-1D [1.1] 迁移规则扩展：更多代理类型支持
+  - 范围：`tools/config-migrator/` + 回归
+  - DoD：检测并提示 snell/tuic/hysteria 等未支持代理类型
+  - 预估：1h
+
+- [ ] P17-1E [1.1] 1.2 版本规划文档
+  - 范围：`docs/roadmap/1.2-preview.md`
+  - DoD：列出 1.2 候选功能（homebrew/debian/systemd/更多规则）
+  - 预估：1h
+
+- NEXT（唯一）：P17-1A（homebrew 支持，生态扩展优先级最高）
