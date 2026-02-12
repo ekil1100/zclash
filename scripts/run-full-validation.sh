@@ -32,8 +32,9 @@ result="PASS"
 [[ ${#failed[@]} -eq 0 ]] || result="FAIL"
 
 echo ""
-echo "FULL_VALIDATION_RESULT=$result"
-echo "FULL_VALIDATION_PASS=${#passed[@]}/$total"
-echo "FULL_VALIDATION_FAILED=${failed[*]:-none}"
+echo "VALIDATION_RESULT=$result"
+echo "VALIDATION_PASS=${#passed[@]}/$total"
+echo "VALIDATION_FAILED_STEPS=${failed[*]:-none}"
+echo "VALIDATION_NEXT_STEP=$(if [[ "$result" == "PASS" ]]; then echo "全部通过，可继续发布流程"; else echo "修复失败项后重新运行"; fi)"
 
 [[ "$result" == "PASS" ]]
