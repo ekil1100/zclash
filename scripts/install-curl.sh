@@ -2,8 +2,7 @@
 set -euo pipefail
 
 # zclash curl 一键安装脚本
-# 用法: curl -fsSL https://zclash.dev/install.sh | bash
-# 或: curl -fsSL https://zclash.dev/install.sh | bash -s -- v1.0.0
+# 用法: curl -fsSL https://github.com/ekil1100/zclash/releases/latest/download/install.sh | bash
 
 VERSION="${1:-latest}"
 INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
