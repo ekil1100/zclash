@@ -22,6 +22,7 @@ pub const DoctorData = struct {
     proxy_reachable: bool = false,
     config_errors: []const []const u8 = &.{},
     config_warnings: []const []const u8 = &.{},
+    migration_hints: []const []const u8 = &.{},
 };
 
 pub fn runDoctorJson(allocator: std.mem.Allocator, config_path: ?[]const u8) !void {
@@ -68,6 +69,13 @@ pub fn runDoctorJson(allocator: std.mem.Allocator, config_path: ?[]const u8) !vo
         if (idx > 0) try out.appendSlice(allocator, ",");
         try out.appendSlice(allocator, "\"");
         try out.appendSlice(allocator, w);
+        try out.appendSlice(allocator, "\"");
+    }
+    try out.appendSlice(allocator, "],\"migration_hints\":[");
+    for (data.migration_hints, 0..) |h, idx| {
+        if (idx > 0) try out.appendSlice(allocator, ",");
+        try out.appendSlice(allocator, "\"");
+        try out.appendSlice(allocator, h);
         try out.appendSlice(allocator, "\"");
     }
     try out.appendSlice(allocator, "]}}\n");
@@ -135,6 +143,7 @@ fn collectDoctorData(allocator: std.mem.Allocator, config_path: ?[]const u8) !Do
 
     try fillDaemonStatus(allocator, &data);
     data.network_ok = checkNetworkConnectivity();
+    data.migration_hints = try collectMigrationHints(allocator, config_path);
     // Check if any configured proxy port is actually listening
     var pi: usize = 0;
     while (pi < data.port_count) : (pi += 1) {
@@ -150,6 +159,33 @@ fn checkNetworkConnectivity() bool {
     const stream = std.net.tcpConnectToHost(std.heap.page_allocator, "1.1.1.1", 53) catch return false;
     stream.close();
     return true;
+}
+
+fn collectMigrationHints(allocator: std.mem.Allocator, config_path: ?[]const u8) ![]const []const u8 {
+    const path = config_path orelse return &.{};
+    const file_content = std.fs.cwd().readFileAlloc(allocator, path, 1024 * 1024) catch return &.{};
+    defer allocator.free(file_content);
+
+    var hints = std.ArrayList([]const u8).empty;
+
+    // Check for tun mode (unsupported)
+    if (std.mem.indexOf(u8, file_content, "tun:") != null) {
+        try hints.append(allocator, try allocator.dupe(u8, "tun mode is not supported by zclash and will be ignored"));
+    }
+    // Check for enhanced-mode (unsupported)
+    if (std.mem.indexOf(u8, file_content, "enhanced-mode:") != null) {
+        try hints.append(allocator, try allocator.dupe(u8, "dns.enhanced-mode is not supported and will be ignored"));
+    }
+    // Check for rule-providers (partial support)
+    if (std.mem.indexOf(u8, file_content, "rule-providers:") != null) {
+        try hints.append(allocator, try allocator.dupe(u8, "rule-providers remote update is not fully implemented; manual refresh recommended"));
+    }
+    // Check for proxy-providers (unsupported)
+    if (std.mem.indexOf(u8, file_content, "proxy-providers:") != null) {
+        try hints.append(allocator, try allocator.dupe(u8, "proxy-providers is not supported; declare proxies statically in the config"));
+    }
+
+    return hints.items;
 }
 
 fn fillDaemonStatus(allocator: std.mem.Allocator, data: *DoctorData) !void {
