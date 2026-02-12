@@ -52,6 +52,39 @@ collect_issues() {
     fi
   done
 
+  # R25: SUBSCRIPTION_URL_CHECK
+  if grep -Eq '^[[:space:]]*subscription-url:' "$file"; then
+    local sub_url=$(grep -E '^[[:space:]]*subscription-url:' "$file" | head -n1 | sed -E 's/^[[:space:]]*subscription-url:[[:space:]]*"?([^"]*)"?[[:space:]]*$/\1/')
+    if [[ -n "$sub_url" ]] && ! echo "$sub_url" | grep -Eq '^(https?|file)://'; then
+      issues+=("{\"rule\":\"SUBSCRIPTION_URL_CHECK\",\"level\":\"warn\",\"path\":\"subscription-url\",\"message\":\"subscription-url should use http/https/file protocol: $sub_url\",\"fixable\":false}")
+    fi
+  fi
+
+  # R24: YAML_SYNTAX_CHECK
+  # Try to detect obvious YAML syntax errors
+  local yaml_errors=()
+  
+  # Check for lines without colon that should have them (in proxy/group definitions)
+  while IFS= read -r line; do
+    if echo "$line" | grep -Eq '^[[:space:]]+[a-zA-Z-]+[[:space:]]+[^:[:space:]]'; then
+      if echo "$line" | grep -Eqv '^[[:space:]]*-'; then
+        local key=$(echo "$line" | sed -E 's/^[[:space:]]+([a-zA-Z-]+).*/\1/')
+        if [[ "$key" =~ ^(name|type|server|port|cipher|password|uuid|sni|mode|log-level)$ ]]; then
+          yaml_errors+=("line missing colon after '$key': $(echo "$line" | cut -c1-40)")
+        fi
+      fi
+    fi
+  done < <(grep -E '^[[:space:]]+[a-zA-Z-]+[[:space:]]+[^:]' "$file" 2>/dev/null || true)
+  
+  # Check for inconsistent indentation (mixing tabs and spaces)
+  if grep -Pq '^\t' "$file" 2>/dev/null && grep -Pq '^ ' "$file" 2>/dev/null; then
+    yaml_errors+=("mixed tabs and spaces for indentation")
+  fi
+  
+  for err in "${yaml_errors[@]:-}"; do
+    issues+=("{\"rule\":\"YAML_SYNTAX_CHECK\",\"level\":\"error\",\"path\":\"yaml\",\"message\":\"YAML syntax issue: $err\",\"fixable\":false}")
+  done
+
   # R23: PROXY_GROUP_REF_CHECK
   if grep -Eq '^[[:space:]]*proxy-groups:' "$file" && grep -Eq '^[[:space:]]*proxies:' "$file"; then
     # Collect all proxy names

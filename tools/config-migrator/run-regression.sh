@@ -390,6 +390,42 @@ else
   fi
 fi
 
+# R24 validation (YAML_SYNTAX_CHECK)
+R24_OUT="$REPORT_DIR/r24-regression.lint.json"
+if bash "$BASE/run.sh" lint "$BASE/examples/r24-yaml-syntax.yaml" > "$R24_OUT" 2>/dev/null || true; then
+  if grep -q '"rule":"YAML_SYNTAX_CHECK"' "$R24_OUT"; then
+    results+=("{\"sample_id\":\"R24_YAML_SYNTAX_CHECK\",\"input\":\"tools/config-migrator/examples/r24-yaml-syntax.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"YAML syntax issue detected\"}")
+  else
+    results+=("{\"sample_id\":\"R24_YAML_SYNTAX_CHECK\",\"input\":\"tools/config-migrator/examples/r24-yaml-syntax.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"YAML syntax check passed\"}")
+  fi
+else
+  if grep -q '"rule":"YAML_SYNTAX_CHECK"' "$R24_OUT" 2>/dev/null; then
+    results+=("{\"sample_id\":\"R24_YAML_SYNTAX_CHECK\",\"input\":\"tools/config-migrator/examples/r24-yaml-syntax.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"YAML syntax issue detected\"}")
+  else
+    results+=("{\"sample_id\":\"R24_YAML_SYNTAX_CHECK\",\"input\":\"tools/config-migrator/examples/r24-yaml-syntax.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"YAML syntax check passed\"}")
+  fi
+fi
+
+# R25 validation (SUBSCRIPTION_URL_CHECK)
+R25_OUT="$REPORT_DIR/r25-regression.lint.json"
+if bash "$BASE/run.sh" lint "$BASE/examples/r25-sub-url.yaml" > "$R25_OUT" 2>/dev/null || true; then
+  if grep -q '"rule":"SUBSCRIPTION_URL_CHECK"' "$R25_OUT"; then
+    results+=("{\"sample_id\":\"R25_SUBSCRIPTION_URL_CHECK\",\"input\":\"tools/config-migrator/examples/r25-sub-url.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"invalid subscription URL detected\"}")
+  else
+    failed_rules+=("SUBSCRIPTION_URL_CHECK")
+    failed_samples+=("R25_SUBSCRIPTION_URL_CHECK")
+    results+=("{\"sample_id\":\"R25_SUBSCRIPTION_URL_CHECK\",\"input\":\"tools/config-migrator/examples/r25-sub-url.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected SUBSCRIPTION_URL_CHECK warn\"}")
+  fi
+else
+  if grep -q '"rule":"SUBSCRIPTION_URL_CHECK"' "$R25_OUT" 2>/dev/null; then
+    results+=("{\"sample_id\":\"R25_SUBSCRIPTION_URL_CHECK\",\"input\":\"tools/config-migrator/examples/r25-sub-url.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"invalid subscription URL detected\"}")
+  else
+    failed_rules+=("SUBSCRIPTION_URL_CHECK")
+    failed_samples+=("R25_SUBSCRIPTION_URL_CHECK")
+    results+=("{\"sample_id\":\"R25_SUBSCRIPTION_URL_CHECK\",\"input\":\"tools/config-migrator/examples/r25-sub-url.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected SUBSCRIPTION_URL_CHECK warn\"}")
+  fi
+fi
+
 pass_count=0
 for r in "${results[@]}"; do
   if echo "$r" | grep -q '"result":"PASS"'; then
