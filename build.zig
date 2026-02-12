@@ -11,6 +11,8 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
+    exe_mod.link_libc = true;
+
     const exe = b.addExecutable(.{
         .name = "zc",
         .root_module = exe_mod,
