@@ -52,6 +52,96 @@ collect_issues() {
     fi
   done
 
+  # R23: PROXY_GROUP_REF_CHECK
+  if grep -Eq '^[[:space:]]*proxy-groups:' "$file" && grep -Eq '^[[:space:]]*proxies:' "$file"; then
+    # Collect all proxy names
+    local proxy_names=()
+    while IFS= read -r line; do
+      local n=$(echo "$line" | sed -E 's/^[[:space:]]*-[[:space:]]*name:[[:space:]]*"?([^"]*)"?[[:space:]]*$/\1/')
+      [[ -n "$n" ]] && proxy_names+=("$n")
+    done < <(grep -E '^[[:space:]]*-[[:space:]]*name:' "$file" | head -100)
+    
+    # Check proxy-groups references
+    local in_group=false
+    local group_name=""
+    while IFS= read -r line; do
+      if echo "$line" | grep -Eq '^[[:space:]]*-[[:space:]]*name:'; then
+        group_name=$(echo "$line" | sed -E 's/^[[:space:]]*-[[:space:]]*name:[[:space:]]*"?([^"]*)"?[[:space:]]*$/\1/')
+        in_group=true
+      elif [[ "$in_group" == "true" ]] && echo "$line" | grep -Eq '^[[:space:]]*proxies:'; then
+        : # start of proxies list
+      elif [[ "$in_group" == "true" ]] && echo "$line" | grep -Eq '^[[:space:]]+-'; then
+        local ref=$(echo "$line" | sed -E 's/^[[:space:]]*-[[:space:]]*"?([^"]*)"?[[:space:]]*$/\1/')
+        if [[ -n "$ref" ]]; then
+          local found=false
+          for pn in "${proxy_names[@]:-}"; do
+            if [[ "$pn" == "$ref" ]]; then
+              found=true
+              break
+            fi
+          done
+          if [[ "$found" == "false" ]]; then
+            issues+=("{\"rule\":\"PROXY_GROUP_REF_CHECK\",\"level\":\"error\",\"path\":\"proxy-groups[$group_name].proxies\",\"message\":\"proxy group '$group_name' references undefined proxy: $ref\",\"fixable\":false}")
+          fi
+        fi
+      elif [[ "$in_group" == "true" ]] && ! echo "$line" | grep -Eq '^[[:space:]]'; then
+        in_group=false
+      fi
+    done < <(grep -E '^[[:space:]]*(proxy-groups:|proxies:|proxy-providers:|rule-providers:|rules:)' -A 1000 "$file" | grep -E '^[[:space:]]*(proxy-groups:|proxies:|[[:space:]]+-[[:space:]]*name:|[[:space:]]+-)' | head -200)
+  fi
+
+  # R22: VLESS_FIELDS_CHECK
+  if grep -Eq '^[[:space:]]*type:[[:space:]]*vless' "$file"; then
+    local proxy_types=()
+    local proxy_names=()
+    local current_name=""
+    
+    while IFS= read -r line; do
+      if echo "$line" | grep -Eq '^[[:space:]]*-[[:space:]]*name:'; then
+        current_name=$(echo "$line" | sed -E 's/^[[:space:]]*-[[:space:]]*name:[[:space:]]*"?([^"]*)"?[[:space:]]*$/\1/')
+      elif echo "$line" | grep -Eq '^[[:space:]]*type:'; then
+        local t=$(echo "$line" | sed -E 's/^[[:space:]]*type:[[:space:]]*"?([^"]*)"?[[:space:]]*$/\1/')
+        if [[ -n "$current_name" ]]; then
+          proxy_types+=("$current_name:$t")
+        fi
+      fi
+    done < <(grep -E '^[[:space:]]*(-[[:space:]]*name:|type:)' "$file")
+    
+    for pt in "${proxy_types[@]:-}"; do
+      local pname=${pt%%:*}
+      local ptype=${pt#*:}
+      if [[ "$ptype" == "vless" ]]; then
+        local block_start=false
+        local in_block=false
+        local has_uuid=false
+        local has_sni=false
+        
+        while IFS= read -r line; do
+          if echo "$line" | grep -Eq "^[[:space:]]*-[[:space:]]*name:[[:space:]]*\"?$pname\"?"; then
+            block_start=true
+            in_block=true
+          elif [[ "$in_block" == "true" ]] && echo "$line" | grep -Eq '^[[:space:]]*-[[:space:]]*name:'; then
+            break
+          elif [[ "$in_block" == "true" ]]; then
+            if echo "$line" | grep -Eq '^[[:space:]]*uuid:'; then
+              has_uuid=true
+            fi
+            if echo "$line" | grep -Eq '^[[:space:]]*sni:'; then
+              has_sni=true
+            fi
+          fi
+        done < <(grep -E '^[[:space:]]*(-[[:space:]]*name:|uuid:|sni:)' "$file")
+        
+        if [[ "$has_uuid" != "true" ]]; then
+          issues+=("{\"rule\":\"VLESS_FIELDS_CHECK\",\"level\":\"error\",\"path\":\"proxies[$pname].uuid\",\"message\":\"vless node '$pname' missing required field: uuid\",\"fixable\":false}")
+        fi
+        if [[ "$has_sni" != "true" ]]; then
+          issues+=("{\"rule\":\"VLESS_FIELDS_CHECK\",\"level\":\"warn\",\"path\":\"proxies[$pname].sni\",\"message\":\"vless node '$pname' missing recommended field: sni\",\"fixable\":false}")
+        fi
+      fi
+    done
+  fi
+
   # R21: RULES_FORMAT_CHECK
   if grep -Eq '^[[:space:]]*rules:' "$file"; then
     while IFS= read -r line; do

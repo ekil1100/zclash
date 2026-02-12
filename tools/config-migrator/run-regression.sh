@@ -350,6 +350,46 @@ else
   fi
 fi
 
+# R22 validation (VLESS_FIELDS_CHECK)
+R22_OUT="$REPORT_DIR/r22-regression.lint.json"
+if bash "$BASE/run.sh" lint "$BASE/examples/r22-vless-fields.yaml" > "$R22_OUT" 2>/dev/null || true; then
+  if grep -q '"rule":"VLESS_FIELDS_CHECK"' "$R22_OUT"; then
+    results+=("{\"sample_id\":\"R22_VLESS_FIELDS_CHECK\",\"input\":\"tools/config-migrator/examples/r22-vless-fields.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"missing vless fields detected\"}")
+  else
+    failed_rules+=("VLESS_FIELDS_CHECK")
+    failed_samples+=("R22_VLESS_FIELDS_CHECK")
+    results+=("{\"sample_id\":\"R22_VLESS_FIELDS_CHECK\",\"input\":\"tools/config-migrator/examples/r22-vless-fields.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected VLESS_FIELDS_CHECK errors\"}")
+  fi
+else
+  if grep -q '"rule":"VLESS_FIELDS_CHECK"' "$R22_OUT" 2>/dev/null; then
+    results+=("{\"sample_id\":\"R22_VLESS_FIELDS_CHECK\",\"input\":\"tools/config-migrator/examples/r22-vless-fields.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"missing vless fields detected\"}")
+  else
+    failed_rules+=("VLESS_FIELDS_CHECK")
+    failed_samples+=("R22_VLESS_FIELDS_CHECK")
+    results+=("{\"sample_id\":\"R22_VLESS_FIELDS_CHECK\",\"input\":\"tools/config-migrator/examples/r22-vless-fields.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected VLESS_FIELDS_CHECK errors\"}")
+  fi
+fi
+
+# R23 validation (PROXY_GROUP_REF_CHECK)
+R23_OUT="$REPORT_DIR/r23-regression.lint.json"
+if bash "$BASE/run.sh" lint "$BASE/examples/r23-group-ref.yaml" > "$R23_OUT" 2>/dev/null || true; then
+  if grep -q '"rule":"PROXY_GROUP_REF_CHECK"' "$R23_OUT"; then
+    results+=("{\"sample_id\":\"R23_PROXY_GROUP_REF_CHECK\",\"input\":\"tools/config-migrator/examples/r23-group-ref.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"undefined proxy reference detected\"}")
+  else
+    failed_rules+=("PROXY_GROUP_REF_CHECK")
+    failed_samples+=("R23_PROXY_GROUP_REF_CHECK")
+    results+=("{\"sample_id\":\"R23_PROXY_GROUP_REF_CHECK\",\"input\":\"tools/config-migrator/examples/r23-group-ref.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected PROXY_GROUP_REF_CHECK error\"}")
+  fi
+else
+  if grep -q '"rule":"PROXY_GROUP_REF_CHECK"' "$R23_OUT" 2>/dev/null; then
+    results+=("{\"sample_id\":\"R23_PROXY_GROUP_REF_CHECK\",\"input\":\"tools/config-migrator/examples/r23-group-ref.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"undefined proxy reference detected\"}")
+  else
+    failed_rules+=("PROXY_GROUP_REF_CHECK")
+    failed_samples+=("R23_PROXY_GROUP_REF_CHECK")
+    results+=("{\"sample_id\":\"R23_PROXY_GROUP_REF_CHECK\",\"input\":\"tools/config-migrator/examples/r23-group-ref.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected PROXY_GROUP_REF_CHECK error\"}")
+  fi
+fi
+
 pass_count=0
 for r in "${results[@]}"; do
   if echo "$r" | grep -q '"result":"PASS"'; then
