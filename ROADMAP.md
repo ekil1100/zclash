@@ -29,11 +29,11 @@
 先“看清楚”，建立可量化对比。
 
 ### 任务
-- [ ] 梳理 mihomo/c 能力矩阵（功能、交互、性能、稳定性）
-- [ ] 梳理 zc 当前能力矩阵（已实现/缺失/不稳定）
-- [ ] 建立标准测试场景与样例配置集
-- [ ] 明确北极星指标与采样方法
-- [ ] 输出差距清单与优先级
+- [x] 梳理 mihomo/c 能力矩阵（功能、交互、性能、稳定性）
+- [x] 梳理 zc 当前能力矩阵（已实现/缺失/不稳定）
+- [x] 建立标准测试场景与样例配置集
+- [x] 明确北极星指标与采样方法
+- [x] 输出差距清单与优先级
 
 ### 交付物
 - `docs/benchmark/baseline.md`
@@ -50,13 +50,13 @@
 CLI 首次使用可猜、可完成核心任务。
 
 ### 任务
-- [ ] 命令模型统一：`zc <resource> <action>` + 常见快捷模式
-- [ ] 核心命令：`start/stop/restart/status`
-- [ ] profile 命令：`list/use/import/validate`
-- [ ] proxy 命令：`list/select/test`
-- [ ] 诊断命令：`diag doctor`
-- [ ] 全面支持 `--json`
-- [ ] 错误输出统一（原因 + hint + 文档链接）
+- [x] 命令模型统一：`zc <resource> <action>` + 常见快捷模式
+- [x] 核心命令：`start/stop/restart/status`
+- [x] profile 命令：`list/use/import/validate`
+- [x] proxy 命令：`list/select/test`
+- [x] 诊断命令：`diag doctor`
+- [x] 全面支持 `--json`
+- [x] 错误输出统一（原因 + hint + 文档链接）
 
 ### 交付物
 - `docs/cli/spec.md`
@@ -73,11 +73,11 @@ CLI 首次使用可猜、可完成核心任务。
 建立稳定、可集成、可文档化的 API v1。
 
 ### 任务
-- [ ] 定义资源模型（runtime/profiles/proxies/connections/rules/metrics）
-- [ ] 统一错误码结构：`code/message/hint`
-- [ ] REST + WebSocket 事件流边界清晰
-- [ ] 输出 OpenAPI 并自动校验
-- [ ] 关键端点集成测试覆盖
+- [x] 定义资源模型（runtime/profiles/proxies/connections/rules/metrics）
+- [x] 统一错误码结构：`code/message/hint`
+- [x] REST + WebSocket 事件流边界清晰
+- [x] 输出 OpenAPI 并自动校验
+- [x] 关键端点集成测试覆盖
 
 ### 交付物
 - `docs/api/openapi.yaml`
@@ -94,11 +94,11 @@ CLI 首次使用可猜、可完成核心任务。
 让 TUI 成为“高效控制台”，不是“功能堆叠页”。
 
 ### 任务
-- [ ] 信息架构重排：Overview / Proxies / Connections / Logs / Diagnose
-- [ ] 全局快捷键统一：`? / / / g / r`
-- [ ] 代理组切换与延迟对比体验优化
-- [ ] 连接筛选/排序与日志过滤
-- [ ] 重载配置后结果反馈可见
+- [x] 信息架构重排：Overview / Proxies / Connections / Logs / Diagnose
+- [x] 全局快捷键统一：`? / / / g / r`
+- [x] 代理组切换与延迟对比体验优化
+- [x] 连接筛选/排序与日志过滤
+- [x] 重载配置后结果反馈可见
 
 ### 交付物
 - `docs/tui/interaction.md`
@@ -147,14 +147,14 @@ CLI 首次使用可猜、可完成核心任务。
 在关键指标上达到或超过基线，并具备长期稳定运行能力。
 
 ### 任务（性能）
-- [ ] 热路径 profiling（规则匹配、DNS、握手、转发）
-- [ ] 分配与内存行为优化
-- [ ] 连接池与并发调度优化
+- [x] 热路径 profiling（规则匹配、DNS、握手、转发）
+- [x] 分配与内存行为优化
+- [x] 连接池与并发调度优化
 
 ### 任务（稳定性）
-- [ ] 热重载回滚机制
-- [ ] 故障注入（超时、抖动、节点故障）
-- [ ] 24h/72h 长稳测试
+- [x] 热重载回滚机制
+- [x] 故障注入（超时、抖动、节点故障）
+- [x] 24h/72h 长稳测试
 
 ### 交付物
 - `docs/perf/reports/*.md`
@@ -171,10 +171,10 @@ CLI 首次使用可猜、可完成核心任务。
 降低迁移成本，扩大可用生态。
 
 ### 任务
-- [ ] mihomo/c 配置兼容层
-- [ ] 迁移工具（lint + autofix）
-- [ ] 常见 GUI/面板接入说明
-- [ ] 样例配置库
+- [x] mihomo/c 配置兼容层
+- [x] 迁移工具（lint + autofix）
+- [x] 常见 GUI/面板接入说明
+- [x] 样例配置库
 
 ### 交付物
 - `docs/compat/mihomo-clash.md`
