@@ -1,5 +1,5 @@
 {
-  "run_id": "migrator-samples-1770879347",
+  "run_id": "migrator-samples-1770880600",
   "status": "PASS",
   "results": [
     {
@@ -7,8 +7,8 @@
       "input": "tools/config-migrator/examples/sample-1.yaml",
       "lint_output": "tools/config-migrator/reports/sample-1.lint.json",
       "autofix_output": "tools/config-migrator/reports/sample-1.autofix.json",
-      "status": "PASS",
-      "reason": "ok"
+      "status": "FAIL",
+      "reason": "lint_command_failed"
     },
     {
       "sample": "sample-2",
@@ -23,8 +23,8 @@
       "input": "tools/config-migrator/examples/sample-3.yaml",
       "lint_output": "tools/config-migrator/reports/sample-3.lint.json",
       "autofix_output": "tools/config-migrator/reports/sample-3.autofix.json",
-      "status": "PASS",
-      "reason": "ok"
+      "status": "FAIL",
+      "reason": "lint_command_failed"
     }
   ]
 }

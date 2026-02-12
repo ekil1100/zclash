@@ -1,1 +1,1 @@
-{"ok":true,"mode":"lint","issues":[],"fixed":0,"hint":"run autofix for fixable issues"}
+{"ok":false,"mode":"lint","issues":[{"rule":"YAML_SYNTAX_CHECK","level":"error","path":"yaml","message":"YAML syntax issue: ","fixable":false}],"fixed":0,"hint":"fix error-level issues first; for LOG_LEVEL_ENUM use suggested value: info"}
