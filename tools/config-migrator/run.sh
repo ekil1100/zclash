@@ -52,6 +52,28 @@ collect_issues() {
     fi
   done
 
+  # R31: DNS_INVALID_CHECK
+  local invalid_dns="localhost|127\.0\.0\.1|0\.0\.0\.0"
+  if grep -Eq 'nameserver:' "$file"; then
+    while IFS= read -r line; do
+      if echo "$line" | grep -Eq '^[[:space:]]*-'; then
+        local ns=$(echo "$line" | sed -E 's/^[[:space:]]*-[[:space:]]*"?([^"]*)"?[[:space:]]*$/\1/' | tr -d ' ')
+        if [[ -n "$ns" ]] && [[ "$ns" == "localhost" || "$ns" == "127.0.0.1" || "$ns" == "0.0.0.0" ]]; then
+          issues+=("{\"rule\":\"DNS_INVALID_CHECK\",\"level\":\"error\",\"path\":\"dns.nameserver\",\"message\":\"invalid DNS server (will cause resolution failure): $ns\",\"fixable\":false,\"suggested\":\"8.8.8.8 or 1.1.1.1\"}")
+        fi
+      fi
+    done < <(grep -A20 'nameserver:' "$file" | grep '^[[:space:]]*-')
+  fi
+
+  # R30: DUPLICATE_KEY_CHECK
+  local top_level_keys="port|socks-port|mixed-port|log-level|mode|allow-lan|bind-address|external-controller"
+  for key in $(echo "$top_level_keys" | tr '|' ' '); do
+    local count=$(grep -E "^[[:space:]]*$key:" "$file" 2>/dev/null | wc -l | tr -d ' ')
+    if [[ "$count" -gt 1 ]]; then
+      issues+=("{\"rule\":\"DUPLICATE_KEY_CHECK\",\"level\":\"warn\",\"path\":\"$key\",\"message\":\"$key is defined $count times (last value will be used)\",\"fixable\":false}")
+    fi
+  done
+
   # R29: PORT_CONFLICT_CHECK
   if grep -Eq '^[[:space:]]*proxies:' "$file"; then
     local -A port_map
