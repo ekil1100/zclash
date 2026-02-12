@@ -1,14 +1,14 @@
 const std = @import("std");
 
 // PID 文件路径
-const PID_FILE = "/tmp/zclash.pid";
-const LOG_FILE = "/tmp/zclash.log";
+const PID_FILE = "/tmp/zc.pid";
+const LOG_FILE = "/tmp/zc.log";
 
 /// 获取 PID 文件路径
 pub fn getPidFilePath(allocator: std.mem.Allocator) ![]const u8 {
     // 优先使用 XDG_RUNTIME_DIR，否则使用 /tmp
     if (std.process.getEnvVarOwned(allocator, "XDG_RUNTIME_DIR")) |runtime_dir| {
-        const path = try std.fs.path.join(allocator, &.{ runtime_dir, "zclash.pid" });
+        const path = try std.fs.path.join(allocator, &.{ runtime_dir, "zc.pid" });
         allocator.free(runtime_dir);
         return path;
     } else |_| {
@@ -23,8 +23,8 @@ pub fn getLogFilePath(allocator: std.mem.Allocator) ![]const u8 {
     };
     defer allocator.free(home);
     
-    // 使用 ~/.local/share/zclash/zclash.log
-    const log_dir = try std.fs.path.join(allocator, &.{ home, ".local/share/zclash" });
+    // 使用 ~/.local/share/zc/zc.log
+    const log_dir = try std.fs.path.join(allocator, &.{ home, ".local/share/zc" });
     defer allocator.free(log_dir);
     
     // 创建目录
@@ -35,7 +35,7 @@ pub fn getLogFilePath(allocator: std.mem.Allocator) ![]const u8 {
         }
     };
     
-    return try std.fs.path.join(allocator, &.{ log_dir, "zclash.log" });
+    return try std.fs.path.join(allocator, &.{ log_dir, "zc.log" });
 }
 
 /// 读取 PID 文件
@@ -161,7 +161,7 @@ pub fn startDaemon(allocator: std.mem.Allocator, config_path: ?[]const u8, json_
         // 父进程：等待子进程至少稳定存活一小段时间，避免假启动
         std.Thread.sleep(300 * std.time.ns_per_ms);
         _ = std.posix.kill(pid, 0) catch {
-            printCliError(json_output, "START_FAILED", "failed to start: child exited early", "check logs via `zclash log --no-follow` and retry");
+            printCliError(json_output, "START_FAILED", "failed to start: child exited early", "check logs via `zc log --no-follow` and retry");
             return error.StartFailed;
         };
 
@@ -258,7 +258,7 @@ pub fn stopDaemon(allocator: std.mem.Allocator, json_output: bool) !void {
             removePidFile(allocator);
             return;
         }
-        printCliError(json_output, "STOP_FAILED", "failed to send terminate signal", "verify process permissions and retry `zclash stop`");
+        printCliError(json_output, "STOP_FAILED", "failed to send terminate signal", "verify process permissions and retry `zc stop`");
         return err;
     };
     

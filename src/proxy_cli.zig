@@ -238,7 +238,7 @@ pub fn selectProxy(allocator: std.mem.Allocator, cfg: *config.Config, group_name
         }
 
         std.debug.print("Selected '{s}' in group '{s}'\n", .{ pn, group.name });
-        std.debug.print("Note: Use 'zclash tui' for interactive selection, or edit the config file directly.\n", .{});
+        std.debug.print("Note: Use 'zc tui' for interactive selection, or edit the config file directly.\n", .{});
     } else {
         // 显示选择界面
         std.debug.print("Select proxy for group '{s}':\n", .{group.name});
@@ -262,6 +262,6 @@ pub fn selectProxy(allocator: std.mem.Allocator, cfg: *config.Config, group_name
             }
         }
 
-        std.debug.print("\nUse 'zclash proxy select -g {s} -p <proxy_name>' to select\n", .{group.name});
+        std.debug.print("\nUse 'zc proxy select -g {s} -p <proxy_name>' to select\n", .{group.name});
     }
 }

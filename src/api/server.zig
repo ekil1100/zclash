@@ -64,7 +64,7 @@ pub const ApiServer = struct {
         // 路由
         if (std.mem.eql(u8, method, "GET")) {
             if (std.mem.eql(u8, path, "/")) {
-                try self.sendJson(conn, "{\"version\":\"0.1.0\",\"hello\":\"zclash\"}");
+                try self.sendJson(conn, "{\"version\":\"0.1.0\",\"hello\":\"zc\"}");
             } else if (std.mem.eql(u8, path, "/proxies")) {
                 try self.handleGetProxies(conn);
             } else if (std.mem.eql(u8, path, "/rules")) {

@@ -506,14 +506,14 @@ fn parseRuleType(s: []const u8) ?RuleType {
 }
 
 /// 查找默认配置文件路径
-/// 优先级：~/.config/zclash/config.yaml > ~/.zclash/config.yaml > ./config.yaml
+/// 优先级：~/.config/zc/config.yaml > ~/.zc/config.yaml > ./config.yaml
 fn getDefaultConfigPath(allocator: std.mem.Allocator) !?[]const u8 {
     const home = std.process.getEnvVarOwned(allocator, "HOME") catch return null;
     defer allocator.free(home);
 
     const paths = [_][]const u8{
-        "/.config/zclash/config.yaml",
-        "/.zclash/config.yaml",
+        "/.config/zc/config.yaml",
+        "/.zc/config.yaml",
     };
 
     for (paths) |rel_path| {
@@ -558,11 +558,11 @@ pub fn loadDefault(allocator: std.mem.Allocator) !Config {
     return try parse(allocator, yaml_config);
 }
 
-/// 获取默认配置目录路径 (~/.config/zclash)
+/// 获取默认配置目录路径 (~/.config/zc)
 pub fn getDefaultConfigDir(allocator: std.mem.Allocator) !?[]const u8 {
     const home = std.process.getEnvVarOwned(allocator, "HOME") catch return null;
     defer allocator.free(home);
-    return try std.fs.path.join(allocator, &.{ home, ".config/zclash" });
+    return try std.fs.path.join(allocator, &.{ home, ".config/zc" });
 }
 
 /// 从 URL 提取域名
@@ -674,7 +674,7 @@ pub fn downloadConfig(allocator: std.mem.Allocator, url: []const u8, name: ?[]co
     try file.writeAll(response_writer.written());
 
     std.debug.print("Config downloaded to: {s}\n", .{config_path});
-    std.debug.print("Use 'zclash config use {s}' to activate it\n", .{final_filename});
+    std.debug.print("Use 'zc config use {s}' to activate it\n", .{final_filename});
 
     return final_filename;
 }
@@ -735,7 +735,7 @@ pub fn listConfigs(allocator: std.mem.Allocator) !void {
     if (count == 0) {
         std.debug.print("  (no config files found)\n", .{});
     } else {
-        std.debug.print("\nUse 'zclash config use <filename>' to switch config\n", .{});
+        std.debug.print("\nUse 'zc config use <filename>' to switch config\n", .{});
     }
 }
 
@@ -765,7 +765,7 @@ pub fn switchConfig(allocator: std.mem.Allocator, filename: []const u8) !void {
 
     std.fs.accessAbsolute(source_path, .{}) catch {
         std.debug.print("Config not found: {s}\n", .{source_path});
-        std.debug.print("Use 'zclash --list-configs' to see available configs\n", .{});
+        std.debug.print("Use 'zc --list-configs' to see available configs\n", .{});
         return error.ConfigNotFound;
     };
 

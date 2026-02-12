@@ -205,7 +205,7 @@ fn collectMigrationHints(allocator: std.mem.Allocator, config_path: ?[]const u8)
 
     // Check for tun mode (unsupported)
     if (std.mem.indexOf(u8, file_content, "tun:") != null) {
-        try hints.append(allocator, try allocator.dupe(u8, "tun mode is not supported by zclash and will be ignored"));
+        try hints.append(allocator, try allocator.dupe(u8, "tun mode is not supported by zc and will be ignored"));
     }
     // Check for enhanced-mode (unsupported)
     if (std.mem.indexOf(u8, file_content, "enhanced-mode:") != null) {
@@ -272,7 +272,7 @@ pub fn formatDoctorReport(allocator: std.mem.Allocator, data: *const DoctorData)
     errdefer out.deinit(allocator);
 
     const w = out.writer(allocator);
-    try w.print("zclash doctor\n", .{});
+    try w.print("zc doctor\n", .{});
     try w.print("{s:-^60}\n", .{""});
 
     try w.print("Version: {s}\n", .{data.version});
@@ -305,10 +305,10 @@ pub fn formatDoctorReport(allocator: std.mem.Allocator, data: *const DoctorData)
 
     try w.print("Suggestions:\n", .{});
     if (!data.config_ok) {
-        try w.print("  1. Fix config syntax/validation issues, then rerun `zclash doctor`.\n", .{});
+        try w.print("  1. Fix config syntax/validation issues, then rerun `zc doctor`.\n", .{});
     }
     if (!data.daemon_running) {
-        try w.print("  2. Start service: zclash start -c <config>\n", .{});
+        try w.print("  2. Start service: zc start -c <config>\n", .{});
     }
     var has_not_listening = false;
     var i: usize = 0;
@@ -319,7 +319,7 @@ pub fn formatDoctorReport(allocator: std.mem.Allocator, data: *const DoctorData)
         }
     }
     if (has_not_listening) {
-        try w.print("  3. Ensure configured proxy ports are bound by zclash process.\n", .{});
+        try w.print("  3. Ensure configured proxy ports are bound by zc process.\n", .{});
     }
     if (data.config_ok and data.daemon_running and !has_not_listening) {
         try w.print("  - No action needed.\n", .{});
@@ -344,8 +344,8 @@ test "formatDoctorReport basic output" {
     const report = try formatDoctorReport(allocator, &data);
     defer allocator.free(report);
 
-    try std.testing.expect(std.mem.indexOf(u8, report, "zclash doctor") != null);
+    try std.testing.expect(std.mem.indexOf(u8, report, "zc doctor") != null);
     try std.testing.expect(std.mem.indexOf(u8, report, "Effective ports") != null);
     try std.testing.expect(std.mem.indexOf(u8, report, "mixed: 127.0.0.1:7890") != null);
-    try std.testing.expect(std.mem.indexOf(u8, report, "Start service: zclash start -c <config>") != null);
+    try std.testing.expect(std.mem.indexOf(u8, report, "Start service: zc start -c <config>") != null);
 }

@@ -155,7 +155,7 @@ fn printPortNotListeningHint(port: u16) void {
 }
 
 fn notListeningSuggestedCommand() []const u8 {
-    return "zclash start -c <config>";
+    return "zc start -c <config>";
 }
 
 fn isLocalPortListening(allocator: std.mem.Allocator, port: u16) !bool {
@@ -416,5 +416,5 @@ test "failureReasonText returns actionable categories" {
 }
 
 test "not listening hint includes executable command" {
-    try std.testing.expectEqualStrings("zclash start -c <config>", notListeningSuggestedCommand());
+    try std.testing.expectEqualStrings("zc start -c <config>", notListeningSuggestedCommand());
 }

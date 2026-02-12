@@ -85,7 +85,7 @@ pub fn main() !void {
         }
         // 后台启动
         daemon.startDaemon(allocator, config_path, json_output) catch |err| {
-            printCliError(json_output, "START_FAILED", "failed to start daemon", "check config path and logs via `zclash log --no-follow`");
+            printCliError(json_output, "START_FAILED", "failed to start daemon", "check config path and logs via `zc log --no-follow`");
             return err;
         };
         return;
@@ -94,7 +94,7 @@ pub fn main() !void {
     // 处理 stop 命令
     if (std.mem.eql(u8, cmd, "stop")) {
         daemon.stopDaemon(allocator, json_output) catch |err| {
-            printCliError(json_output, "STOP_FAILED", "failed to stop daemon", "verify process permissions and retry `zclash stop`");
+            printCliError(json_output, "STOP_FAILED", "failed to stop daemon", "verify process permissions and retry `zc stop`");
             return err;
         };
         return;
@@ -113,7 +113,7 @@ pub fn main() !void {
             }
         }
         daemon.restartDaemon(allocator, config_path, json_output) catch |err| {
-            printCliError(json_output, "RESTART_FAILED", "failed to restart daemon", "check logs and retry `zclash restart -c <config>`");
+            printCliError(json_output, "RESTART_FAILED", "failed to restart daemon", "check logs and retry `zc restart -c <config>`");
             return err;
         };
         return;
@@ -122,7 +122,7 @@ pub fn main() !void {
     // 处理 status 命令
     if (std.mem.eql(u8, cmd, "status")) {
         daemon.getStatus(allocator, json_output) catch |err| {
-            printCliError(json_output, "STATUS_FAILED", "failed to read daemon status", "check pid file permissions and retry `zclash status`");
+            printCliError(json_output, "STATUS_FAILED", "failed to read daemon status", "check pid file permissions and retry `zc status`");
             return err;
         };
         return;
@@ -157,9 +157,9 @@ pub fn main() !void {
     if (std.mem.eql(u8, cmd, "profile")) {
         if (args.len < 3) {
             if (json_output) {
-                printCliError(json_output, "PROFILE_SUBCOMMAND_MISSING", "profile subcommand is required", "use `zclash profile list|use <name>`");
+                printCliError(json_output, "PROFILE_SUBCOMMAND_MISSING", "profile subcommand is required", "use `zc profile list|use <name>`");
             } else {
-                std.debug.print("Usage: zclash profile list|use <name>\n", .{});
+                std.debug.print("Usage: zc profile list|use <name>\n", .{});
             }
             return;
         }
@@ -177,14 +177,14 @@ pub fn main() !void {
 
         if (std.mem.eql(u8, subcmd, "use")) {
             if (args.len < 4) {
-                printCliError(json_output, "PROFILE_NAME_REQUIRED", "profile name is required", "use `zclash profile use <name>`");
+                printCliError(json_output, "PROFILE_NAME_REQUIRED", "profile name is required", "use `zc profile use <name>`");
                 return;
             }
 
             const profile_name = args[3];
             const exists = try profileExists(allocator, profile_name);
             if (!exists) {
-                printCliError(json_output, "PROFILE_NOT_FOUND", "profile not found", "run `zclash profile list` and confirm the profile name");
+                printCliError(json_output, "PROFILE_NOT_FOUND", "profile not found", "run `zc profile list` and confirm the profile name");
                 return;
             }
 
@@ -205,7 +205,7 @@ pub fn main() !void {
 
         if (std.mem.eql(u8, subcmd, "import")) {
             if (args.len < 4) {
-                printCliError(json_output, "PROFILE_SOURCE_REQUIRED", "profile import source is required", "use `zclash profile import <url_or_path> [-n name]`");
+                printCliError(json_output, "PROFILE_SOURCE_REQUIRED", "profile import source is required", "use `zc profile import <url_or_path> [-n name]`");
                 return;
             }
 
@@ -242,7 +242,7 @@ pub fn main() !void {
         if (std.mem.eql(u8, subcmd, "validate")) {
             const target = if (args.len >= 4) args[3] else null;
             var cfg = resolveProfileConfig(allocator, target) catch {
-                printCliError(json_output, "PROFILE_VALIDATE_FAILED", "failed to load profile for validation", "run `zclash profile list` or pass a valid path");
+                printCliError(json_output, "PROFILE_VALIDATE_FAILED", "failed to load profile for validation", "run `zc profile list` or pass a valid path");
                 return;
             };
             defer cfg.deinit();
@@ -258,7 +258,7 @@ pub fn main() !void {
             return;
         }
 
-        printCliError(json_output, "PROFILE_SUBCOMMAND_UNKNOWN", "unknown profile subcommand", "use `zclash profile list|use|import|validate`");
+        printCliError(json_output, "PROFILE_SUBCOMMAND_UNKNOWN", "unknown profile subcommand", "use `zc profile list|use|import|validate`");
         return;
     }
 
@@ -278,7 +278,7 @@ pub fn main() !void {
 
         if (std.mem.eql(u8, subcmd, "use")) {
             if (args.len < 4) {
-                std.debug.print("Usage: zclash config use <configname>\n", .{});
+                std.debug.print("Usage: zc config use <configname>\n", .{});
                 return;
             }
             try config.switchConfig(allocator, args[3]);
@@ -287,7 +287,7 @@ pub fn main() !void {
 
         if (std.mem.eql(u8, subcmd, "download")) {
             if (args.len < 4) {
-                std.debug.print("Usage: zclash config download <url> [-n <name>] [-d]\n", .{});
+                std.debug.print("Usage: zc config download <url> [-n <name>] [-d]\n", .{});
                 return;
             }
 
@@ -394,8 +394,8 @@ pub fn main() !void {
             if (json_output) {
                 proxy_cli.selectProxyJson(allocator, &cfg, group_name, proxy_name) catch |err| {
                     switch (err) {
-                        error.GroupNotFound => printCliError(true, "PROXY_GROUP_NOT_FOUND", "proxy group not found", "run `zclash proxy list --json` to inspect groups"),
-                        error.ProxyNotFound => printCliError(true, "PROXY_NOT_FOUND", "proxy not found in group", "run `zclash proxy select -g <group> --json` to inspect choices"),
+                        error.GroupNotFound => printCliError(true, "PROXY_GROUP_NOT_FOUND", "proxy group not found", "run `zc proxy list --json` to inspect groups"),
+                        error.ProxyNotFound => printCliError(true, "PROXY_NOT_FOUND", "proxy not found in group", "run `zc proxy select -g <group> --json` to inspect choices"),
                         error.NoSelectGroup => printCliError(true, "PROXY_SELECT_GROUP_MISSING", "no select-type proxy group found", "check profile proxy-groups config"),
                         else => printCliError(true, "PROXY_SELECT_FAILED", "failed to select proxy", "retry with valid group/proxy arguments"),
                     }
@@ -433,7 +433,7 @@ pub fn main() !void {
 
         // 未知子命令
         if (json_output) {
-            printCliError(json_output, "PROXY_SUBCOMMAND_UNKNOWN", "unknown proxy subcommand", "use `zclash proxy --help` or `zclash help`");
+            printCliError(json_output, "PROXY_SUBCOMMAND_UNKNOWN", "unknown proxy subcommand", "use `zc proxy --help` or `zc help`");
         } else {
             std.debug.print("Unknown proxy subcommand: {s}\n", .{subcmd});
             try printProxyHelp();
@@ -457,7 +457,7 @@ pub fn main() !void {
         const config_path = parseConfigPathArg(args, 2);
         if (json_output) {
             doctor_cli.runDoctorJson(allocator, config_path) catch |err| {
-                printCliError(true, "DIAG_DOCTOR_FAILED", "failed to run doctor diagnostics", "check config and retry `zclash doctor --json`");
+                printCliError(true, "DIAG_DOCTOR_FAILED", "failed to run doctor diagnostics", "check config and retry `zc doctor --json`");
                 return err;
             };
         } else {
@@ -469,13 +469,13 @@ pub fn main() !void {
     // 处理 diag 子命令（doctor 别名）
     if (std.mem.eql(u8, cmd, "diag")) {
         if (args.len < 3 or !std.mem.eql(u8, args[2], "doctor")) {
-            printCliError(json_output, "DIAG_SUBCOMMAND_UNKNOWN", "unknown diag subcommand", "use `zclash diag doctor [-c <config>] [--json]`");
+            printCliError(json_output, "DIAG_SUBCOMMAND_UNKNOWN", "unknown diag subcommand", "use `zc diag doctor [-c <config>] [--json]`");
             return;
         }
         const config_path = parseConfigPathArg(args, 3);
         if (json_output) {
             doctor_cli.runDoctorJson(allocator, config_path) catch |err| {
-                printCliError(true, "DIAG_DOCTOR_FAILED", "failed to run doctor diagnostics", "check config and retry `zclash diag doctor --json`");
+                printCliError(true, "DIAG_DOCTOR_FAILED", "failed to run doctor diagnostics", "check config and retry `zc diag doctor --json`");
                 return err;
             };
         } else {
@@ -596,7 +596,7 @@ fn profileExists(allocator: std.mem.Allocator, name: []const u8) !bool {
 
 fn printProfileListJson(allocator: std.mem.Allocator) !void {
     const config_dir = (try config.getDefaultConfigDir(allocator)) orelse {
-        printCliError(true, "PROFILE_LIST_FAILED", "could not determine config directory", "check HOME and retry `zclash profile list`");
+        printCliError(true, "PROFILE_LIST_FAILED", "could not determine config directory", "check HOME and retry `zc profile list`");
         return error.NoConfigDir;
     };
     defer allocator.free(config_dir);
@@ -606,7 +606,7 @@ fn printProfileListJson(allocator: std.mem.Allocator) !void {
             std.debug.print("{{\"ok\":true,\"data\":{{\"profiles\":[],\"active\":null}}}}\n", .{});
             return;
         }
-        printCliError(true, "PROFILE_LIST_FAILED", "failed to open config directory", "ensure ~/.config/zclash exists and is readable");
+        printCliError(true, "PROFILE_LIST_FAILED", "failed to open config directory", "ensure ~/.config/zc exists and is readable");
         return err;
     };
     defer dir.close();
@@ -687,7 +687,7 @@ fn parseConfigPathArg(args: []const []const u8, start_index: usize) ?[]const u8 
 }
 
 fn runProxy(allocator: std.mem.Allocator, config_path: ?[]const u8, use_tui: bool) !void {
-    std.debug.print("zclash v0.1.0\n", .{});
+    std.debug.print("zc v0.1.0\n", .{});
 
     // 保存配置路径用于重载
     if (config_path) |path| {
@@ -811,7 +811,7 @@ fn runTui(allocator: std.mem.Allocator, cfg: *const config.Config, engine: *rule
     }.reload);
 
     // Add some sample logs
-    try tui_manager.log("zclash started");
+    try tui_manager.log("zc started");
     try tui_manager.log("Configuration loaded");
     try tui_manager.log("Proxy servers starting...");
 
@@ -923,10 +923,10 @@ fn parseExternalControllerPort(ec: []const u8) !u16 {
 
 fn printHelp() !void {
     std.debug.print("\n", .{});
-    std.debug.print("zclash v0.1.0 - A high-performance proxy tool in Zig\n", .{});
+    std.debug.print("zc v0.1.0 - A high-performance proxy tool in Zig\n", .{});
     std.debug.print("\n", .{});
     std.debug.print("USAGE:\n", .{});
-    std.debug.print("    zclash <command> [options]\n", .{});
+    std.debug.print("    zc <command> [options]\n", .{});
     std.debug.print("\n", .{});
     std.debug.print("COMMANDS:\n", .{});
     std.debug.print("    help                    Show this help message\n", .{});
@@ -942,88 +942,88 @@ fn printHelp() !void {
     std.debug.print("    doctor [-c <config>]    Diagnose config/service/ports\n", .{});
     std.debug.print("\n", .{});
     std.debug.print("CONFIG COMMANDS:\n", .{});
-    std.debug.print("    zclash config list                  List all available configs\n", .{});
-    std.debug.print("    zclash config ls                    Alias for list\n", .{});
-    std.debug.print("    zclash config download <url>        Download config from URL\n", .{});
+    std.debug.print("    zc config list                  List all available configs\n", .{});
+    std.debug.print("    zc config ls                    Alias for list\n", .{});
+    std.debug.print("    zc config download <url>        Download config from URL\n", .{});
     std.debug.print("                            -n <name>   Config filename (default: timestamp)\n", .{});
     std.debug.print("                            -d          Set as default after download\n", .{});
-    std.debug.print("    zclash config use <configname>     Switch to specified config\n", .{});
+    std.debug.print("    zc config use <configname>     Switch to specified config\n", .{});
     std.debug.print("\n", .{});
     std.debug.print("PROXY COMMANDS:\n", .{});
-    std.debug.print("    zclash proxy list                   List all proxy groups and nodes\n", .{});
-    std.debug.print("    zclash proxy ls                     Alias for list\n", .{});
-    std.debug.print("    zclash proxy select                 Show proxy selection UI\n", .{});
-    std.debug.print("    zclash proxy select -g <group>      Select proxy for specific group\n", .{});
-    std.debug.print("    zclash proxy select -g <group>      Select specific proxy\n", .{});
+    std.debug.print("    zc proxy list                   List all proxy groups and nodes\n", .{});
+    std.debug.print("    zc proxy ls                     Alias for list\n", .{});
+    std.debug.print("    zc proxy select                 Show proxy selection UI\n", .{});
+    std.debug.print("    zc proxy select -g <group>      Select proxy for specific group\n", .{});
+    std.debug.print("    zc proxy select -g <group>      Select specific proxy\n", .{});
     std.debug.print("              -p <proxy>\n", .{});
     std.debug.print("EXAMPLES:\n", .{});
     std.debug.print("    # Start proxy in background\n", .{});
-    std.debug.print("    zclash start\n", .{});
+    std.debug.print("    zc start\n", .{});
     std.debug.print("\n", .{});
     std.debug.print("    # Start with specific config\n", .{});
-    std.debug.print("    zclash start -c /path/to/config.yaml\n", .{});
+    std.debug.print("    zc start -c /path/to/config.yaml\n", .{});
     std.debug.print("\n", .{});
     std.debug.print("    # Start TUI\n", .{});
-    std.debug.print("    zclash tui\n", .{});
+    std.debug.print("    zc tui\n", .{});
     std.debug.print("\n", .{});
     std.debug.print("    # Check status\n", .{});
-    std.debug.print("    zclash status\n", .{});
+    std.debug.print("    zc status\n", .{});
     std.debug.print("\n", .{});
     std.debug.print("    # View logs (default: last 50 lines, auto-refresh)\n", .{});
-    std.debug.print("    zclash log\n", .{});
-    std.debug.print("    zclash log -n 100              # Show last 100 lines\n", .{});
-    std.debug.print("    zclash log --no-follow         # Show last 50 lines without refresh\n", .{});
+    std.debug.print("    zc log\n", .{});
+    std.debug.print("    zc log -n 100              # Show last 100 lines\n", .{});
+    std.debug.print("    zc log --no-follow         # Show last 50 lines without refresh\n", .{});
     std.debug.print("\n", .{});
     std.debug.print("    # Download a config\n", .{});
-    std.debug.print("    zclash config download https://example.com/config.yaml\n", .{});
+    std.debug.print("    zc config download https://example.com/config.yaml\n", .{});
     std.debug.print("\n", .{});
     std.debug.print("    # Download and set as default\n", .{});
-    std.debug.print("    zclash config download https://example.com/config.yaml -n myconfig -d\n", .{});
+    std.debug.print("    zc config download https://example.com/config.yaml -n myconfig -d\n", .{});
     std.debug.print("\n", .{});
     std.debug.print("    # List all configs\n", .{});
-    std.debug.print("    zclash config list\n", .{});
+    std.debug.print("    zc config list\n", .{});
     std.debug.print("\n", .{});
     std.debug.print("    # Switch config\n", .{});
-    std.debug.print("    zclash config use myconfig.yaml\n", .{});
+    std.debug.print("    zc config use myconfig.yaml\n", .{});
     std.debug.print("\n", .{});
 }
 
 fn printConfigHelp() !void {
     std.debug.print("\n", .{});
-    std.debug.print("zclash config - Manage configurations\n", .{});
+    std.debug.print("zc config - Manage configurations\n", .{});
     std.debug.print("\n", .{});
     std.debug.print("USAGE:\n", .{});
-    std.debug.print("    zclash config list                  List all available configs\n", .{});
-    std.debug.print("    zclash config ls                    Alias for list\n", .{});
-    std.debug.print("    zclash config download <url>        Download config from URL\n", .{});
+    std.debug.print("    zc config list                  List all available configs\n", .{});
+    std.debug.print("    zc config ls                    Alias for list\n", .{});
+    std.debug.print("    zc config download <url>        Download config from URL\n", .{});
     std.debug.print("                            -n <name>   Config filename (default: timestamp)\n", .{});
     std.debug.print("                            -d          Set as default after download\n", .{});
-    std.debug.print("    zclash config use <configname>     Switch to specified config\n", .{});
+    std.debug.print("    zc config use <configname>     Switch to specified config\n", .{});
     std.debug.print("\n", .{});
     std.debug.print("EXAMPLES:\n", .{});
-    std.debug.print("    zclash config download https://example.com/config.yaml\n", .{});
-    std.debug.print("    zclash config download https://example.com/config.yaml -n myconfig -d\n", .{});
-    std.debug.print("    zclash config list\n", .{});
-    std.debug.print("    zclash config use myconfig.yaml\n", .{});
+    std.debug.print("    zc config download https://example.com/config.yaml\n", .{});
+    std.debug.print("    zc config download https://example.com/config.yaml -n myconfig -d\n", .{});
+    std.debug.print("    zc config list\n", .{});
+    std.debug.print("    zc config use myconfig.yaml\n", .{});
     std.debug.print("\n", .{});
 }
 
 fn printProxyHelp() !void {
     std.debug.print("\n", .{});
-    std.debug.print("zclash proxy - Manage proxies\n", .{});
+    std.debug.print("zc proxy - Manage proxies\n", .{});
     std.debug.print("\n", .{});
     std.debug.print("USAGE:\n", .{});
-    std.debug.print("    zclash proxy list                   List all proxy groups and nodes\n", .{});
-    std.debug.print("    zclash proxy ls                     Alias for list\n", .{});
-    std.debug.print("    zclash proxy select                 Show proxy selection UI\n", .{});
-    std.debug.print("    zclash proxy select -g <group>      Select proxy for specific group\n", .{});
-    std.debug.print("    zclash proxy select -g <group>      Select specific proxy\n", .{});
+    std.debug.print("    zc proxy list                   List all proxy groups and nodes\n", .{});
+    std.debug.print("    zc proxy ls                     Alias for list\n", .{});
+    std.debug.print("    zc proxy select                 Show proxy selection UI\n", .{});
+    std.debug.print("    zc proxy select -g <group>      Select proxy for specific group\n", .{});
+    std.debug.print("    zc proxy select -g <group>      Select specific proxy\n", .{});
     std.debug.print("              -p <proxy>\n", .{});
     std.debug.print("\n", .{});
     std.debug.print("EXAMPLES:\n", .{});
-    std.debug.print("    zclash proxy list\n", .{});
-    std.debug.print("    zclash proxy select                 # Show selection UI\n", .{});
-    std.debug.print("    zclash proxy select -g Proxy -p HK  # Select HK in Proxy group\n", .{});
+    std.debug.print("    zc proxy list\n", .{});
+    std.debug.print("    zc proxy select                 # Show selection UI\n", .{});
+    std.debug.print("    zc proxy select -g Proxy -p HK  # Select HK in Proxy group\n", .{});
     std.debug.print("\n", .{});
 }
 
@@ -1039,10 +1039,10 @@ test "parseExternalControllerPort valid and invalid" {
 test "parseConfigPathArg handles -c" {
     const testing = std.testing;
 
-    const args = [_][]const u8{ "zclash", "test", "-c", "./x.yaml" };
+    const args = [_][]const u8{ "zc", "test", "-c", "./x.yaml" };
     try testing.expectEqualStrings("./x.yaml", parseConfigPathArg(args[0..], 2).?);
 
-    const args2 = [_][]const u8{ "zclash", "test" };
+    const args2 = [_][]const u8{ "zc", "test" };
     try testing.expect(parseConfigPathArg(args2[0..], 2) == null);
 }
 

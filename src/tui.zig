@@ -594,7 +594,7 @@ pub const TuiManager = struct {
         try moveCursor(1, 1);
         try setBgColor(theme.panel_bg);
         try setFgColor(theme.accent);
-        try print(" === zclash === ");
+        try print(" === zc === ");
         try setFgColor(theme.text_dim);
         try printCentered("Proxy Dashboard", w - 20);
         try resetStyles();
