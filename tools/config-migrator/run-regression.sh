@@ -250,6 +250,42 @@ else
   fi
 fi
 
+# R15 validation (MODE_ENUM_CHECK)
+R15_OUT="$REPORT_DIR/r15-regression.lint.json"
+if bash "$BASE/run.sh" lint "$BASE/examples/r15-mode-enum.yaml" > "$R15_OUT" 2>/dev/null || true; then
+  if grep -q '"rule":"MODE_ENUM_CHECK"' "$R15_OUT"; then
+    results+=("{\"sample_id\":\"R15_MODE_ENUM_CHECK\",\"input\":\"tools/config-migrator/examples/r15-mode-enum.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"invalid mode detected\"}")
+  else
+    failed_rules+=("MODE_ENUM_CHECK")
+    failed_samples+=("R15_MODE_ENUM_CHECK")
+    results+=("{\"sample_id\":\"R15_MODE_ENUM_CHECK\",\"input\":\"tools/config-migrator/examples/r15-mode-enum.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected MODE_ENUM_CHECK error\"}")
+  fi
+fi
+
+# R16 validation (PROXY_NAME_UNIQUENESS_CHECK)
+R16_OUT="$REPORT_DIR/r16-regression.lint.json"
+if bash "$BASE/run.sh" lint "$BASE/examples/r16-duplicate-names.yaml" > "$R16_OUT" 2>/dev/null || true; then
+  if grep -q '"rule":"PROXY_NAME_UNIQUENESS_CHECK"' "$R16_OUT"; then
+    results+=("{\"sample_id\":\"R16_PROXY_NAME_UNIQUENESS_CHECK\",\"input\":\"tools/config-migrator/examples/r16-duplicate-names.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"duplicate name detected\"}")
+  else
+    failed_rules+=("PROXY_NAME_UNIQUENESS_CHECK")
+    failed_samples+=("R16_PROXY_NAME_UNIQUENESS_CHECK")
+    results+=("{\"sample_id\":\"R16_PROXY_NAME_UNIQUENESS_CHECK\",\"input\":\"tools/config-migrator/examples/r16-duplicate-names.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected PROXY_NAME_UNIQUENESS_CHECK error\"}")
+  fi
+fi
+
+# R17 validation (PORT_RANGE_CHECK)
+R17_OUT="$REPORT_DIR/r17-regression.lint.json"
+if bash "$BASE/run.sh" lint "$BASE/examples/r17-port-range.yaml" > "$R17_OUT" 2>/dev/null || true; then
+  if grep -q '"rule":"PORT_RANGE_CHECK"' "$R17_OUT"; then
+    results+=("{\"sample_id\":\"R17_PORT_RANGE_CHECK\",\"input\":\"tools/config-migrator/examples/r17-port-range.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"out of range ports detected\"}")
+  else
+    failed_rules+=("PORT_RANGE_CHECK")
+    failed_samples+=("R17_PORT_RANGE_CHECK")
+    results+=("{\"sample_id\":\"R17_PORT_RANGE_CHECK\",\"input\":\"tools/config-migrator/examples/r17-port-range.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected PORT_RANGE_CHECK error\"}")
+  fi
+fi
+
 pass_count=0
 for r in "${results[@]}"; do
   if echo "$r" | grep -q '"result":"PASS"'; then

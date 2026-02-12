@@ -52,6 +52,46 @@ collect_issues() {
     fi
   done
 
+  # R17: PORT_RANGE_CHECK
+  for port_key in port socks-port mixed-port; do
+    if grep -Eq "^[[:space:]]*$port_key:" "$file"; then
+      port_val=$(grep -E "^[[:space:]]*$port_key:" "$file" | head -n1 | sed -E "s/^[[:space:]]*$port_key:[[:space:]]*\"?([^\"]*)\"?[[:space:]]*$/\1/")
+      if [[ "$port_val" =~ ^[0-9]+$ ]]; then
+        if [[ "$port_val" -lt 1 || "$port_val" -gt 65535 ]]; then
+          issues+=("{\"rule\":\"PORT_RANGE_CHECK\",\"level\":\"error\",\"path\":\"$port_key\",\"message\":\"port out of range: $port_val (must be 1-65535)\",\"fixable\":false}")
+        fi
+      fi
+    fi
+  done
+
+  # R16: PROXY_NAME_UNIQUENESS_CHECK
+  if grep -Eq '^[[:space:]]*proxies:' "$file"; then
+    local -a names=()
+    while IFS= read -r line; do
+      n=$(echo "$line" | sed -E 's/^[[:space:]]*-[[:space:]]*name:[[:space:]]*"?([^"]*)"?[[:space:]]*$/\1/')
+      if [[ -n "$n" ]]; then
+        for existing in "${names[@]:-}"; do
+          if [[ "$existing" == "$n" ]]; then
+            issues+=("{\"rule\":\"PROXY_NAME_UNIQUENESS_CHECK\",\"level\":\"error\",\"path\":\"proxies[$n]\",\"message\":\"duplicate proxy name: $n\",\"fixable\":false}")
+            break
+          fi
+        done
+        names+=("$n")
+      fi
+    done < <(grep -E '^[[:space:]]*-[[:space:]]*name:' "$file")
+  fi
+
+  # R15: MODE_ENUM_CHECK
+  if grep -Eq '^[[:space:]]*mode:' "$file"; then
+    mode_val=$(grep -E '^[[:space:]]*mode:' "$file" | head -n1 | sed -E 's/^[[:space:]]*mode:[[:space:]]*"?([^"]*)"?[[:space:]]*$/\1/')
+    case "$mode_val" in
+      rule|global|direct) ;;
+      *)
+        issues+=("{\"rule\":\"MODE_ENUM_CHECK\",\"level\":\"error\",\"path\":\"mode\",\"message\":\"invalid mode: $mode_val (must be rule/global/direct)\",\"fixable\":false,\"suggested\":\"rule\"}")
+        ;;
+    esac
+  fi
+
   # R14: MIXED_PORT_CONFLICT_CHECK
   local has_mixed=false has_port=false has_socks=false
   grep -Eq '^[[:space:]]*mixed-port:' "$file" && has_mixed=true
