@@ -26,7 +26,10 @@
 | R18 SS_PROTOCOL_CHECK | warn | SS 协议变体识别 | `type: ss-plugin` | 确认支持（已支持） |
 | R19 VMESS_ALTERID_RANGE_CHECK | error | VMess alterId 超出范围 | `alterId: 99999` | `alterId: 0-65535` |
 | R20 TROJAN_FIELDS_CHECK | error/warn | Trojan 节点缺少字段 | 缺 `password` | 添加 password/sni |
-| R21 RULES_FORMAT_CHECK | error | 规则格式错误 | `DOMAIN,google` | `DOMAIN,google.com,PROXY` |
+| R24 YAML_SYNTAX_CHECK | error | YAML 语法错误（缩进、冒号等） | `mixed-port 7890` | `mixed-port: 7890` |
+| R25 SUBSCRIPTION_URL_CHECK | warn | 订阅 URL 协议不正确 | `subscription-url: "ftp://..."` | `https://...` |
+| R26 WS_OPTS_FORMAT_CHECK | warn | WebSocket path 格式错误 | `path: ws` | `path: /ws` |
+| R27 TLS_SNI_CHECK | warn | TLS 开启但未配置 SNI | `tls: true` 缺 `sni` | 添加 `sni: server.com` |
 
 ## 快速修复命令
 
