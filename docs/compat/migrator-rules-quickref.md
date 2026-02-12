@@ -45,3 +45,15 @@ bash tools/config-migrator/run-all.sh
 
 - **error**: 会导致配置无法正常工作，必须修复
 - **warn**: 可能工作但建议修复，或会被忽略的配置
+
+## 新增规则（R21-R29）
+
+| 规则 | 级别 | 一句话说明 | 示例配置 | 修复建议 |
+|------|------|-----------|----------|----------|
+| R21 RULES_FORMAT_CHECK | error | 规则格式错误 | `DOMAIN,google` | `DOMAIN,google.com,PROXY` |
+| R22 VLESS_FIELDS_CHECK | error/warn | VLESS 节点缺少字段 | 缺 `uuid` | 添加 uuid/sni |
+| R23 PROXY_GROUP_REF_CHECK | error | 代理组引用不存在 | `proxies: [missing]` | 添加 proxy 定义 |
+| R28 UNSUPPORTED_PROXY_TYPE_CHECK | error | 代理类型不支持 | `type: snell` | 更换为 ss/vmess/trojan/vless |
+| R29 PORT_CONFLICT_CHECK | warn | 不同代理使用相同端口 | node1:8388, node2:8388 | 使用不同端口 |
+| R30 DUPLICATE_KEY_CHECK | warn | 配置项重复定义 | `port: 7890` 出现两次 | 删除重复项 |
+| R31 DNS_INVALID_CHECK | error | DNS 服务器无效 | `nameserver: [localhost]` | 使用 8.8.8.8 或 1.1.1.1 |
