@@ -23,6 +23,7 @@ pub const DoctorData = struct {
     config_errors: []const []const u8 = &.{},
     config_warnings: []const []const u8 = &.{},
     migration_hints: []const []const u8 = &.{},
+    daemon_uptime_seconds: ?i64 = null,
 };
 
 pub fn runDoctorJson(allocator: std.mem.Allocator, config_path: ?[]const u8) !void {
@@ -71,6 +72,14 @@ pub fn runDoctorJson(allocator: std.mem.Allocator, config_path: ?[]const u8) !vo
         try out.appendSlice(allocator, w);
         try out.appendSlice(allocator, "\"");
     }
+    // config_warnings array
+    try out.appendSlice(allocator, ",\"config_warnings\":[");
+    for (data.config_warnings, 0..) |w, idx| {
+        if (idx > 0) try out.appendSlice(allocator, ",");
+        try out.appendSlice(allocator, "\"");
+        try out.appendSlice(allocator, w);
+        try out.appendSlice(allocator, "\"");
+    }
     try out.appendSlice(allocator, "],\"migration_hints\":[");
     for (data.migration_hints, 0..) |h, idx| {
         if (idx > 0) try out.appendSlice(allocator, ",");
@@ -78,7 +87,12 @@ pub fn runDoctorJson(allocator: std.mem.Allocator, config_path: ?[]const u8) !vo
         try out.appendSlice(allocator, h);
         try out.appendSlice(allocator, "\"");
     }
-    try out.appendSlice(allocator, "]}}\n");
+    try out.appendSlice(allocator, "],\"daemon_uptime_seconds\":");
+    if (data.daemon_uptime_seconds) |uptime| {
+        try out.writer(allocator).print("{d}}}}}\n", .{uptime});
+    } else {
+        try out.appendSlice(allocator, "null}}}\n");
+    }
 
     std.debug.print("{s}", .{out.items});
 }
@@ -141,7 +155,10 @@ fn collectDoctorData(allocator: std.mem.Allocator, config_path: ?[]const u8) !Do
         try fillEffectivePorts(allocator, loaded_cfg, &data);
     }
 
-    try fillDaemonStatus(allocator, &data);
+    data.daemon_pid = try daemon.readPid(allocator);
+    data.daemon_running = try daemon.isRunning(allocator);
+    data.daemon_uptime_seconds = try getDaemonUptime(data.daemon_pid);
+
     data.network_ok = checkNetworkConnectivity();
     data.migration_hints = try collectMigrationHints(allocator, config_path);
     // Check if any configured proxy port is actually listening
@@ -159,6 +176,24 @@ fn checkNetworkConnectivity() bool {
     const stream = std.net.tcpConnectToHost(std.heap.page_allocator, "1.1.1.1", 53) catch return false;
     stream.close();
     return true;
+}
+
+fn getDaemonUptime(pid: ?i32) !?i64 {
+    const p = pid orelse return null;
+    // Try to get process start time using ps
+    var buf: [256]u8 = undefined;
+    const cmd = try std.fmt.bufPrint(&buf, "ps -o etimes= -p {d}", .{p});
+    const result = std.process.Child.run(.{
+        .allocator = std.heap.page_allocator,
+        .argv = &.{"sh", "-c", cmd},
+    }) catch return null;
+    defer {
+        std.heap.page_allocator.free(result.stdout);
+        std.heap.page_allocator.free(result.stderr);
+    }
+    if (result.term.Exited != 0) return null;
+    const trimmed = std.mem.trim(u8, result.stdout, " \t\n\r");
+    return std.fmt.parseInt(i64, trimmed, 10) catch null;
 }
 
 fn collectMigrationHints(allocator: std.mem.Allocator, config_path: ?[]const u8) ![]const []const u8 {
