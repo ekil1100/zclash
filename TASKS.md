@@ -926,3 +926,44 @@ R1 PORT_TYPE_INT | R2 LOG_LEVEL_ENUM | R3 PROXY_GROUP_TYPE_CHECK | R4 DNS_FIELD_
   - 预估：1h
 
 - NEXT（唯一）：P14-1D（v1.0.0 发布，等确认）或 P14-1A（继续规则扩展）
+
+### P14-1 完成状态
+
+- [x] P14-1A [1.1] vless 字段校验（R22）— **tagged** `task-done/P14-1A`
+- [x] P14-1B [1.1] proxy-group 引用校验（R23）— **tagged** `task-done/P14-1B`
+- [x] P14-1C [1.2] curl 安装文档 — **tagged** `task-done/P14-1C`
+- [ ] P14-1D [1.0] v1.0.0 正式发布 — **🟡 等待 Like 确认**
+  - 准备命令：`git tag v1.0.0 && git push origin v1.0.0`
+- [x] P14-1E [1.1] 收口 P14-1 — **tagging now**
+- P14-1 结论：close-ready（23 条规则全部完成，curl 安装就绪）
+- **迁移规则总览：R1-R23（23 条）全部回归通过 ✅**
+
+### P14-2/P15 第一批任务（收尾 + 发布）
+
+- [ ] P15-1A [1.1] 迁移规则扩展：yaml 语法基础校验
+  - 范围：`tools/config-migrator/` + 回归
+  - DoD：检测明显的 YAML 语法错误（缩进、冒号等）；回归通过
+  - 预估：1h
+
+- [ ] P15-1B [1.1] 迁移规则扩展：subscription-url 格式校验
+  - 范围：`tools/config-migrator/` + 回归
+  - DoD：检测订阅 URL 格式是否合法；回归通过
+  - 预估：1h
+
+- [ ] P15-1C [1.1] 更新 CHANGELOG 到 v1.1.0 预览
+  - 范围：`CHANGELOG.md`
+  - DoD：添加 1.1 功能预览（23 条迁移规则 + curl 安装）
+  - 预估：0.5h
+
+- [ ] P15-1D [1.0] v1.0.0 正式发布（等 Like 确认）
+  - 范围：git tag + GitHub Release
+  - DoD：执行发布命令，确认 release workflow 成功
+  - 前置：Like 回复"确认发布"
+  - 预估：5min
+
+- [ ] P15-1E [1.1] 1.1 版本规划文档
+  - 范围：`docs/roadmap/1.1-preview.md`
+  - DoD：列出 1.1 已完成功能和计划功能
+  - 预估：1h
+
+- NEXT（唯一）：P15-1D（v1.0.0 发布，等确认）或 P15-1A（继续规则扩展）
