@@ -1,4 +1,4 @@
-# TASKS.md — zclash 执行任务清单（基于 ROADMAP）
+# TASKS.md — zc 执行任务清单（基于 ROADMAP）
 
 > 状态说明：`TODO` / `DOING` / `BLOCKED` / `DONE`
 > 更新规则：每次推进后立即更新本文件（状态、负责人、备注、时间）。
@@ -8,24 +8,24 @@
 
 ## 当前冲刺：Phase 0（基线与差距分析）
 
-### P0-1 能力矩阵对比（mihomo/clash vs zclash）
+### P0-1 能力矩阵对比（mihomo/c vs zc）
 - 状态：DONE
 - 优先级：P0
 - 负责人：Lan
 - 输出：`docs/benchmark/baseline.md`
 - 验收标准（Acceptance Criteria）：
   - [x] 覆盖 CLI/API/TUI/协议/规则/DNS/观测 7 大维度
-  - [x] 每个维度包含“基线现状 + zclash 现状 + 差距等级 + 下一步建议”
+  - [x] 每个维度包含“基线现状 + zc 现状 + 差距等级 + 下一步建议”
   - [x] 差距分级明确为 P0/P1/P2 并可追溯到 ROADMAP
 - 子任务：
-  - [x] 列出 mihomo/clash 功能矩阵（CLI/API/TUI/协议/规则/DNS/观测）
-  - [x] 列出 zclash 当前能力矩阵（已实现/缺失/不稳定）
+  - [x] 列出 mihomo/c 功能矩阵（CLI/API/TUI/协议/规则/DNS/观测）
+  - [x] 列出 zc 当前能力矩阵（已实现/缺失/不稳定）
   - [x] 形成并排对比表（功能、体验、稳定性、性能）
   - [x] 标注“必补项/增强项/可延后项”
 - 备注：已完成最终对齐检查（baseline vs gap-analysis）。差异已清零：DNS/观测已拆分、P0/P1/P2→ROADMAP 逐项追溯映射已显式化。结论：P0-1 满足转 DONE 条件。
 - P0-1 进入 DONE 验收清单（可打勾）：
   - [x] `baseline.md` 拆分 DNS 与观测为独立维度（满足“7 大维度”）
-  - [x] `baseline.md` 每个维度均包含：基线现状 / zclash 现状 / 差距等级 / 下一步建议
+  - [x] `baseline.md` 每个维度均包含：基线现状 / zc 现状 / 差距等级 / 下一步建议
   - [x] `baseline.md` 中 P0/P1/P2 分级项可追溯到 `docs/roadmap/gap-analysis.md`
   - [x] `TASKS.md` 中 P0-1 验收标准 3 项全部勾选
 - 验收责任人：Lan（执行自检）+ Like（最终确认）
@@ -378,7 +378,7 @@
     - 文档：README 新增“3步安装试用（人话版）”
     - 对齐：输出字段保持 `INSTALL_*` 机器可解析契约
   - [x] P6-4A 一键安装最小真实 install 实现（高优先）
-    - 实现：install 写入安装标记/版本文件并生成可执行 `zclash` shim
+    - 实现：install 写入安装标记/版本文件并生成可执行 `zc` shim
     - 验证：verify 额外校验可执行 shim 存在
     - 失败：保留 `INSTALL_FAILED_STEP` + `INSTALL_NEXT_STEP`
   - [x] P6-4B 一键安装最小 verify+upgrade 实现与回归（并行）
@@ -526,7 +526,7 @@
 - [x] P7-2C [1.1] TUI 日志高亮最小实现
   - 产出：`src/tui.zig` error(红)/warn(黄)/info(蓝) 三色 + `--json` 无影响
   - 构建+测试通过
-- [x] P7-2D [1.1] 诊断命令增强 `zclash doctor --json`
+- [x] P7-2D [1.1] 诊断命令增强 `zc doctor --json`
   - 产出：`src/doctor_cli.zig` 新增 version/network_ok 字段 + `docs/cli/spec.md` 补字段说明
   - 构建+测试通过
 - [x] P7-2E [1.1] 回归入口接入新规则
@@ -619,9 +619,9 @@
 
 ### P10-2 下一批任务（1.1 功能 + GA 后续）
 
-- [ ] P10-2B [1.1] 迁移规则扩展：VMess uuid 格式校验
+- [ ] P10-2B [1.1] 迁移规则扩展：VM uuid 格式校验
   - 范围：`tools/config-migrator/` + 回归
-  - DoD：检测 VMess 节点 uuid 是否符合 UUID v4 格式；回归通过
+  - DoD：检测 VM 节点 uuid 是否符合 UUID v4 格式；回归通过
   - 预估：1h
 
 - [ ] P10-2C [1.1] 迁移规则扩展：mixed-port 与 port/socks-port 互斥提示
@@ -636,7 +636,7 @@
 
 ### P10-2 下一批任务（GA 发布 + 1.1 继续）
 
-- [x] P10-2B [1.1] VMess uuid 格式校验（R13）
+- [x] P10-2B [1.1] VM uuid 格式校验（R13）
 - [x] P10-2C [1.1] mixed-port 与 port/socks-port 互斥提示（R14）
 - [x] P10-2D [1.1] doctor uptime 字段
 - [ ] P10-2E [1.0] GA tag v1.0.0 — **待 Like 确认后执行**
@@ -742,7 +742,7 @@
 - 2026-02-11 23:03（GMT+8）完成 P6-2C：新增一键安装脚手架首版（`oc-run.sh` 串联 install/verify/upgrade），并统一输出 PASS/FAIL + next-step 机器字段。
 - 2026-02-11 23:15（GMT+8）完成 P6-3A：在脚手架上接入最小真实闭环（install/verify/upgrade 各1条可执行路径），失败返回 next-step，机器字段保持兼容。
 - 2026-02-11 23:15（GMT+8）完成 P6-3B：新增 `verify-install-flow.sh` 覆盖成功/失败回归样例，并在安装 README 增加“3步安装试用”人话说明，输出字段与 runner 保持一致。
-- 2026-02-11 23:27（GMT+8）完成 P6-4A：install 接入最小真实路径（生成可执行 `zclash` shim），verify 增加 shim 存在校验；失败输出保留 next-step 字段。
+- 2026-02-11 23:27（GMT+8）完成 P6-4A：install 接入最小真实路径（生成可执行 `zc` shim），verify 增加 shim 存在校验；失败输出保留 next-step 字段。
 - 2026-02-11 23:27（GMT+8）完成 P6-4B：补齐 verify+upgrade 最小真实逻辑与失败分支（含未安装/缺版本），并扩展 `verify-install-flow.sh` 覆盖成功/失败回归样例，保持统一机器字段输出口径。
 - 2026-02-11 23:53（GMT+8）完成 P6-4C：统一单入口 `oc-run.sh` 覆盖 install/verify/upgrade，并补充 `INSTALL_SUMMARY` 人类摘要字段；失败保持 fail-fast 与 next-step 输出。
 - 2026-02-11 23:53（GMT+8）完成 P6-4D：安装 README 定稿“3步试用”并补 Beta 常见失败场景与 next-step，内容与 `verify-install-flow.sh` 回归输出保持一致。
@@ -809,7 +809,7 @@
 - 2026-02-12 08:30（GMT+8）完成 P10-1C：release workflow 验证 + 新增 install regression。
 - 2026-02-12 08:30（GMT+8）完成 P10-1D：R12 SS_CIPHER_ENUM_CHECK 规则。
 - 2026-02-12 08:30（GMT+8）完成 P10-1E：README 更新为 GA-ready + CHANGELOG 链接。
-- 2026-02-12 09:22（GMT+8）完成 P10-2B：R13 VMESS_UUID_FORMAT_CHECK 规则。
+- 2026-02-12 09:22（GMT+8）完成 P10-2B：R13 VM_UUID_FMT_CHK 规则。
 - 2026-02-12 09:22（GMT+8）完成 P10-2C：R14 MIXED_PORT_CONFLICT_CHECK 规则。
 - 2026-02-12 09:22（GMT+8）完成 P10-2D：doctor daemon_uptime_seconds 字段。
 - 2026-02-12 09:22（GMT+8）完成 P10-2E：GA tag 命令已准备，状态更新为待确认。
@@ -839,9 +839,9 @@
 
 ### P13 第一批任务（1.1 收尾 + curl 一键安装）
 
-- [ ] P13-1A [1.1] 迁移规则扩展：trojan 字段完整性校验
+- [ ] P13-1A [1.1] 迁移规则扩展：tj 字段完整性校验
   - 范围：`tools/config-migrator/` + 回归
-  - DoD：检测 trojan 节点缺少 password/sni 字段；回归通过
+  - DoD：检测 tj 节点缺少 password/sni 字段；回归通过
   - 预估：1h
 
 - [ ] P13-1B [1.1] 迁移规则扩展：rules 格式基础校验
@@ -880,17 +880,17 @@
 
 - **1.1 进行中**: 🟢 active
   - 迁移规则: R1-R19（19 条，全部回归通过）
-  - 剩余: P13-1A/B/D（trojan/规则格式/速查表）
+  - 剩余: P13-1A/B/D（tj/规则格式/速查表）
 
 ### 迁移规则总览（19 条）
-R1 PORT_TYPE_INT | R2 LOG_LEVEL_ENUM | R3 PROXY_GROUP_TYPE_CHECK | R4 DNS_FIELD_CHECK | R5 DNS_NAMESERVER_FORMAT | R6 PROXY_GROUP_EMPTY_PROXIES | R7 TUN_ENABLE_CHECK | R8 EXTERNAL_CONTROLLER_FORMAT | R9 ALLOW_LAN_BIND_CONFLICT | R10 RULE_PROVIDER_REF_CHECK | R11 PROXY_NODE_FIELDS_CHECK | R12 SS_CIPHER_ENUM_CHECK | R13 VMESS_UUID_FORMAT_CHECK | R14 MIXED_PORT_CONFLICT_CHECK | R15 MODE_ENUM_CHECK | R16 PROXY_NAME_UNIQUENESS_CHECK | R17 PORT_RANGE_CHECK | R18 SS_PROTOCOL_CHECK | R19 VMESS_ALTERID_RANGE_CHECK
+R1 PORT_TYPE_INT | R2 LOG_LEVEL_ENUM | R3 PROXY_GROUP_TYPE_CHECK | R4 DNS_FIELD_CHECK | R5 DNS_NAMESERVER_FORMAT | R6 PROXY_GROUP_EMPTY_PROXIES | R7 TUN_ENABLE_CHECK | R8 EXTERNAL_CONTROLLER_FORMAT | R9 ALLOW_LAN_BIND_CONFLICT | R10 RULE_PROVIDER_REF_CHECK | R11 PROXY_NODE_FIELDS_CHECK | R12 SS_CIPHER_ENUM_CHECK | R13 VM_UUID_FMT_CHK | R14 MIXED_PORT_CONFLICT_CHECK | R15 MODE_ENUM_CHECK | R16 PROXY_NAME_UNIQUENESS_CHECK | R17 PORT_RANGE_CHECK | R18 SS_PROTOCOL_CHECK | R19 VM_ALTERID_RNG_CHK
 
 ### 待确认事项
 - [ ] v1.0.0 GA 发布（回复"确认发布"立即执行）
 
 ### P13-1 完成状态
 
-- [x] P13-1A [1.1] trojan 字段校验（R20）— **tagged** `task-done/P13-1A`
+- [x] P13-1A [1.1] tj 字段校验（R20）— **tagged** `task-done/P13-1A`
 - [x] P13-1B [1.1] rules 格式校验（R21）— **tagged** `task-done/P13-1B`
 - [x] P13-1C [1.2] curl 一键安装脚本 — **tagged** `task-done/P13-1C` ⭐ 最高优先级
 - [x] P13-1D [1.1] 迁移规则速查表 — **tagged** `task-done/P13-1D`
@@ -899,9 +899,9 @@ R1 PORT_TYPE_INT | R2 LOG_LEVEL_ENUM | R3 PROXY_GROUP_TYPE_CHECK | R4 DNS_FIELD_
 
 ### P13-2/P14 第一批任务（1.1 收尾 + 1.2 规划）
 
-- [ ] P14-1A [1.1] 迁移规则扩展：vless 字段完整性校验
+- [ ] P14-1A [1.1] 迁移规则扩展：vl 字段完整性校验
   - 范围：`tools/config-migrator/` + 回归
-  - DoD：检测 vless 节点缺少 uuid/sni 字段；回归通过
+  - DoD：检测 vl 节点缺少 uuid/sni 字段；回归通过
   - 预估：1h
 
 - [ ] P14-1B [1.1] 迁移规则扩展：proxy-group 引用有效性校验
@@ -929,7 +929,7 @@ R1 PORT_TYPE_INT | R2 LOG_LEVEL_ENUM | R3 PROXY_GROUP_TYPE_CHECK | R4 DNS_FIELD_
 
 ### P14-1 完成状态
 
-- [x] P14-1A [1.1] vless 字段校验（R22）— **tagged** `task-done/P14-1A`
+- [x] P14-1A [1.1] vl 字段校验（R22）— **tagged** `task-done/P14-1A`
 - [x] P14-1B [1.1] proxy-group 引用校验（R23）— **tagged** `task-done/P14-1B`
 - [x] P14-1C [1.2] curl 安装文档 — **tagged** `task-done/P14-1C`
 - [ ] P14-1D [1.0] v1.0.0 正式发布 — **🟡 命令已准备，等 Like 确认**
@@ -1018,13 +1018,13 @@ R1 PORT_TYPE_INT | R2 LOG_LEVEL_ENUM | R3 PROXY_GROUP_TYPE_CHECK | R4 DNS_FIELD_
 - [x] P16-1E [1.1] 收口 P16-1 — **tagging now**
 - P16-1 结论：close-ready（27 条规则，v1.0.0 已发布）
 - **迁移规则总览：R1-R27（27 条）全部回归通过 ✅**
-- **v1.0.0 GA 状态：已发布** https://github.com/ekil1100/zclash/releases/tag/v1.0.0
+- **v1.0.0 GA 状态：已发布** https://github.com/ekil1100/zc/releases/tag/v1.0.0
 
 ### P16-2/P17 第一批任务（1.2 规划 + 生态扩展）
 
 - [ ] P17-1A [1.2] homebrew formula 准备
-  - 范围：`homebrew-zclash/` 或提交到 homebrew-core
-  - DoD：`brew install zclash` 可用；提供安装说明
+  - 范围：`homebrew-zc/` 或提交到 homebrew-core
+  - DoD：`brew install zc` 可用；提供安装说明
   - 预估：2h
 
 - [ ] P17-1B [1.2] debian 包构建脚本
@@ -1033,8 +1033,8 @@ R1 PORT_TYPE_INT | R2 LOG_LEVEL_ENUM | R3 PROXY_GROUP_TYPE_CHECK | R4 DNS_FIELD_
   - 预估：2h
 
 - [ ] P17-1C [1.2] systemd 服务文件
-  - 范围：`scripts/zclash.service` + 文档
-  - DoD：提供 systemd 服务配置；支持 `systemctl enable/start zclash`
+  - 范围：`scripts/zc.service` + 文档
+  - DoD：提供 systemd 服务配置；支持 `systemctl enable/start zc`
   - 预估：1h
 
 - [ ] P17-1D [1.1] 迁移规则扩展：更多代理类型支持
@@ -1064,7 +1064,7 @@ R1 PORT_TYPE_INT | R2 LOG_LEVEL_ENUM | R3 PROXY_GROUP_TYPE_CHECK | R4 DNS_FIELD_
 
 - [ ] P18-1A [1.2] homebrew 安装文档
   - 范围：`docs/install/homebrew.md` + README 更新
-  - DoD：提供 `brew install zclash` 使用说明
+  - DoD：提供 `brew install zc` 使用说明
   - 预估：0.5h
 
 - [ ] P18-1B [1.2] debian 包安装文档
@@ -1074,7 +1074,7 @@ R1 PORT_TYPE_INT | R2 LOG_LEVEL_ENUM | R3 PROXY_GROUP_TYPE_CHECK | R4 DNS_FIELD_
 
 - [ ] P18-1C [1.2] systemd 使用文档
   - 范围：`docs/install/systemd.md`
-  - DoD：提供 `systemctl enable/start zclash` 说明
+  - DoD：提供 `systemctl enable/start zc` 说明
   - 预估：0.5h
 
 - [ ] P18-1D [1.1] 迁移规则扩展：端口冲突检测
