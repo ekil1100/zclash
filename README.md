@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <b>🚧 Beta → GA-ready</b> — 1.0 准入条件 8/8 满足，等待正式发布确认
+  <b>v1.0.0 GA</b> — 生产就绪，稳定可用
 </p>
 
 <p align="center">
