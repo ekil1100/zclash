@@ -1,3 +1,0 @@
-mixed-port: 7890
-log-level: info
-external-controller: "9090"

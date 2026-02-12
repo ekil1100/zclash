@@ -1,5 +1,0 @@
-mixed-port 7890
-log-level info
-proxies
-  - name: "bad-yaml"
-    type: ss

@@ -1,6 +1,0 @@
-mixed-port: 7890
-log-level: info
-tun:
-  enable: true
-  stack: system
-  auto-route: true

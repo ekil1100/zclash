@@ -1,1 +1,0 @@
-{"ok":false,"mode":"lint","issues":[{"rule":"PROXY_GROUP_TYPE_CHECK","level":"error","path":"proxy-groups[].type","message":"unknown proxy group type: urll-test","fixable":false,"suggested":"select"}],"fixed":0,"hint":"fix error-level issues first; for LOG_LEVEL_ENUM use suggested value: info"}

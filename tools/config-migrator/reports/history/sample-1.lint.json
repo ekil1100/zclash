@@ -1,1 +1,0 @@
-{"ok":true,"mode":"lint","issues":[{"rule":"PORT_TYPE_INT","level":"warn","path":"mixed-port","message":"numeric string can be autofixed to int","fixable":true}],"fixed":0,"hint":"run autofix for fixable issues"}

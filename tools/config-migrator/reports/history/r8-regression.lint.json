@@ -1,1 +1,0 @@
-{"ok":true,"mode":"lint","issues":[{"rule":"EXTERNAL_CONTROLLER_FORMAT","level":"warn","path":"external-controller","message":"expected host:port format, got: 9090","fixable":false,"suggested":"127.0.0.1:9090"}],"fixed":0,"hint":"run autofix for fixable issues"}

@@ -1,1 +1,0 @@
-{"ok":true,"mode":"lint","issues":[{"rule":"MIXED_PORT_CONFLICT_CHECK","level":"warn","path":"port/socks-port","message":"mixed-port is set, port/socks-port will be ignored","fixable":false,"suggested":"remove port/socks-port when using mixed-port"}],"fixed":0,"hint":"run autofix for fixable issues"}
