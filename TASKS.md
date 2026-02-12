@@ -590,7 +590,40 @@
 - [x] P9-1E [1.1] ALLOW_LAN_BIND_CONFLICT 规则
   - 产出：R9 规则 + 回归样例
 - 回归：migrator 9/9 PASS，构建+测试通过
-- NEXT（唯一）：Like 决策是否启动 24h 长稳（`bash scripts/reliability/run-soak-real.sh 24 --config <path>`）
+### P9-2（1.0 最终审计 + 1.1 继续）
+- [x] P9-2A [1.0] 72h soak 执行并归档（scaffold PASS）
+- [x] P9-2B [1.1] RULE_PROVIDER_REF_CHECK 规则（R10）
+- [x] P9-2C [1.0] 1.0 准入最终审计：**8/8 全部满足，ready for GA**
+- [x] P9-2D [1.1] doctor migration_hints 字段
+- [x] P9-2E 收口 + P10 拆解
+- [x] P10-1A [1.1] PROXY_NODE_FIELDS_CHECK 规则（R11）
+- P9 结论：close-ready
+- 迁移规则总览：R1-R11 共 11 条，回归 11/11 PASS
+- **1.0 准入：8/8 ✅ — 可进入 GA 发布流程**
+
+### P10 第一批任务（GA 发布 + 1.1 继续）
+
+- [ ] P10-1B [1.0] GA 发布准备：CHANGELOG + tag v1.0.0
+  - 范围：`CHANGELOG.md` + git tag
+  - DoD：CHANGELOG 覆盖 P0-P9 关键里程碑；打 v1.0.0 tag 并 push
+  - 预估：1h
+
+- [ ] P10-1C [1.0] release workflow 验证
+  - 范围：`.github/workflows/release.yml`
+  - DoD：确认 tag-triggered release 可正常触发（本地 dry-run）
+  - 预估：0.5h
+
+- [ ] P10-1D [1.1] 迁移规则扩展：cipher 枚举校验
+  - 范围：`tools/config-migrator/` + 回归
+  - DoD：检测 ss 节点 cipher 值是否在支持列表内；回归通过
+  - 预估：1h
+
+- [ ] P10-1E [1.1] README 更新为 1.0 GA 版本
+  - 范围：`README.md`
+  - DoD：去掉 Beta 标识，更新为 GA；补充 CHANGELOG 链接
+  - 预估：0.5h
+
+- NEXT（唯一）：P10-1B（GA 发布准备，1.0 收口最终步骤）
 
 ---
 
@@ -745,3 +778,9 @@
 - 2026-02-12 05:50（GMT+8）完成 P9-1C：doctor --json 新增 config_errors/config_warnings。
 - 2026-02-12 05:50（GMT+8）完成 P9-1D：CI 新增 full-validation 步骤。
 - 2026-02-12 05:50（GMT+8）完成 P9-1E：R9 ALLOW_LAN_BIND_CONFLICT 规则。
+- 2026-02-12 08:10（GMT+8）完成 P9-2A：72h soak 执行并归档（PASS）。
+- 2026-02-12 08:10（GMT+8）完成 P9-2B：R10 RULE_PROVIDER_REF_CHECK 规则。
+- 2026-02-12 08:10（GMT+8）完成 P9-2C：1.0 准入最终审计 8/8 全部满足。
+- 2026-02-12 08:10（GMT+8）完成 P9-2D：doctor --json 新增 migration_hints。
+- 2026-02-12 08:10（GMT+8）完成 P10-1A：R11 PROXY_NODE_FIELDS_CHECK 规则。
+- 2026-02-12 08:10（GMT+8）完成 P9-2E：P9 close-ready + P10 首批任务拆解。
