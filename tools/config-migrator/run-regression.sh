@@ -462,6 +462,26 @@ else
   fi
 fi
 
+# R28 validation (UNSUPPORTED_PROXY_TYPE_CHECK)
+R28_OUT="$REPORT_DIR/r28-regression.lint.json"
+if bash "$BASE/run.sh" lint "$BASE/examples/r28-unsupported-types.yaml" > "$R28_OUT" 2>/dev/null || true; then
+  if grep -q '"rule":"UNSUPPORTED_PROXY_TYPE_CHECK"' "$R28_OUT"; then
+    results+=("{\"sample_id\":\"R28_UNSUPPORTED_PROXY_TYPE_CHECK\",\"input\":\"tools/config-migrator/examples/r28-unsupported-types.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"unsupported proxy types detected\"}")
+  else
+    failed_rules+=("UNSUPPORTED_PROXY_TYPE_CHECK")
+    failed_samples+=("R28_UNSUPPORTED_PROXY_TYPE_CHECK")
+    results+=("{\"sample_id\":\"R28_UNSUPPORTED_PROXY_TYPE_CHECK\",\"input\":\"tools/config-migrator/examples/r28-unsupported-types.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected UNSUPPORTED_PROXY_TYPE_CHECK errors\"}")
+  fi
+else
+  if grep -q '"rule":"UNSUPPORTED_PROXY_TYPE_CHECK"' "$R28_OUT" 2>/dev/null; then
+    results+=("{\"sample_id\":\"R28_UNSUPPORTED_PROXY_TYPE_CHECK\",\"input\":\"tools/config-migrator/examples/r28-unsupported-types.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"unsupported proxy types detected\"}")
+  else
+    failed_rules+=("UNSUPPORTED_PROXY_TYPE_CHECK")
+    failed_samples+=("R28_UNSUPPORTED_PROXY_TYPE_CHECK")
+    results+=("{\"sample_id\":\"R28_UNSUPPORTED_PROXY_TYPE_CHECK\",\"input\":\"tools/config-migrator/examples/r28-unsupported-types.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected UNSUPPORTED_PROXY_TYPE_CHECK errors\"}")
+  fi
+fi
+
 pass_count=0
 for r in "${results[@]}"; do
   if echo "$r" | grep -q '"result":"PASS"'; then

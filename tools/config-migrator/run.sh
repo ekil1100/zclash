@@ -52,6 +52,16 @@ collect_issues() {
     fi
   done
 
+  # R28: UNSUPPORTED_PROXY_TYPE_CHECK
+  local supported_types="direct|reject|ss|ss-plugin|vmess|trojan|vless|http|socks5|socks"
+  while IFS= read -r line; do
+    local t=$(echo "$line" | sed -E 's/^[[:space:]]*type:[[:space:]]*"?([^"]*)"?[[:space:]]*$/\1/')
+    if [[ -n "$t" ]] && ! echo "$t" | grep -Eq "^($supported_types)$"; then
+      local name=$(grep -B5 "type:[[:space:]]*$t" "$file" | grep "name:" | tail -1 | sed -E 's/.*name:[[:space:]]*"?([^"]*)"?.*/\1/')
+      issues+=("{\"rule\":\"UNSUPPORTED_PROXY_TYPE_CHECK\",\"level\":\"error\",\"path\":\"proxies[$name].type\",\"message\":\"proxy type '$t' is not supported by zclash\",\"fixable\":false}")
+    fi
+  done < <(grep -E '^[[:space:]]*type:' "$file")
+
   # R27: TLS_SNI_CHECK
   if grep -Eq '^[[:space:]]*tls:[[:space:]]*true' "$file"; then
     # Get all proxy names and their tls/sni status
