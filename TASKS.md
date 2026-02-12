@@ -1048,3 +1048,43 @@ R1 PORT_TYPE_INT | R2 LOG_LEVEL_ENUM | R3 PROXY_GROUP_TYPE_CHECK | R4 DNS_FIELD_
   - 预估：1h
 
 - NEXT（唯一）：P17-1A（homebrew 支持，生态扩展优先级最高）
+
+### P17-1 完成状态
+
+- [x] P17-1A [1.2] homebrew formula — **tagged** `task-done/P17-1A`
+- [x] P17-1B [1.2] debian 包构建脚本 — **tagged** `task-done/P17-1B`
+- [x] P17-1C [1.2] systemd 服务文件 — **tagged** `task-done/P17-1C`
+- [x] P17-1D [1.1] 更多代理类型支持（R28）— **tagged** `task-done/P17-1D`
+- [x] P17-1E [1.1] 收口 P17-1 — **tagging now**
+- P17-1 结论：close-ready（28 条规则，homebrew/debian/systemd 全部就绪）
+- **迁移规则总览：R1-R28（28 条）全部回归通过 ✅**
+- **1.2 生态扩展：homebrew / debian / systemd 全部完成**
+
+### P17-2/P18 第一批任务（1.2 收尾 + 后续规划）
+
+- [ ] P18-1A [1.2] homebrew 安装文档
+  - 范围：`docs/install/homebrew.md` + README 更新
+  - DoD：提供 `brew install zclash` 使用说明
+  - 预估：0.5h
+
+- [ ] P18-1B [1.2] debian 包安装文档
+  - 范围：`docs/install/debian.md` + README 更新
+  - DoD：提供 `dpkg -i` 安装说明
+  - 预估：0.5h
+
+- [ ] P18-1C [1.2] systemd 使用文档
+  - 范围：`docs/install/systemd.md`
+  - DoD：提供 `systemctl enable/start zclash` 说明
+  - 预估：0.5h
+
+- [ ] P18-1D [1.1] 迁移规则扩展：端口冲突检测
+  - 范围：`tools/config-migrator/` + 回归
+  - DoD：检测不同代理使用相同端口；回归通过
+  - 预估：1h
+
+- [ ] P18-1E [1.2] 1.2 版本规划文档
+  - 范围：`docs/roadmap/1.2-preview.md`
+  - DoD：列出 1.2 已完成功能（homebrew/debian/systemd/R28）
+  - 预估：1h
+
+- NEXT（唯一）：P18-1A（homebrew 文档，生态扩展收尾）
