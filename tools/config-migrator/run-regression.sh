@@ -310,6 +310,46 @@ if bash "$BASE/run.sh" lint "$BASE/examples/r19-vmess-alterid.yaml" > "$R19_OUT"
   fi
 fi
 
+# R20 validation (TROJAN_FIELDS_CHECK)
+R20_OUT="$REPORT_DIR/r20-regression.lint.json"
+if bash "$BASE/run.sh" lint "$BASE/examples/r20-trojan-fields.yaml" > "$R20_OUT" 2>/dev/null || true; then
+  if grep -q '"rule":"TROJAN_FIELDS_CHECK"' "$R20_OUT"; then
+    results+=("{\"sample_id\":\"R20_TROJAN_FIELDS_CHECK\",\"input\":\"tools/config-migrator/examples/r20-trojan-fields.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"missing trojan fields detected\"}")
+  else
+    failed_rules+=("TROJAN_FIELDS_CHECK")
+    failed_samples+=("R20_TROJAN_FIELDS_CHECK")
+    results+=("{\"sample_id\":\"R20_TROJAN_FIELDS_CHECK\",\"input\":\"tools/config-migrator/examples/r20-trojan-fields.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected TROJAN_FIELDS_CHECK errors\"}")
+  fi
+else
+  if grep -q '"rule":"TROJAN_FIELDS_CHECK"' "$R20_OUT" 2>/dev/null; then
+    results+=("{\"sample_id\":\"R20_TROJAN_FIELDS_CHECK\",\"input\":\"tools/config-migrator/examples/r20-trojan-fields.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"missing trojan fields detected\"}")
+  else
+    failed_rules+=("TROJAN_FIELDS_CHECK")
+    failed_samples+=("R20_TROJAN_FIELDS_CHECK")
+    results+=("{\"sample_id\":\"R20_TROJAN_FIELDS_CHECK\",\"input\":\"tools/config-migrator/examples/r20-trojan-fields.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected TROJAN_FIELDS_CHECK errors\"}")
+  fi
+fi
+
+# R21 validation (RULES_FORMAT_CHECK)
+R21_OUT="$REPORT_DIR/r21-regression.lint.json"
+if bash "$BASE/run.sh" lint "$BASE/examples/r21-rules-format.yaml" > "$R21_OUT" 2>/dev/null || true; then
+  if grep -q '"rule":"RULES_FORMAT_CHECK"' "$R21_OUT"; then
+    results+=("{\"sample_id\":\"R21_RULES_FORMAT_CHECK\",\"input\":\"tools/config-migrator/examples/r21-rules-format.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"malformed rule detected\"}")
+  else
+    failed_rules+=("RULES_FORMAT_CHECK")
+    failed_samples+=("R21_RULES_FORMAT_CHECK")
+    results+=("{\"sample_id\":\"R21_RULES_FORMAT_CHECK\",\"input\":\"tools/config-migrator/examples/r21-rules-format.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected RULES_FORMAT_CHECK error\"}")
+  fi
+else
+  if grep -q '"rule":"RULES_FORMAT_CHECK"' "$R21_OUT" 2>/dev/null; then
+    results+=("{\"sample_id\":\"R21_RULES_FORMAT_CHECK\",\"input\":\"tools/config-migrator/examples/r21-rules-format.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"malformed rule detected\"}")
+  else
+    failed_rules+=("RULES_FORMAT_CHECK")
+    failed_samples+=("R21_RULES_FORMAT_CHECK")
+    results+=("{\"sample_id\":\"R21_RULES_FORMAT_CHECK\",\"input\":\"tools/config-migrator/examples/r21-rules-format.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected RULES_FORMAT_CHECK error\"}")
+  fi
+fi
+
 pass_count=0
 for r in "${results[@]}"; do
   if echo "$r" | grep -q '"result":"PASS"'; then

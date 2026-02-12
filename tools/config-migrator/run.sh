@@ -52,6 +52,81 @@ collect_issues() {
     fi
   done
 
+  # R21: RULES_FORMAT_CHECK
+  if grep -Eq '^[[:space:]]*rules:' "$file"; then
+    while IFS= read -r line; do
+      # Check if rule line starts with - and has comma-separated parts
+      if echo "$line" | grep -Eq '^[[:space:]]*-'; then
+        local content=$(echo "$line" | sed -E 's/^[[:space:]]*-//' | tr -d ' ')
+        # Skip MATCH rule (only needs two parts)
+        if echo "$content" | grep -Eq '^MATCH,'; then
+          continue
+        fi
+        # Check for at least 3 comma-separated parts
+        local parts=$(echo "$content" | awk -F',' '{print NF}')
+        if [[ "$parts" -lt 3 ]]; then
+          local rule_preview=$(echo "$content" | cut -c1-30)
+          issues+=("{\"rule\":\"RULES_FORMAT_CHECK\",\"level\":\"error\",\"path\":\"rules[]\",\"message\":\"rule malformed (expected TYPE,VALUE,ACTION): $rule_preview\",\"fixable\":false}")
+        fi
+      fi
+    done < <(grep -E '^[[:space:]]*-|^rules:' "$file" | tail -n +2)
+  fi
+
+  # R20: TROJAN_FIELDS_CHECK
+  if grep -Eq '^[[:space:]]*type:[[:space:]]*trojan' "$file"; then
+    # Get all proxy names and their types
+    local proxy_types=()
+    local proxy_names=()
+    local current_name=""
+    
+    while IFS= read -r line; do
+      if echo "$line" | grep -Eq '^[[:space:]]*-[[:space:]]*name:'; then
+        current_name=$(echo "$line" | sed -E 's/^[[:space:]]*-[[:space:]]*name:[[:space:]]*"?([^"]*)"?[[:space:]]*$/\1/')
+      elif echo "$line" | grep -Eq '^[[:space:]]*type:'; then
+        local t=$(echo "$line" | sed -E 's/^[[:space:]]*type:[[:space:]]*"?([^"]*)"?[[:space:]]*$/\1/')
+        if [[ -n "$current_name" ]]; then
+          proxy_types+=("$current_name:$t")
+        fi
+      fi
+    done < <(grep -E '^[[:space:]]*(-[[:space:]]*name:|type:)' "$file")
+    
+    # For each trojan proxy, check password and sni
+    for pt in "${proxy_types[@]:-}"; do
+      local pname=${pt%%:*}
+      local ptype=${pt#*:}
+      if [[ "$ptype" == "trojan" ]]; then
+        # Check if password exists in block
+        local block_start=false
+        local in_block=false
+        local has_password=false
+        local has_sni=false
+        
+        while IFS= read -r line; do
+          if echo "$line" | grep -Eq "^[[:space:]]*-[[:space:]]*name:[[:space:]]*\"?$pname\"?"; then
+            block_start=true
+            in_block=true
+          elif [[ "$in_block" == "true" ]] && echo "$line" | grep -Eq '^[[:space:]]*-[[:space:]]*name:'; then
+            break
+          elif [[ "$in_block" == "true" ]]; then
+            if echo "$line" | grep -Eq '^[[:space:]]*password:'; then
+              has_password=true
+            fi
+            if echo "$line" | grep -Eq '^[[:space:]]*sni:'; then
+              has_sni=true
+            fi
+          fi
+        done < <(grep -E '^[[:space:]]*(-[[:space:]]*name:|password:|sni:)' "$file")
+        
+        if [[ "$has_password" != "true" ]]; then
+          issues+=("{\"rule\":\"TROJAN_FIELDS_CHECK\",\"level\":\"error\",\"path\":\"proxies[$pname].password\",\"message\":\"trojan node '$pname' missing required field: password\",\"fixable\":false}")
+        fi
+        if [[ "$has_sni" != "true" ]]; then
+          issues+=("{\"rule\":\"TROJAN_FIELDS_CHECK\",\"level\":\"warn\",\"path\":\"proxies[$pname].sni\",\"message\":\"trojan node '$pname' missing recommended field: sni\",\"fixable\":false}")
+        fi
+      fi
+    done
+  fi
+
   # R19: VMESS_ALTERID_RANGE_CHECK
   while IFS= read -r line; do
     if echo "$line" | grep -Eq 'alterId:'; then
