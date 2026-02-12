@@ -836,3 +836,34 @@
 - [ ] P12-1D [1.1] 迁移规则文档补齐：规则速查表
 - [ ] P12-1E [1.2] 1.2 规划草案（可选）
 - **1.0 GA 发布状态：P12-1B 脚本已就绪，等你回复"确认发布"后执行**
+
+### P13 第一批任务（1.1 收尾 + curl 一键安装）
+
+- [ ] P13-1A [1.1] 迁移规则扩展：trojan 字段完整性校验
+  - 范围：`tools/config-migrator/` + 回归
+  - DoD：检测 trojan 节点缺少 password/sni 字段；回归通过
+  - 预估：1h
+
+- [ ] P13-1B [1.1] 迁移规则扩展：rules 格式基础校验
+  - 范围：`tools/config-migrator/` + 回归
+  - DoD：检测 rules 条目是否以 - 开头且包含逗号分隔的三部分；回归通过
+  - 预估：1h
+
+- [ ] P13-1C [1.2] curl 一键安装脚本准备
+  - 范围：`scripts/install-curl.sh` + 文档
+  - DoD：脚本支持 `curl -fsSL https://.../install.sh | bash` 方式安装；提供使用文档
+  - 依赖：v1.0.0 release 后（需要下载链接）
+  - 预估：2h
+
+- [ ] P13-1D [1.1] 迁移规则文档速查表
+  - 范围：`docs/compat/migrator-rules-quickref.md`
+  - DoD：R1-R19 每条规则一句话说明 + 示例配置 + 修复建议表格
+  - 预估：1h
+
+- [ ] P13-1E [1.0] v1.0.0 正式发布（等 Like 确认）
+  - 范围：git tag + GitHub Release
+  - DoD：执行 `git tag v1.0.0 && git push origin v1.0.0`，确认 release workflow 成功
+  - 前置：Like 明确确认
+  - 预估：5min
+
+- NEXT（唯一）：P13-1A（继续 1.1 规则扩展）或 P13-1E（Like 确认后立即发布）
