@@ -887,3 +887,42 @@ R1 PORT_TYPE_INT | R2 LOG_LEVEL_ENUM | R3 PROXY_GROUP_TYPE_CHECK | R4 DNS_FIELD_
 
 ### 待确认事项
 - [ ] v1.0.0 GA 发布（回复"确认发布"立即执行）
+
+### P13-1 完成状态
+
+- [x] P13-1A [1.1] trojan 字段校验（R20）— **tagged** `task-done/P13-1A`
+- [x] P13-1B [1.1] rules 格式校验（R21）— **tagged** `task-done/P13-1B`
+- [x] P13-1C [1.2] curl 一键安装脚本 — **tagged** `task-done/P13-1C` ⭐ 最高优先级
+- [x] P13-1D [1.1] 迁移规则速查表 — **tagged** `task-done/P13-1D`
+- [x] P13-1E [1.1] 收口 P13-1 — **tagging now**
+- P13-1 结论：close-ready（21 条规则，curl 安装完成）
+
+### P13-2/P14 第一批任务（1.1 收尾 + 1.2 规划）
+
+- [ ] P14-1A [1.1] 迁移规则扩展：vless 字段完整性校验
+  - 范围：`tools/config-migrator/` + 回归
+  - DoD：检测 vless 节点缺少 uuid/sni 字段；回归通过
+  - 预估：1h
+
+- [ ] P14-1B [1.1] 迁移规则扩展：proxy-group 引用有效性校验
+  - 范围：`tools/config-migrator/` + 回归
+  - DoD：检测 proxy-groups 中引用的 proxy 是否存在；回归通过
+  - 预估：1h
+
+- [ ] P14-1C [1.2] curl 安装脚本文档完善
+  - 范围：`docs/install/curl-install.md` + README 更新
+  - DoD：提供 curl 安装详细文档（含参数说明、故障排查）
+  - 预估：1h
+
+- [ ] P14-1D [1.0] v1.0.0 正式发布（等 Like 确认）
+  - 范围：git tag + GitHub Release
+  - DoD：执行 `git tag v1.0.0 && git push origin v1.0.0`，确认 release workflow 成功
+  - 前置：Like 明确确认
+  - 预估：5min
+
+- [ ] P14-1E [1.1] 迁移规则扩展：yaml 语法基础校验
+  - 范围：`tools/config-migrator/` + 回归
+  - DoD：检测明显的 YAML 语法错误（缩进、冒号等）；回归通过
+  - 预估：1h
+
+- NEXT（唯一）：P14-1D（v1.0.0 发布，等确认）或 P14-1A（继续规则扩展）
