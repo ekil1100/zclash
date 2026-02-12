@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 RUNNER="$ROOT_DIR/scripts/install/oc-run.sh"
-OUT_DIR="/tmp/zclash-install-path-matrix"
+OUT_DIR="/tmp/zc-install-path-matrix"
 mkdir -p "$OUT_DIR"
 
 results=()
@@ -37,9 +37,9 @@ run_case() {
 }
 
 # normal platform/path style combinations
-run_case "case_macos_usr_local_bin" "/tmp/zclash-matrix/usr-local-bin" "检查目录权限或改用 /tmp 路径"
-run_case "case_linux_user_local_bin" "$HOME/.local/bin/zclash-matrix" "确认 HOME 可写并重试"
-run_case "case_custom_workspace_bin" "/tmp/zclash-matrix/custom-bin" "检查自定义路径是否可写"
+run_case "case_macos_usr_local_bin" "/tmp/zc-matrix/usr-local-bin" "检查目录权限或改用 /tmp 路径"
+run_case "case_linux_user_local_bin" "$HOME/.local/bin/zc-matrix" "确认 HOME 可写并重试"
+run_case "case_custom_workspace_bin" "/tmp/zc-matrix/custom-bin" "检查自定义路径是否可写"
 
 run_expected_fail_case() {
   local id="$1" target="$2" hint="$3"
@@ -61,7 +61,7 @@ echo "file" > "$CONFLICT_PARENT"
 run_expected_fail_case "case_abnormal_path_conflict" "$CONFLICT_PARENT/subdir" "目标路径与文件冲突：换一个目录路径再试"
 
 # existing install overwrite path
-EXISTING_TARGET="/tmp/zclash-matrix/existing-bin"
+EXISTING_TARGET="/tmp/zc-matrix/existing-bin"
 OUT_EXIST1="$OUT_DIR/case_existing_overwrite.1.out"
 OUT_EXIST2="$OUT_DIR/case_existing_overwrite.2.out"
 bash "$RUNNER" install --target-dir "$EXISTING_TARGET" > "$OUT_EXIST1" 2>&1 || true

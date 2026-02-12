@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 SMOKE_SCRIPT="$ROOT_DIR/scripts/install/run-3step-smoke.sh"
-OUT_DIR="/tmp/zclash-3step-public"
+OUT_DIR="/tmp/zc-3step-public"
 mkdir -p "$OUT_DIR"
 
 SMOKE_OUT="$OUT_DIR/smoke.out"
@@ -20,7 +20,7 @@ failed_step_line="$(grep '^INSTALL_FAILED_STEP=' "$SMOKE_OUT" | sed 's/^INSTALL_
 
 PUBLIC_SUMMARY="$OUT_DIR/public-summary.txt"
 cat > "$PUBLIC_SUMMARY" <<EOF
-zclash 安装链路 3 步试用结果（对外版）
+zc 安装链路 3 步试用结果（对外版）
 - 结果：$result
 - 摘要：${summary_line:-N/A}
 - 失败步骤：${failed_step_line:-none}

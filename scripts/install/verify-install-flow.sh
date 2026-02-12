@@ -5,7 +5,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 RUNNER="$ROOT_DIR/scripts/install/oc-run.sh"
-TMP_DIR="/tmp/zclash-install-regression"
+TMP_DIR="/tmp/zc-install-regression"
 
 rm -rf "$TMP_DIR"
 mkdir -p "$TMP_DIR"

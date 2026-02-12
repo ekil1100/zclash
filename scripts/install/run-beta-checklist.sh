@@ -6,8 +6,8 @@ RUNNER="$ROOT_DIR/scripts/install/oc-run.sh"
 FLOW_REG="$ROOT_DIR/scripts/install/verify-install-flow.sh"
 ENV_REG="$ROOT_DIR/scripts/install/verify-install-env.sh"
 
-TARGET_DIR="/tmp/zclash-beta"
-OUT_DIR="/tmp/zclash-beta-checklist"
+TARGET_DIR="/tmp/zc-beta"
+OUT_DIR="/tmp/zc-beta-checklist"
 ARCHIVE_ROOT="$ROOT_DIR/docs/install/evidence/history"
 
 while [[ $# -gt 0 ]]; do
@@ -48,9 +48,9 @@ record_item() {
 A_OUT="$OUT_DIR/A.install.out"
 if bash "$RUNNER" install --target-dir "$TARGET_DIR" > "$A_OUT" 2>&1 \
   && grep -q 'INSTALL_RESULT=PASS' "$A_OUT" \
-  && [[ -f "$TARGET_DIR/.zclash_installed" ]] \
-  && [[ -f "$TARGET_DIR/.zclash_version" ]]; then
-  record_item "A_install" "PASS" "$TARGET_DIR/.zclash_installed,$TARGET_DIR/.zclash_version" "install passed"
+  && [[ -f "$TARGET_DIR/.zc_installed" ]] \
+  && [[ -f "$TARGET_DIR/.zc_version" ]]; then
+  record_item "A_install" "PASS" "$TARGET_DIR/.zc_installed,$TARGET_DIR/.zc_version" "install passed"
 else
   record_item "A_install" "FAIL" "$A_OUT" "run install and check permission/path"
 fi
@@ -60,7 +60,7 @@ B_OUT="$OUT_DIR/B.verify.out"
 if bash "$RUNNER" verify --target-dir "$TARGET_DIR" > "$B_OUT" 2>&1 \
   && grep -q 'INSTALL_RESULT=PASS' "$B_OUT" \
   && grep -q 'INSTALL_ACTION=verify' "$B_OUT"; then
-  record_item "B_verify" "PASS" "$TARGET_DIR/.zclash_installed" "verify passed"
+  record_item "B_verify" "PASS" "$TARGET_DIR/.zc_installed" "verify passed"
 else
   record_item "B_verify" "FAIL" "$B_OUT" "run install first then verify"
 fi
@@ -69,8 +69,8 @@ fi
 C_OUT="$OUT_DIR/C.upgrade.out"
 if bash "$RUNNER" upgrade --target-dir "$TARGET_DIR" --version v0.2.0 > "$C_OUT" 2>&1 \
   && grep -q 'INSTALL_RESULT=PASS' "$C_OUT" \
-  && grep -q '^v0.2.0$' "$TARGET_DIR/.zclash_version"; then
-  record_item "C_upgrade" "PASS" "$TARGET_DIR/.zclash_version" "upgrade passed"
+  && grep -q '^v0.2.0$' "$TARGET_DIR/.zc_version"; then
+  record_item "C_upgrade" "PASS" "$TARGET_DIR/.zc_version" "upgrade passed"
 else
   record_item "C_upgrade" "FAIL" "$C_OUT" "retry upgrade with --version"
 fi
@@ -82,7 +82,7 @@ if bash "$FLOW_REG" > "$D1_OUT" 2>&1 \
   && bash "$ENV_REG" > "$D2_OUT" 2>&1 \
   && grep -q 'INSTALL_FLOW_REGRESSION=PASS' "$D1_OUT" \
   && grep -q 'INSTALL_ENV_REGRESSION_RESULT=PASS' "$D2_OUT"; then
-  record_item "D_failure_rollback" "PASS" "/tmp/zclash-install-regression,/tmp/zclash-install-env/install-env-summary.json" "failure+rollback checks passed"
+  record_item "D_failure_rollback" "PASS" "/tmp/zc-install-regression,/tmp/zc-install-env/install-env-summary.json" "failure+rollback checks passed"
 else
   record_item "D_failure_rollback" "FAIL" "$D1_OUT,$D2_OUT" "inspect failed samples and next-step fields"
 fi
@@ -113,7 +113,7 @@ echo "BETA_CHECKLIST_RESULT=$result"
 echo "BETA_CHECKLIST_PASS_RATE=$rate"
 echo "BETA_CHECKLIST_FAILED_ITEMS=$(IFS=,; echo "${failed[*]:-}")"
 echo "BETA_CHECKLIST_REPORT=$ARCHIVE_DIR/summary.json"
-echo "BETA_CHECKLIST_EVIDENCE=$TARGET_DIR,/tmp/zclash-install-regression,/tmp/zclash-install-env/install-env-summary.json"
+echo "BETA_CHECKLIST_EVIDENCE=$TARGET_DIR,/tmp/zc-install-regression,/tmp/zc-install-env/install-env-summary.json"
 echo "BETA_CHECKLIST_ARCHIVE_DIR=$ARCHIVE_DIR"
 
 # human summary

@@ -4,7 +4,7 @@ set -euo pipefail
 # v1.0.0 发布准备脚本（等 Like 确认后执行）
 # 用法：确认后执行 bash scripts/prepare-v1.0.0-release.sh
 
-echo "=== zclash v1.0.0 Release Preparation ==="
+echo "=== zc v1.0.0 Release Preparation ==="
 echo ""
 echo "步骤 1: 确认当前在 main 分支且工作区干净"
 if [[ $(git branch --show-current) != "main" ]]; then
@@ -46,15 +46,15 @@ fi
 echo ""
 
 echo "步骤 5: 监控 release workflow"
-echo "请访问: https://github.com/ekil1100/zclash/actions"
+echo "请访问: https://github.com/ekil1100/zc/actions"
 echo "等待 release workflow 完成..."
 echo ""
 
 echo "步骤 6: 验证 release 产物"
-echo "检查: https://github.com/ekil1100/zclash/releases/tag/v1.0.0"
+echo "检查: https://github.com/ekil1100/zc/releases/tag/v1.0.0"
 echo "预期产物:"
-echo "  - zclash-v1.0.0-linux-amd64.tar.gz"
-echo "  - zclash-v1.0.0-macos-arm64.tar.gz"
+echo "  - zc-v1.0.0-linux-amd64.tar.gz"
+echo "  - zc-v1.0.0-macos-arm64.tar.gz"
 echo ""
 
 echo "步骤 7: 更新 README 下载链接（如有必要）"

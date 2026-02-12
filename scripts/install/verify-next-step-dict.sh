@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 RUNNER="$ROOT/oc-run.sh"
-OUT="/tmp/zclash-next-step-dict"
+OUT="/tmp/zc-next-step-dict"
 mkdir -p "$OUT"
 fails=()
 
@@ -19,11 +19,11 @@ check_fail() {
 }
 
 # 4 failure classes
-check_fail permission "bash $RUNNER install --target-dir /var/root/zclash-test"
+check_fail permission "bash $RUNNER install --target-dir /var/root/zc-test"
 check_fail path "bash $RUNNER install --target-dir ''"
-check_fail conflict "echo x > /tmp/zclash-conflict-file && bash $RUNNER install --target-dir /tmp/zclash-conflict-file/sub"
-bash $RUNNER install --target-dir /tmp/zclash-next-step-dep > /tmp/zclash-next-step-dep.install.out 2>&1 || true
-check_fail dependency_missing "bash $RUNNER verify --target-dir /tmp/zclash-next-step-dep --require-cmd definitely_missing_cmd_123"
+check_fail conflict "echo x > /tmp/zc-conflict-file && bash $RUNNER install --target-dir /tmp/zc-conflict-file/sub"
+bash $RUNNER install --target-dir /tmp/zc-next-step-dep > /tmp/zc-next-step-dep.install.out 2>&1 || true
+check_fail dependency_missing "bash $RUNNER verify --target-dir /tmp/zc-next-step-dep --require-cmd definitely_missing_cmd_123"
 
 result="PASS"; [[ ${#fails[@]} -eq 0 ]] || result="FAIL"
 

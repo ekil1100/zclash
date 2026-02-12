@@ -23,9 +23,9 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-MARKER="$TARGET_DIR/.zclash_installed"
-VERSION_FILE="$TARGET_DIR/.zclash_version"
-BIN_SHIM="$TARGET_DIR/zclash"
+MARKER="$TARGET_DIR/.zc_installed"
+VERSION_FILE="$TARGET_DIR/.zc_version"
+BIN_SHIM="$TARGET_DIR/zc"
 
 if [[ ! -f "$MARKER" ]]; then
   emit_install_result "FAIL" "verify" "" "marker-missing" "$(install_next_step marker_missing)"

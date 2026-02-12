@@ -28,7 +28,7 @@ fi
 
 # Resolve config
 if [[ -z "$CONFIG_PATH" ]]; then
-  for candidate in "$HOME/.config/zclash/config.yaml" "$HOME/.zclash/config.yaml" "$ROOT_DIR/config.yaml"; do
+  for candidate in "$HOME/.config/zc/config.yaml" "$HOME/.zc/config.yaml" "$ROOT_DIR/config.yaml"; do
     if [[ -f "$candidate" ]]; then
       CONFIG_PATH="$candidate"
       break
@@ -58,22 +58,22 @@ echo "Start: $TS_START"
 echo ""
 
 # Build if needed
-if [[ ! -x "$ROOT_DIR/zig-out/bin/zclash" ]]; then
-  echo "Building zclash..."
+if [[ ! -x "$ROOT_DIR/zig-out/bin/zc" ]]; then
+  echo "Building zc..."
   (cd "$ROOT_DIR" && zig build) || { echo "SOAK_RESULT=FAIL"; echo "SOAK_FAILED_STEP=build"; exit 1; }
 fi
 
-# Start zclash in background
-"$ROOT_DIR/zig-out/bin/zclash" start -c "$CONFIG_PATH" >> "$SOAK_LOG" 2>&1 &
+# Start zc in background
+"$ROOT_DIR/zig-out/bin/zc" start -c "$CONFIG_PATH" >> "$SOAK_LOG" 2>&1 &
 ZCLASH_PID=$!
-echo "zclash started (PID: $ZCLASH_PID)"
+echo "zc started (PID: $ZCLASH_PID)"
 sleep 2
 
 # Verify it's running
 if ! kill -0 "$ZCLASH_PID" 2>/dev/null; then
   echo "SOAK_RESULT=FAIL"
   echo "SOAK_FAILED_STEP=start-failed"
-  echo "SOAK_NEXT_STEP=检查配置文件是否有效：zclash doctor -c $CONFIG_PATH"
+  echo "SOAK_NEXT_STEP=检查配置文件是否有效：zc doctor -c $CONFIG_PATH"
   exit 1
 fi
 
@@ -84,7 +84,7 @@ failures=0
 crash_count=0
 
 cleanup() {
-  echo "Stopping zclash (PID: $ZCLASH_PID)..."
+  echo "Stopping zc (PID: $ZCLASH_PID)..."
   kill "$ZCLASH_PID" 2>/dev/null || true
   wait "$ZCLASH_PID" 2>/dev/null || true
 }
@@ -101,7 +101,7 @@ while [[ $elapsed -lt $DURATION_SEC ]]; do
     crash_count=$((crash_count + 1))
     echo "{\"ts\":\"$sample_ts\",\"elapsed_s\":$elapsed,\"alive\":false,\"crash_count\":$crash_count}" >> "$METRICS_LOG"
     echo "[$sample_ts] CRASH detected (count: $crash_count), restarting..."
-    "$ROOT_DIR/zig-out/bin/zclash" start -c "$CONFIG_PATH" >> "$SOAK_LOG" 2>&1 &
+    "$ROOT_DIR/zig-out/bin/zc" start -c "$CONFIG_PATH" >> "$SOAK_LOG" 2>&1 &
     ZCLASH_PID=$!
     sleep 2
     continue
@@ -109,7 +109,7 @@ while [[ $elapsed -lt $DURATION_SEC ]]; do
 
   # Check port listening (basic health)
   port_ok=false
-  if "$ROOT_DIR/zig-out/bin/zclash" doctor -c "$CONFIG_PATH" --json 2>/dev/null | grep -q '"proxy_reachable":true'; then
+  if "$ROOT_DIR/zig-out/bin/zc" doctor -c "$CONFIG_PATH" --json 2>/dev/null | grep -q '"proxy_reachable":true'; then
     port_ok=true
   fi
 

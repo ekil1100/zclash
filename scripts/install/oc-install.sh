@@ -28,15 +28,15 @@ if ! mkdir -p "$TARGET_DIR" 2>/dev/null; then
   exit 1
 fi
 
-MARKER="$TARGET_DIR/.zclash_installed"
-VERSION_FILE="$TARGET_DIR/.zclash_version"
-BIN_SHIM="$TARGET_DIR/zclash"
+MARKER="$TARGET_DIR/.zc_installed"
+VERSION_FILE="$TARGET_DIR/.zc_version"
+BIN_SHIM="$TARGET_DIR/zc"
 
 echo "installed_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" > "$MARKER"
 echo "v0.1.0" > "$VERSION_FILE"
 cat > "$BIN_SHIM" <<'EOF'
 #!/usr/bin/env bash
-echo "zclash install shim: use project scripts in development mode"
+echo "zc install shim: use project scripts in development mode"
 EOF
 chmod +x "$BIN_SHIM"
 

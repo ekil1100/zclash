@@ -28,8 +28,8 @@ if [[ -z "$VERSION" ]]; then
   exit 2
 fi
 
-MARKER="$TARGET_DIR/.zclash_installed"
-VERSION_FILE="$TARGET_DIR/.zclash_version"
+MARKER="$TARGET_DIR/.zc_installed"
+VERSION_FILE="$TARGET_DIR/.zc_version"
 
 if [[ ! -f "$MARKER" ]]; then
   emit_install_result "FAIL" "upgrade" "" "not-installed" "$(install_next_step not_installed)"

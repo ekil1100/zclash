@@ -29,9 +29,9 @@ if [[ ! -d "$TARGET_DIR" ]]; then
 fi
 
 TARGETS=(
-  "$TARGET_DIR/.zclash_installed"
-  "$TARGET_DIR/.zclash_version"
-  "$TARGET_DIR/zclash"
+  "$TARGET_DIR/.zc_installed"
+  "$TARGET_DIR/.zc_version"
+  "$TARGET_DIR/zc"
 )
 
 removed=0

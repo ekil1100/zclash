@@ -8,7 +8,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 RUNNER="$ROOT_DIR/scripts/install/oc-run.sh"
-TMP_ROOT="/tmp/zclash-install-env"
+TMP_ROOT="/tmp/zc-install-env"
 REPORT="$TMP_ROOT/install-env-summary.json"
 
 rm -rf "$TMP_ROOT"
@@ -34,7 +34,7 @@ else
 fi
 
 # case2: permission denied (real non-simulated path type A: privileged root-owned dir)
-REAL_DENIED_TARGET_A="/var/root/zclash-install-test"
+REAL_DENIED_TARGET_A="/var/root/zc-install-test"
 OUT2="$TMP_ROOT/case2.out"
 if bash "$RUNNER" install --target-dir "$REAL_DENIED_TARGET_A" > "$OUT2" 2>&1; then
   add_result "case_permission_denied_real_root" "FAIL" "expected permission failure on /var/root"
@@ -49,7 +49,7 @@ else
 fi
 
 # case2a2: permission denied (real non-simulated path type B: system protected path)
-REAL_DENIED_TARGET_B="/System/zclash-install-test"
+REAL_DENIED_TARGET_B="/System/zc-install-test"
 OUT2A2="$TMP_ROOT/case2a2.out"
 if bash "$RUNNER" install --target-dir "$REAL_DENIED_TARGET_B" > "$OUT2A2" 2>&1; then
   add_result "case_permission_denied_real_system" "FAIL" "expected permission failure on /System"

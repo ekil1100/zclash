@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 RUNNER="$ROOT_DIR/scripts/install/oc-run.sh"
-OUT_DIR="/tmp/zclash-rollback-regression"
+OUT_DIR="/tmp/zc-rollback-regression"
 mkdir -p "$OUT_DIR"
 
 failed=()
@@ -22,7 +22,7 @@ fi
 # case2: rollback failure branch (remove permission denied)
 TARGET_FAIL="$OUT_DIR/fail-target"
 mkdir -p "$TARGET_FAIL"
-echo "x" > "$TARGET_FAIL/.zclash_installed"
+echo "x" > "$TARGET_FAIL/.zc_installed"
 chmod 500 "$TARGET_FAIL"
 if bash "$RUNNER" rollback --target-dir "$TARGET_FAIL" > "$OUT_DIR/case2.rollback.out" 2>&1; then
   failed+=("case_rollback_fail_expected")

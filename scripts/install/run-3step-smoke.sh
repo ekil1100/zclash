@@ -3,8 +3,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 RUNNER="$ROOT_DIR/scripts/install/oc-run.sh"
-TARGET_DIR="/tmp/zclash-3step-smoke"
-OUT_DIR="/tmp/zclash-3step-smoke-report"
+TARGET_DIR="/tmp/zc-3step-smoke"
+OUT_DIR="/tmp/zc-3step-smoke-report"
 mkdir -p "$OUT_DIR"
 
 steps=(install verify upgrade)

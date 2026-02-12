@@ -28,9 +28,9 @@ add_check() {
 }
 
 # 1) install completeness
-MARKER="$TARGET_DIR/.zclash_installed"
-VERSION_FILE="$TARGET_DIR/.zclash_version"
-BIN_SHIM="$TARGET_DIR/zclash"
+MARKER="$TARGET_DIR/.zc_installed"
+VERSION_FILE="$TARGET_DIR/.zc_version"
+BIN_SHIM="$TARGET_DIR/zc"
 
 if [[ -f "$MARKER" && -f "$VERSION_FILE" && -x "$BIN_SHIM" ]]; then
   add_check "install_completeness" "PASS" "marker+version+shim all present"
@@ -75,7 +75,7 @@ pass=$((total - ${#failed[@]}))
 result="PASS"
 [[ ${#failed[@]} -eq 0 ]] || result="FAIL"
 
-report="/tmp/zclash-healthcheck-$(date +%s).json"
+report="/tmp/zc-healthcheck-$(date +%s).json"
 printf '{\n  "result":"%s",\n  "pass_count":%d,\n  "total_count":%d,\n  "failed_checks":["%s"],\n  "checks":[\n    %s\n  ]\n}\n' \
   "$result" "$pass" "$total" "$(IFS='","'; echo "${failed[*]:-}")" "$(IFS=,; echo "${checks[*]}")" > "$report"
 

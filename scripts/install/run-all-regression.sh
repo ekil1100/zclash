@@ -15,14 +15,14 @@ steps=(
 failed=()
 for s in "${steps[@]}"; do
   script="${s%%:*}"; category="${s##*:}"
-  out="/tmp/zclash-all-${category}.out"
+  out="/tmp/zc-all-${category}.out"
   if ! bash "$ROOT/$script" > "$out" 2>&1; then
     failed+=("$category")
   fi
 done
 
 result="PASS"; [[ ${#failed[@]} -eq 0 ]] || result="FAIL"
-report="/tmp/zclash-install-all-summary.json"
+report="/tmp/zc-install-all-summary.json"
 printf '{\n  "result":"%s",\n  "failed_categories":["%s"],\n  "steps":["%s"]\n}\n' \
   "$result" "$(IFS='","'; echo "${failed[*]:-}")" "$(IFS='","'; printf '%s' "${steps[*]%:*}")" > "$report"
 

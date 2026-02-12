@@ -5,7 +5,7 @@ set -euo pipefail
 # 用法: bash scripts/build-deb.sh [version]
 
 VERSION="${1:-v1.0.0}"
-PKG_NAME="zclash"
+PKG_NAME="zc"
 PKG_VERSION="${VERSION#v}"
 ARCH=$(dpkg --print-architecture 2>/dev/null || echo "amd64")
 BUILD_DIR="$(pwd)/build-deb"
@@ -19,14 +19,14 @@ rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR/$PKG_NAME-$PKG_VERSION/DEBIAN"
 mkdir -p "$BUILD_DIR/$PKG_NAME-$PKG_VERSION/usr/bin"
 mkdir -p "$BUILD_DIR/$PKG_NAME-$PKG_VERSION/usr/lib/systemd/system"
-mkdir -p "$BUILD_DIR/$PKG_NAME-$PKG_VERSION/etc/zclash"
+mkdir -p "$BUILD_DIR/$PKG_NAME-$PKG_VERSION/etc/zc"
 
 # 构建
-echo "Building zclash..."
+echo "Building zc..."
 zig build -Doptimize=ReleaseSafe
 
 # 复制二进制文件
-cp "zig-out/bin/zclash" "$BUILD_DIR/$PKG_NAME-$PKG_VERSION/usr/bin/"
+cp "zig-out/bin/zc" "$BUILD_DIR/$PKG_NAME-$PKG_VERSION/usr/bin/"
 
 # 创建 control 文件
 cat > "$BUILD_DIR/$PKG_NAME-$PKG_VERSION/DEBIAN/control" <<EOF
@@ -41,16 +41,16 @@ Description: High-performance proxy tool in Zig
 EOF
 
 # 创建 systemd 服务文件
-cat > "$BUILD_DIR/$PKG_NAME-$PKG_VERSION/usr/lib/systemd/system/zclash.service" <<EOF
+cat > "$BUILD_DIR/$PKG_NAME-$PKG_VERSION/usr/lib/systemd/system/zc.service" <<EOF
 [Unit]
-Description=zclash proxy service
+Description=zc proxy service
 After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/zclash start
-ExecReload=/usr/bin/zclash restart
-ExecStop=/usr/bin/zclash stop
+ExecStart=/usr/bin/zc start
+ExecReload=/usr/bin/zc restart
+ExecStop=/usr/bin/zc stop
 Restart=on-failure
 
 [Install]
