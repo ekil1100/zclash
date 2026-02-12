@@ -967,3 +967,44 @@ R1 PORT_TYPE_INT | R2 LOG_LEVEL_ENUM | R3 PROXY_GROUP_TYPE_CHECK | R4 DNS_FIELD_
   - 预估：1h
 
 - NEXT（唯一）：P15-1D（v1.0.0 发布，等确认）或 P15-1A（继续规则扩展）
+
+### P15-1 完成状态
+
+- [x] P15-1A [1.1] YAML 语法校验（R24）— **tagged** `task-done/P15-1A`
+- [x] P15-1B [1.1] subscription-url 校验（R25）— **tagged** `task-done/P15-1B`
+- [x] P15-1C [1.1] CHANGELOG v1.1.0 预览 — **tagged** `task-done/P15-1C`
+- [ ] P15-1D [1.0] v1.0.0 正式发布 — **🟡 命令已准备，等 Like 确认**
+  - 准备命令：`git tag v1.0.0 && git push origin v1.0.0`
+- [x] P15-1E [1.1] 收口 P15-1 — **tagging now**
+- P15-1 结论：close-ready（25 条规则，v1.1.0 预览完成）
+- **迁移规则总览：R1-R25（25 条）全部回归通过 ✅**
+
+### P15-2/P16 第一批任务（发布收尾 + 后续）
+
+- [ ] P16-1A [1.1] 迁移规则扩展：ws-opts 格式校验
+  - 范围：`tools/config-migrator/` + 回归
+  - DoD：检测 ws-opts 配置格式是否合法；回归通过
+  - 预估：1h
+
+- [ ] P16-1B [1.1] 迁移规则扩展：tls 配置完整性校验
+  - 范围：`tools/config-migrator/` + 回归
+  - DoD：检测 tls 为 true 时 sni 是否配置；回归通过
+  - 预估：1h
+
+- [ ] P16-1C [1.0] v1.0.0 正式发布（等 Like 确认）
+  - 范围：git tag + GitHub Release
+  - DoD：执行发布命令，确认 release workflow 成功
+  - 前置：Like 回复"确认发布"
+  - 预估：5min
+
+- [ ] P16-1D [1.1] 更新速查表到 R25
+  - 范围：`docs/compat/migrator-rules-quickref.md`
+  - DoD：添加 R24/R25 说明
+  - 预估：0.5h
+
+- [ ] P16-1E [1.1] 1.2 版本规划草案
+  - 范围：`docs/roadmap/1.2-preview.md`
+  - DoD：列出 1.2 候选功能（homebrew 支持、debian 包等）
+  - 预估：1h
+
+- NEXT（唯一）：P16-1C（v1.0.0 发布，等确认）或 P16-1A（继续规则扩展）
