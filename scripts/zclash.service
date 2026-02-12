@@ -1,0 +1,15 @@
+[Unit]
+Description=zclash proxy service
+Documentation=https://github.com/ekil1100/zclash
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/zclash start
+ExecReload=/usr/local/bin/zclash restart
+ExecStop=/usr/local/bin/zclash stop
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
