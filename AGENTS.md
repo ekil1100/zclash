@@ -1,17 +1,21 @@
-# AGENTS.md — zclash Agent 协作准则
+# AGENTS.md — zc Agent 协作准则
 
 > 本文件只定义目标、原则、角色与执行规范。
 > 具体开发计划与阶段排期见 `ROADMAP.md`。
 
+---
+
 ## 1) 项目目标（North Star）
 
-zclash 以 mihomo/clash 为基线，追求：
+zc 以 mihomo/c 为基线，追求：
 
 1. CLI 命令符合人的直觉
 2. API 好用、易用、可自动化
 3. TUI 易用、操作直觉、界面简洁
 4. 更好、更快（性能与稳定性）
-5. 学习并超越 mihomo/clash
+5. 学习并超越 mihomo/c
+
+---
 
 ## 2) 不可妥协原则
 
@@ -21,17 +25,21 @@ zclash 以 mihomo/clash 为基线，追求：
 - **性能优先**：热路径优化，但不牺牲长期可维护性
 - **兼容优先**：尽量兼容主流配置与生态，破坏性变更需迁移方案
 
+---
+
 ## 3) 统一概念模型
 
 统一名词：`profile / proxy / proxy-group / rule / connection / runtime / health`
 
 所有控制面（CLI/API/TUI）都围绕同一数据模型与行为语义。
 
+---
+
 ## 4) Agent 角色分工
 
 ### Product Agent
 - 维护目标与优先级
-- 定义“好用”的可验收标准
+- 定义"好用"的可验收标准
 
 ### CLI Agent
 - 命令设计、参数语义、输出一致性
@@ -58,6 +66,8 @@ zclash 以 mihomo/clash 为基线，追求：
 ### DX Agent
 - 文档、示例、错误提示、开发流程可达性
 
+---
+
 ## 5) 工程执行规范
 
 1. 先测后改：改动前补测试，改动后跑回归
@@ -66,28 +76,32 @@ zclash 以 mihomo/clash 为基线，追求：
 4. 文档同更：行为变更同步文档与迁移说明
 5. 性能门禁：关键路径回退则阻断合并
 
+---
+
 ## 6) 开发方法选择策略（强制规则：TDD / BDD / Benchmark-Driven）
 
 按任务类型选择最合适的方法（强制执行）：
 
-- **TDD（测试驱动开发）**：
-  - 适用于算法、规则引擎、协议边界、解析器等“正确性优先”模块
-  - 先写失败测试，再实现，再重构
+### TDD（测试驱动开发）
+- 适用于算法、规则引擎、协议边界、解析器等"正确性优先"模块
+- 先写失败测试，再实现，再重构
 
-- **BDD（行为驱动开发）**：
-  - 适用于 CLI/API/TUI 的用户行为与交互流程
-  - 用 Given/When/Then 描述行为验收，保证“符合直觉”
+### BDD（行为驱动开发）
+- 适用于 CLI/API/TUI 的用户行为与交互流程
+- 用 Given/When/Then 描述行为验收，保证"符合直觉"
 
-- **Benchmark-Driven Development + Scenario-based Testing**：
-  - 适用于性能、稳定性、系统级体验对比
-  - 先定义场景与指标，再开发与回归（参考 `docs/benchmark/scenarios.md` 与 `docs/benchmark/metrics.md`）
+### Benchmark-Driven + Scenario-based
+- 适用于性能、稳定性、系统级体验对比
+- 先定义场景与指标，再开发与回归（参考 `docs/benchmark/scenarios.md` 与 `docs/benchmark/metrics.md`）
 
-默认组合策略：
+**默认组合策略：**
 - 核心逻辑：TDD
 - 交互与产品行为：BDD
 - 性能与稳定性：Benchmark-Driven + Scenario-based
 
-## 6) 验收标准（DoD）
+---
+
+## 7) 验收标准（DoD）
 
 - CLI：核心任务可在低学习成本下完成，错误提示可操作
 - API：schema 清晰稳定，关键端点有集成测试
@@ -95,7 +109,9 @@ zclash 以 mihomo/clash 为基线，追求：
 - 性能：关键指标达到阶段目标且可复现
 - 稳定性：长稳与故障场景可通过验证
 
-## 7) 执行与更新要求（强制）
+---
+
+## 8) 执行与更新要求（强制）
 
 - 开发计划放在 `ROADMAP.md`，不写入 AGENTS。
 - 执行任务统一维护在 `TASKS.md`。
@@ -104,7 +120,9 @@ zclash 以 mihomo/clash 为基线，追求：
 - **每个功能必须先定义验收标准（DoD/Acceptance Criteria）再开始实现。**
 - 未定义验收标准的任务，不允许进入 DOING。
 
-## 8) Git 提交与同步规范（强制）
+---
+
+## 9) Git 提交与同步规范（强制）
 
 ### Commit 原子化
 
@@ -121,6 +139,8 @@ zclash 以 mihomo/clash 为基线，追求：
 - 高风险改动（大重构、冲突高发文件、关键配置）优先即时 push 以降低风险。
 - 避免长期堆积大量本地 commits 不上远端。
 
-## 9) 工作方式
+---
 
-> 先统一模型，再统一接口，再打磨体验，用数据证明“更好、更快”。
+## 10) 工作方式
+
+> 先统一模型，再统一接口，再打磨体验，用数据证明"更好、更快"。
