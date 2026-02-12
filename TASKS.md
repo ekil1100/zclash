@@ -867,3 +867,23 @@
   - 预估：5min
 
 - NEXT（唯一）：P13-1A（继续 1.1 规则扩展）或 P13-1E（Like 确认后立即发布）
+
+---
+
+## 当前状态汇总（2026-02-12）
+
+### 里程碑状态
+- **1.0 GA**: 🟡 ready（等 Like 确认发布）
+  - 准入条件: 8/8 ✅
+  - 发布命令: `git tag v1.0.0 && git push origin v1.0.0`
+  - 准备脚本: `scripts/prepare-v1.0.0-release.sh`
+
+- **1.1 进行中**: 🟢 active
+  - 迁移规则: R1-R19（19 条，全部回归通过）
+  - 剩余: P13-1A/B/D（trojan/规则格式/速查表）
+
+### 迁移规则总览（19 条）
+R1 PORT_TYPE_INT | R2 LOG_LEVEL_ENUM | R3 PROXY_GROUP_TYPE_CHECK | R4 DNS_FIELD_CHECK | R5 DNS_NAMESERVER_FORMAT | R6 PROXY_GROUP_EMPTY_PROXIES | R7 TUN_ENABLE_CHECK | R8 EXTERNAL_CONTROLLER_FORMAT | R9 ALLOW_LAN_BIND_CONFLICT | R10 RULE_PROVIDER_REF_CHECK | R11 PROXY_NODE_FIELDS_CHECK | R12 SS_CIPHER_ENUM_CHECK | R13 VMESS_UUID_FORMAT_CHECK | R14 MIXED_PORT_CONFLICT_CHECK | R15 MODE_ENUM_CHECK | R16 PROXY_NAME_UNIQUENESS_CHECK | R17 PORT_RANGE_CHECK | R18 SS_PROTOCOL_CHECK | R19 VMESS_ALTERID_RANGE_CHECK
+
+### 待确认事项
+- [ ] v1.0.0 GA 发布（回复"确认发布"立即执行）
