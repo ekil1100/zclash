@@ -818,25 +818,12 @@
 
 ### P11 第一批任务（1.1 收尾 + 发布）
 
-- [ ] P11-1A [1.1] 迁移规则扩展：mode 枚举校验
-  - 范围：`tools/config-migrator/` + 回归
-  - DoD：检测 mode 值是否在 rule/global/direct 范围内；回归通过
-  - 预估：1h
-
-- [ ] P11-1B [1.1] 迁移规则扩展：proxy 名称唯一性检测
-  - 范围：`tools/config-migrator/` + 回归
-  - DoD：检测 proxies 列表中是否存在重复 name；回归通过
-  - 预估：1h
-
-- [ ] P11-1C [1.0] 正式发布 v1.0.0（等 Like 最终确认）
-  - 范围：git tag + GitHub Release
-  - DoD：执行 `git tag v1.0.0 && git push origin v1.0.0`，确认 release workflow 成功
-  - 前置：Like 明确确认
-  - 预估：5min
-
-- [ ] P11-1D [1.1] README 最终 GA 更新
-  - 范围：`README.md`
-  - DoD：去掉 Beta/GA-ready 标识，更新为正式 1.0 版本；补充 release 下载链接
-  - 预估：0.5h
-
-- NEXT（唯一）：P11-1A（继续 1.1 规则扩展）或 P11-1C（Like 确认后立即发布）
+- [x] P11-1A [1.1] mode 枚举校验（R15）— **tagged** `task-done/P11-1A`
+- [x] P11-1B [1.1] proxy 名称唯一性检测（R16）— **tagged** `task-done/P11-1B`
+- [ ] P11-1C [1.0] 正式发布 v1.0.0 — **🟡 等待 Like 确认**
+  - 准备命令：`git tag v1.0.0 && git push origin v1.0.0`
+  - 确认后执行并打 `task-done/P11-1C`
+- [x] P11-1D [1.0] README 最终 GA 更新 — **tagged** `task-done/P11-1D`
+- [x] P11-1E [1.1] port 范围校验（R17）— **tagged** `task-done/P11-1E`
+- 迁移规则：R1-R17 共 17 条，回归 17/17 PASS
+- **1.0 GA 就绪：等你回复"确认发布"后立即执行 P11-1C**
