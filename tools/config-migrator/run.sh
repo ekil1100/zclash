@@ -19,6 +19,28 @@ json_escape() {
   echo "$1" | sed 's/"/\\"/g'
 }
 
+_proxy_issues=()
+
+_check_proxy_fields() {
+  local block="$1"
+  local pname ptype
+  pname=$(echo "$block" | grep -oE 'name:[[:space:]]*"?[^"]*"?' | head -1 | sed -E 's/name:[[:space:]]*"?([^"]*)"?/\1/')
+  ptype=$(echo "$block" | grep -oE 'type:[[:space:]]*[a-z]+' | head -1 | sed -E 's/type:[[:space:]]*//')
+
+  # Skip direct/reject - no server/port needed
+  [[ "$ptype" == "direct" || "$ptype" == "reject" ]] && return
+
+  if [[ -z "$pname" ]]; then
+    _proxy_issues+=("{\"rule\":\"PROXY_NODE_FIELDS_CHECK\",\"level\":\"error\",\"path\":\"proxies[?]\",\"message\":\"proxy node missing 'name' field\",\"fixable\":false}")
+  fi
+  if [[ -n "$ptype" ]] && ! echo "$block" | grep -Eq 'server:'; then
+    _proxy_issues+=("{\"rule\":\"PROXY_NODE_FIELDS_CHECK\",\"level\":\"error\",\"path\":\"proxies[$pname].server\",\"message\":\"proxy '$pname' missing 'server' field\",\"fixable\":false}")
+  fi
+  if [[ -n "$ptype" ]] && ! echo "$block" | grep -Eq 'port:'; then
+    _proxy_issues+=("{\"rule\":\"PROXY_NODE_FIELDS_CHECK\",\"level\":\"error\",\"path\":\"proxies[$pname].port\",\"message\":\"proxy '$pname' missing 'port' field\",\"fixable\":false}")
+  fi
+}
+
 collect_issues() {
   local file="$1"
   local issues=()
@@ -29,6 +51,57 @@ collect_issues() {
       issues+=("{\"rule\":\"PORT_TYPE_INT\",\"level\":\"warn\",\"path\":\"$key\",\"message\":\"numeric string can be autofixed to int\",\"fixable\":true}")
     fi
   done
+
+  # R11: PROXY_NODE_FIELDS_CHECK
+  if grep -Eq '^[[:space:]]*proxies:' "$file"; then
+    local proxy_block=""
+    local in_proxy=false
+    while IFS= read -r line; do
+      if echo "$line" | grep -Eq '^[[:space:]]*-[[:space:]]*name:|^[[:space:]]*-[[:space:]]*type:'; then
+        # Process previous block
+        if [[ -n "$proxy_block" ]]; then
+          _check_proxy_fields "$proxy_block"
+        fi
+        proxy_block="$line"
+      elif [[ -n "$proxy_block" ]]; then
+        proxy_block="$proxy_block
+$line"
+      fi
+    done < <(awk '/^[[:space:]]*proxies:/{found=1; next} found && /^[^[:space:]]/{exit} found{print}' "$file")
+    # Last block
+    if [[ -n "$proxy_block" ]]; then
+      _check_proxy_fields "$proxy_block"
+    fi
+  fi
+
+  # Merge proxy field issues
+  for pi in "${_proxy_issues[@]:-}"; do
+    [[ -n "$pi" ]] && issues+=("$pi")
+  done
+  _proxy_issues=()
+
+  # R10: RULE_PROVIDER_REF_CHECK
+  if grep -Eq '^[[:space:]]*rule-providers:' "$file" && grep -Eq 'RULE-SET,' "$file"; then
+    # Collect declared provider names
+    local providers=()
+    while IFS= read -r line; do
+      pname=$(echo "$line" | sed -E 's/^[[:space:]]+([^:]+):[[:space:]]*$/\1/')
+      [[ -n "$pname" ]] && providers+=("$pname")
+    done < <(awk '/^[[:space:]]*rule-providers:/{found=1; next} found && /^[[:space:]]{2,4}[a-zA-Z]/{print; next} found && /^[^[:space:]]/{exit}' "$file")
+    # Check RULE-SET references
+    while IFS= read -r line; do
+      ref=$(echo "$line" | sed -E 's/^[[:space:]]*-[[:space:]]*RULE-SET,([^,]+),.*/\1/')
+      if [[ -n "$ref" ]]; then
+        local found_ref=false
+        for p in "${providers[@]:-}"; do
+          [[ "$p" == "$ref" ]] && found_ref=true && break
+        done
+        if [[ "$found_ref" == "false" ]]; then
+          issues+=("{\"rule\":\"RULE_PROVIDER_REF_CHECK\",\"level\":\"error\",\"path\":\"rules[RULE-SET,$ref]\",\"message\":\"RULE-SET references undefined provider: $ref\",\"fixable\":false}")
+        fi
+      fi
+    done < <(grep -E '^[[:space:]]*-[[:space:]]*RULE-SET,' "$file")
+  fi
 
   # R9: ALLOW_LAN_BIND_CONFLICT
   if grep -Eq '^[[:space:]]*allow-lan:[[:space:]]*false' "$file"; then

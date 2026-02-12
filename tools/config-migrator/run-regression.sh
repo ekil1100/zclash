@@ -174,6 +174,30 @@ else
   fi
 fi
 
+# R10 validation (RULE_PROVIDER_REF_CHECK)
+R10_OUT="$REPORT_DIR/r10-regression.lint.json"
+if bash "$BASE/run.sh" lint "$BASE/examples/r10-rule-provider-ref.yaml" > "$R10_OUT" 2>/dev/null || true; then
+  if grep -q '"rule":"RULE_PROVIDER_REF_CHECK"' "$R10_OUT" && grep -q 'missing-provider' "$R10_OUT"; then
+    results+=("{\"sample_id\":\"R10_RULE_PROVIDER_REF_CHECK\",\"input\":\"tools/config-migrator/examples/r10-rule-provider-ref.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"undefined provider detected\"}")
+  else
+    failed_rules+=("RULE_PROVIDER_REF_CHECK")
+    failed_samples+=("R10_RULE_PROVIDER_REF_CHECK")
+    results+=("{\"sample_id\":\"R10_RULE_PROVIDER_REF_CHECK\",\"input\":\"tools/config-migrator/examples/r10-rule-provider-ref.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected RULE_PROVIDER_REF_CHECK error\"}")
+  fi
+fi
+
+# R11 validation (PROXY_NODE_FIELDS_CHECK)
+R11_OUT="$REPORT_DIR/r11-regression.lint.json"
+if bash "$BASE/run.sh" lint "$BASE/examples/r11-proxy-fields.yaml" > "$R11_OUT" 2>/dev/null || true; then
+  if grep -q '"rule":"PROXY_NODE_FIELDS_CHECK"' "$R11_OUT"; then
+    results+=("{\"sample_id\":\"R11_PROXY_NODE_FIELDS_CHECK\",\"input\":\"tools/config-migrator/examples/r11-proxy-fields.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"missing fields detected\"}")
+  else
+    failed_rules+=("PROXY_NODE_FIELDS_CHECK")
+    failed_samples+=("R11_PROXY_NODE_FIELDS_CHECK")
+    results+=("{\"sample_id\":\"R11_PROXY_NODE_FIELDS_CHECK\",\"input\":\"tools/config-migrator/examples/r11-proxy-fields.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected PROXY_NODE_FIELDS_CHECK error\"}")
+  fi
+fi
+
 pass_count=0
 for r in "${results[@]}"; do
   if echo "$r" | grep -q '"result":"PASS"'; then
