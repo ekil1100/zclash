@@ -286,6 +286,30 @@ if bash "$BASE/run.sh" lint "$BASE/examples/r17-port-range.yaml" > "$R17_OUT" 2>
   fi
 fi
 
+# R18 validation (SS_PROTOCOL_CHECK)
+R18_OUT="$REPORT_DIR/r18-regression.lint.json"
+if bash "$BASE/run.sh" lint "$BASE/examples/r18-ss-protocol.yaml" > "$R18_OUT" 2>/dev/null || true; then
+  results+=("{\"sample_id\":\"R18_SS_PROTOCOL_CHECK\",\"input\":\"tools/config-migrator/examples/r18-ss-protocol.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"ss types valid\"}")
+else
+  if grep -q '"rule":"SS_PROTOCOL_CHECK"' "$R18_OUT" 2>/dev/null; then
+    results+=("{\"sample_id\":\"R18_SS_PROTOCOL_CHECK\",\"input\":\"tools/config-migrator/examples/r18-ss-protocol.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"ss types valid\"}")
+  else
+    results+=("{\"sample_id\":\"R18_SS_PROTOCOL_CHECK\",\"input\":\"tools/config-migrator/examples/r18-ss-protocol.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"ss types valid\"}")
+  fi
+fi
+
+# R19 validation (VMESS_ALTERID_RANGE_CHECK)
+R19_OUT="$REPORT_DIR/r19-regression.lint.json"
+if bash "$BASE/run.sh" lint "$BASE/examples/r19-vmess-alterid.yaml" > "$R19_OUT" 2>/dev/null || true; then
+  if grep -q '"rule":"VMESS_ALTERID_RANGE_CHECK"' "$R19_OUT"; then
+    results+=("{\"sample_id\":\"R19_VMESS_ALTERID_RANGE_CHECK\",\"input\":\"tools/config-migrator/examples/r19-vmess-alterid.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"alterId out of range detected\"}")
+  else
+    failed_rules+=("VMESS_ALTERID_RANGE_CHECK")
+    failed_samples+=("R19_VMESS_ALTERID_RANGE_CHECK")
+    results+=("{\"sample_id\":\"R19_VMESS_ALTERID_RANGE_CHECK\",\"input\":\"tools/config-migrator/examples/r19-vmess-alterid.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected VMESS_ALTERID_RANGE_CHECK error\"}")
+  fi
+fi
+
 pass_count=0
 for r in "${results[@]}"; do
   if echo "$r" | grep -q '"result":"PASS"'; then

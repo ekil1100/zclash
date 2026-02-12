@@ -52,6 +52,28 @@ collect_issues() {
     fi
   done
 
+  # R19: VMESS_ALTERID_RANGE_CHECK
+  while IFS= read -r line; do
+    if echo "$line" | grep -Eq 'alterId:'; then
+      aid=$(echo "$line" | sed -E 's/.*alterId:[[:space:]]*"?([^"]*)"?.*/\1/')
+      if [[ "$aid" =~ ^[0-9]+$ ]]; then
+        if [[ "$aid" -lt 0 || "$aid" -gt 65535 ]]; then
+          issues+=("{\"rule\":\"VMESS_ALTERID_RANGE_CHECK\",\"level\":\"error\",\"path\":\"proxies[].alterId\",\"message\":\"alterId out of range: $aid (must be 0-65535)\",\"fixable\":false}")
+        fi
+      fi
+    fi
+  done < <(grep -E '^[[:space:]]*alterId:' "$file")
+
+  # R18: SS_PROTOCOL_CHECK
+  while IFS= read -r line; do
+    type_val=$(echo "$line" | sed -E 's/.*type:[[:space:]]*"?([^"]*)"?.*/\1/')
+    if [[ -n "$type_val" ]] && [[ "$type_val" == ss* ]]; then
+      if [[ "$type_val" != "ss" && "$type_val" != "ss-plugin" ]]; then
+        issues+=("{\"rule\":\"SS_PROTOCOL_CHECK\",\"level\":\"warn\",\"path\":\"proxies[].type\",\"message\":\"unrecognized ss variant: $type_val (treating as ss)\",\"fixable\":false,\"suggested\":\"ss\"}")
+      fi
+    fi
+  done < <(grep -E '^[[:space:]]*type:[[:space:]]*ss' "$file")
+
   # R17: PORT_RANGE_CHECK
   for port_key in port socks-port mixed-port; do
     if grep -Eq "^[[:space:]]*$port_key:" "$file"; then
