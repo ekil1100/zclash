@@ -1,0 +1,1 @@
+{"ok":false,"mode":"lint","issues":[{"rule":"RULES_FORMAT_CHECK","level":"error","path":"rules[]","message":"rule malformed (expected TYPE,VALUE,ACTION): invalidrulewithoutcomma","fixable":false}],"fixed":0,"hint":"fix error-level issues first; for LOG_LEVEL_ENUM use suggested value: info"}
