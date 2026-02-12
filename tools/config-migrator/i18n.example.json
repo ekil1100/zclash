@@ -1,0 +1,10 @@
+{
+  "en": {
+    "regression.summary.pass": "PASS total={total} failed_rules={failed_rules} failed_samples={failed_samples}",
+    "regression.summary.fail": "FAIL total={total} failed_rules={failed_rules} failed_samples={failed_samples}"
+  },
+  "zh": {
+    "regression.summary.pass": "通过 total={total} failed_rules={failed_rules} failed_samples={failed_samples}",
+    "regression.summary.fail": "失败 total={total} failed_rules={failed_rules} failed_samples={failed_samples}"
+  }
+}
