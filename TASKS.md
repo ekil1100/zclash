@@ -1088,3 +1088,43 @@ R1 PORT_TYPE_INT | R2 LOG_LEVEL_ENUM | R3 PROXY_GROUP_TYPE_CHECK | R4 DNS_FIELD_
   - 预估：1h
 
 - NEXT（唯一）：P18-1A（homebrew 文档，生态扩展收尾）
+
+### P18-1 完成状态
+
+- [x] P18-1A [1.2] homebrew 安装文档 — **tagged** `task-done/P18-1A`
+- [x] P18-1B [1.2] debian 包安装文档 — **tagged** `task-done/P18-1B`
+- [x] P18-1C [1.2] systemd 使用文档 — **tagged** `task-done/P18-1C`
+- [x] P18-1D [1.1] 端口冲突检测（R29）— **tagged** `task-done/P18-1D`
+- [x] P18-1E [1.1] 收口 P18-1 — **tagging now**
+- P18-1 结论：close-ready（29 条规则，文档全部完善）
+- **迁移规则总览：R1-R29（29 条）全部回归通过 ✅**
+- **1.2 生态扩展：文档全部完成 ✅**
+
+### P18-2/P19 第一批任务（1.2 收尾 + 后续规划）
+
+- [ ] P19-1A [1.2] 1.2 版本规划文档
+  - 范围：`docs/roadmap/1.2-preview.md`
+  - DoD：列出 1.2 已完成功能（homebrew/debian/systemd/R29/文档）
+  - 预估：1h
+
+- [ ] P19-1B [1.1] 迁移规则扩展：配置项重复检测
+  - 范围：`tools/config-migrator/` + 回归
+  - DoD：检测配置文件中重复定义的配置项；回归通过
+  - 预估：1h
+
+- [ ] P19-1C [1.1] 迁移规则扩展：DNS 服务器有效性提示
+  - 范围：`tools/config-migrator/` + 回归
+  - DoD：检测 nameserver 是否包含常见无效地址；回归通过
+  - 预估：1h
+
+- [ ] P19-1D [1.1] 迁移规则速查表更新到 R29
+  - 范围：`docs/compat/migrator-rules-quickref.md`
+  - DoD：添加 R29 说明
+  - 预估：0.5h
+
+- [ ] P19-1E [1.2] 归档 1.1 成果并准备 1.2 RC
+  - 范围：`CHANGELOG.md` + `README.md`
+  - DoD：更新 CHANGELOG 为 1.2 正式版，README 更新为 1.2 推荐
+  - 预估：1h
+
+- NEXT（唯一）：P19-1A（1.2 规划文档）
