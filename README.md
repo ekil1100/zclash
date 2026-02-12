@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <b>🚧 Beta</b> — 核心功能可用，安装链路已闭环，正在收集试用反馈
+  <b>🚧 Beta → GA-ready</b> — 1.0 准入条件 8/8 满足，等待正式发布确认
 </p>
 
 <p align="center">
@@ -15,7 +15,8 @@
   <a href="#快速开始">快速开始</a> •
   <a href="#tui-界面">TUI 界面</a> •
   <a href="#配置说明">配置说明</a> •
-  <a href="#反馈与问题">反馈</a>
+  <a href="#反馈与问题">反馈</a> •
+  <a href="CHANGELOG.md">CHANGELOG</a>
 </p>
 
 ---
