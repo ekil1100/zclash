@@ -44,10 +44,10 @@ jobs:
       - name: Package
         run: |
           mkdir -p dist
-          PKG_NAME="zclash-${{ github.ref_name }}-${{ matrix.target_os }}-${{ matrix.target_arch }}"
+          PKG_NAME="zc-${{ github.ref_name }}-${{ matrix.target_os }}-${{ matrix.target_arch }}"
           PKG_DIR="dist/${PKG_NAME}"
           mkdir -p "$PKG_DIR"
-          cp ./zig-out/bin/zclash "$PKG_DIR/"
+          cp ./zig-out/bin/zc "$PKG_DIR/"
           cp ./README.md "$PKG_DIR/"
           tar -czf "dist/${PKG_NAME}.tar.gz" -C dist "$PKG_NAME"
           if command -v shasum >/dev/null 2>&1; then
@@ -80,7 +80,7 @@ jobs:
           RANGE="HEAD~20..HEAD"
           LOGS="$(git log --pretty=format:'- %h %s' "$RANGE" 2>/dev/null || echo '- (no commits in range)')"
           cat > dist/release-notes.md <<EOF
-          # zclash ${{ github.ref_name }}
+          # zc ${{ github.ref_name }}
 
           ## Changes
           ${LOGS}
