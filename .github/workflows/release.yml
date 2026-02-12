@@ -38,6 +38,9 @@ jobs:
       - name: Smoke (migrator regression)
         run: bash tools/config-migrator/run-all.sh
 
+      - name: Smoke (install regression)
+        run: bash scripts/install/run-all-regression.sh
+
       - name: Package
         run: |
           mkdir -p dist
