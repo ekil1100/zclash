@@ -603,27 +603,44 @@
 
 ### P10 第一批任务（GA 发布 + 1.1 继续）
 
-- [ ] P10-1B [1.0] GA 发布准备：CHANGELOG + tag v1.0.0
-  - 范围：`CHANGELOG.md` + git tag
-  - DoD：CHANGELOG 覆盖 P0-P9 关键里程碑；打 v1.0.0 tag 并 push
-  - 预估：1h
+- [x] P10-1B [1.0] CHANGELOG 准备（不打 tag）
+  - 产出：`CHANGELOG.md` 覆盖 P0-P9 全部里程碑
+  - 注意：v1.0.0 tag 等 Like 确认后打
+- [x] P10-1C [1.0] release workflow 验证
+  - 产出：release.yml 新增 install regression 步骤；语法/逻辑验证通过
+- [x] P10-1D [1.1] SS_CIPHER_ENUM_CHECK 规则（R12）
+  - 产出：检测不支持的 cipher 值；回归 12/12 PASS
+- [x] P10-1E [1.0] README GA-ready
+  - 产出：状态更新为"GA-ready"；补充 CHANGELOG 链接
+- [x] P10-2A 收口 + 下一批拆解
+- P10-1 结论：close-ready
+- 迁移规则：R1-R12 共 12 条，回归 12/12 PASS
+- **1.0 GA 发布状态：CHANGELOG 已就绪，等 Like 确认打 v1.0.0 tag**
 
-- [ ] P10-1C [1.0] release workflow 验证
-  - 范围：`.github/workflows/release.yml`
-  - DoD：确认 tag-triggered release 可正常触发（本地 dry-run）
-  - 预估：0.5h
+### P10-2 下一批任务（1.1 功能 + GA 后续）
 
-- [ ] P10-1D [1.1] 迁移规则扩展：cipher 枚举校验
+- [ ] P10-2B [1.1] 迁移规则扩展：VMess uuid 格式校验
   - 范围：`tools/config-migrator/` + 回归
-  - DoD：检测 ss 节点 cipher 值是否在支持列表内；回归通过
+  - DoD：检测 VMess 节点 uuid 是否符合 UUID v4 格式；回归通过
   - 预估：1h
 
-- [ ] P10-1E [1.1] README 更新为 1.0 GA 版本
-  - 范围：`README.md`
-  - DoD：去掉 Beta 标识，更新为 GA；补充 CHANGELOG 链接
-  - 预估：0.5h
+- [ ] P10-2C [1.1] 迁移规则扩展：mixed-port 与 port/socks-port 互斥提示
+  - 范围：`tools/config-migrator/` + 回归
+  - DoD：检测同时配置 mixed-port 和 port/socks-port 时给出提示；回归通过
+  - 预估：1h
 
-- NEXT（唯一）：P10-1B（GA 发布准备，1.0 收口最终步骤）
+- [ ] P10-2D [1.1] doctor 增加 uptime 字段
+  - 范围：`src/doctor_cli.zig`
+  - DoD：`--json` 新增 `daemon_uptime_seconds`（从 PID 启动时间计算）；构建+测试通过
+  - 预估：1-2h
+
+- [ ] P10-2E [1.0] 正式打 v1.0.0 tag（等 Like 确认）
+  - 范围：git tag + push
+  - DoD：`git tag v1.0.0 && git push --tags`
+  - 前置：Like 确认
+  - 预估：5min
+
+- NEXT（唯一）：P10-2B（继续 1.1 迁移规则扩展）；P10-2E 等 Like 确认
 
 ---
 
@@ -784,3 +801,8 @@
 - 2026-02-12 08:10（GMT+8）完成 P9-2D：doctor --json 新增 migration_hints。
 - 2026-02-12 08:10（GMT+8）完成 P10-1A：R11 PROXY_NODE_FIELDS_CHECK 规则。
 - 2026-02-12 08:10（GMT+8）完成 P9-2E：P9 close-ready + P10 首批任务拆解。
+- 2026-02-12 08:30（GMT+8）完成 P10-1B：CHANGELOG 覆盖 P0-P9（不打 tag）。
+- 2026-02-12 08:30（GMT+8）完成 P10-1C：release workflow 验证 + 新增 install regression。
+- 2026-02-12 08:30（GMT+8）完成 P10-1D：R12 SS_CIPHER_ENUM_CHECK 规则。
+- 2026-02-12 08:30（GMT+8）完成 P10-1E：README 更新为 GA-ready + CHANGELOG 链接。
+- 2026-02-12 08:30（GMT+8）完成 P10-2A：P10-1 close-ready + P10-2 任务拆解。
