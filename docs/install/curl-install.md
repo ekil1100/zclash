@@ -3,7 +3,7 @@
 ## 快速安装
 
 ```bash
-curl -fsSL https://zclash.dev/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ekil1100/zclash/main/scripts/install-curl.sh | bash
 ```
 
 ## 指定版本安装

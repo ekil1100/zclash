@@ -94,8 +94,8 @@
 ### 从 Release 安装（推荐）
 
 ```bash
-# 一键安装（自动检测系统）
-curl -fsSL https://zclash.dev/install.sh | bash
+# 一键安装（使用 GitHub raw）
+curl -fsSL https://raw.githubusercontent.com/ekil1100/zclash/main/scripts/install-curl.sh | bash
 
 # 指定版本
 # https://github.com/ekil1100/zclash/releases
