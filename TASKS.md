@@ -1128,3 +1128,43 @@ R1 PORT_TYPE_INT | R2 LOG_LEVEL_ENUM | R3 PROXY_GROUP_TYPE_CHECK | R4 DNS_FIELD_
   - 预估：1h
 
 - NEXT（唯一）：P19-1A（1.2 规划文档）
+
+### P19-1 完成状态
+
+- [x] P19-1A [1.2] 1.2 版本规划文档 — **tagged** `task-done/P19-1A`
+- [x] P19-1B [1.1] 配置项重复检测（R30）— **tagged** `task-done/P19-1B`
+- [x] P19-1C [1.1] DNS 服务器有效性提示（R31）— **tagged** `task-done/P19-1C`
+- [x] P19-1D [1.1] 迁移规则速查表更新到 R31 — **tagged** `task-done/P19-1D`
+- [x] P19-1E [1.1] 收口 P19-1 — **tagging now**
+- P19-1 结论：close-ready（31 条规则，1.2 规划完成）
+- **迁移规则总览：R1-R31（31 条）全部回归通过 ✅**
+- **1.2 版本规划：已完成 ✅**
+
+### P19-2/P20 第一批任务（收尾 + 稳定）
+
+- [ ] P20-1A [1.2] 完整安装指南整合
+  - 范围：`docs/install/README.md`
+  - DoD：整合所有安装方式（curl/homebrew/debian/systemd/源码）到一个入口文档
+  - 预估：1h
+
+- [ ] P20-1B [1.1] 回归测试覆盖率提升
+  - 范围：`tools/config-migrator/`
+  - DoD：复杂配置样本测试（包含所有代理类型的配置）；回归通过
+  - 预估：2h
+
+- [ ] P20-1C [1.2] 1.2 RC 准备
+  - 范围：`CHANGELOG.md` + git tag
+  - DoD：CHANGELOG 更新为 1.2.0-rc1；评估是否打 rc tag
+  - 预估：1h
+
+- [ ] P20-1D [1.1] 性能回归基线更新
+  - 范围：`docs/perf/reports/`
+  - DoD：更新基准数据；确认性能无回退
+  - 预估：1h
+
+- [ ] P20-1E [1.2] 社区反馈收集准备
+  - 范围：`docs/CONTRIBUTING.md`
+  - DoD：创建贡献指南；添加 issue 模板
+  - 预估：1h
+
+- NEXT（唯一）：P20-1A（安装指南整合，文档收尾）
