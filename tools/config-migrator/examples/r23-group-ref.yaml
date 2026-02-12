@@ -1,0 +1,15 @@
+mixed-port: 7890
+log-level: info
+proxies:
+  - name: "node1"
+    type: ss
+    server: a.com
+    port: 8388
+    cipher: aes-256-gcm
+    password: "pass"
+proxy-groups:
+  - name: "Group1"
+    type: select
+    proxies:
+      - node1
+      - missing-node

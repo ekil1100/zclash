@@ -1,0 +1,15 @@
+mixed-port: 7890
+log-level: info
+proxy-groups:
+  - name: "Auto"
+    type: "urll-test"
+    proxies:
+      - node-1
+      - node-2
+    url: "http://www.gstatic.com/generate_204"
+    interval: 300
+  - name: "Select"
+    type: "select"
+    proxies:
+      - Auto
+      - node-1

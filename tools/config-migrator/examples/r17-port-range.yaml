@@ -1,0 +1,4 @@
+mixed-port: 99999
+port: 0
+socks-port: -1
+log-level: info

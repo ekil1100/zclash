@@ -1,0 +1,1 @@
+{"ok":true,"mode":"lint","issues":[{"rule":"TUN_ENABLE_CHECK","level":"warn","path":"tun.enable","message":"tun mode is not supported by zclash, will be ignored","fixable":false}],"fixed":0,"hint":"run autofix for fixable issues"}

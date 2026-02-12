@@ -1,0 +1,7 @@
+mixed-port: 7890
+log-level: info
+rules:
+  - DOMAIN,google.com,PROXY
+  - IP-CIDR,192.168.0.0/16,DIRECT
+  - invalid rule without comma
+  MATCH,DIRECT

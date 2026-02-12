@@ -1,0 +1,8 @@
+mixed-port: 7890
+log-level: info
+subscription-url: "not-a-valid-url"
+proxies:
+  - name: "test"
+    type: ss
+    server: example.com
+    port: 8388

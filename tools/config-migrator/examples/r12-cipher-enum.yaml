@@ -1,0 +1,15 @@
+mixed-port: 7890
+log-level: info
+proxies:
+  - name: "good-ss"
+    type: ss
+    server: example.com
+    port: 8388
+    cipher: aes-256-gcm
+    password: "pass"
+  - name: "bad-cipher"
+    type: ss
+    server: example.com
+    port: 8388
+    cipher: aes-256-cbc
+    password: "pass"
