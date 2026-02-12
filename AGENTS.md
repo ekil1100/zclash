@@ -1,126 +1,24 @@
-# AGENTS.md — zclash Agent 协作准则
+# AGENTS.md
 
-> 本文件只定义目标、原则、角色与执行规范。
-> 具体开发计划与阶段排期见 `ROADMAP.md`。
+Agent collaboration guidelines for zc project.
 
-## 1) 项目目标（North Star）
+## Principles
 
-zclash 以 mihomo/clash 为基线，追求：
+- Intuitive defaults
+- Consistency across CLI/API/TUI
+- Observable and diagnosable
+- Performance without sacrificing maintainability
 
-1. CLI 命令符合人的直觉
-2. API 好用、易用、可自动化
-3. TUI 易用、操作直觉、界面简洁
-4. 更好、更快（性能与稳定性）
-5. 学习并超越 mihomo/clash
+## Roles
 
-## 2) 不可妥协原则
+- Product: goals and priorities
+- CLI: command design and UX
+- API: stable contracts
+- TUI: interaction design
+- Runtime: correctness and performance
 
-- **直觉优先**：默认值合理，错误信息给下一步动作
-- **一致性优先**：CLI / API / TUI 使用统一概念模型
-- **可观测优先**：关键动作可追踪、可诊断
-- **性能优先**：热路径优化，但不牺牲长期可维护性
-- **兼容优先**：尽量兼容主流配置与生态，破坏性变更需迁移方案
+## DoD
 
-## 3) 统一概念模型
-
-统一名词：`profile / proxy / proxy-group / rule / connection / runtime / health`
-
-所有控制面（CLI/API/TUI）都围绕同一数据模型与行为语义。
-
-## 4) Agent 角色分工
-
-### Product Agent
-- 维护目标与优先级
-- 定义“好用”的可验收标准
-
-### CLI Agent
-- 命令设计、参数语义、输出一致性
-- 保证人类可读 + 脚本可用（`--json`）
-
-### API Agent
-- 资源模型、版本策略、错误码体系
-- 对外契约稳定第一
-
-### TUI Agent
-- 信息架构、交互流、快捷键与视觉一致性
-- 优先低学习成本和高操作效率
-
-### Runtime Agent
-- 规则引擎、DNS、出站管理、热重载正确性
-- 目标：低延迟 + 高正确性
-
-### Perf Agent
-- Profiling、benchmark、性能回归门禁
-
-### Reliability Agent
-- 故障注入、恢复策略、长稳测试
-
-### DX Agent
-- 文档、示例、错误提示、开发流程可达性
-
-## 5) 工程执行规范
-
-1. 先测后改：改动前补测试，改动后跑回归
-2. 小步提交：单 PR 单主题
-3. 可回滚：高风险改动必须有回退方案
-4. 文档同更：行为变更同步文档与迁移说明
-5. 性能门禁：关键路径回退则阻断合并
-
-## 6) 开发方法选择策略（强制规则：TDD / BDD / Benchmark-Driven）
-
-按任务类型选择最合适的方法（强制执行）：
-
-- **TDD（测试驱动开发）**：
-  - 适用于算法、规则引擎、协议边界、解析器等“正确性优先”模块
-  - 先写失败测试，再实现，再重构
-
-- **BDD（行为驱动开发）**：
-  - 适用于 CLI/API/TUI 的用户行为与交互流程
-  - 用 Given/When/Then 描述行为验收，保证“符合直觉”
-
-- **Benchmark-Driven Development + Scenario-based Testing**：
-  - 适用于性能、稳定性、系统级体验对比
-  - 先定义场景与指标，再开发与回归（参考 `docs/benchmark/scenarios.md` 与 `docs/benchmark/metrics.md`）
-
-默认组合策略：
-- 核心逻辑：TDD
-- 交互与产品行为：BDD
-- 性能与稳定性：Benchmark-Driven + Scenario-based
-
-## 6) 验收标准（DoD）
-
-- CLI：核心任务可在低学习成本下完成，错误提示可操作
-- API：schema 清晰稳定，关键端点有集成测试
-- TUI：核心任务无文档可完成，交互无明显陷阱
-- 性能：关键指标达到阶段目标且可复现
-- 稳定性：长稳与故障场景可通过验证
-
-## 7) 执行与更新要求（强制）
-
-- 开发计划放在 `ROADMAP.md`，不写入 AGENTS。
-- 执行任务统一维护在 `TASKS.md`。
-- **每次任务状态变化必须实时更新 `TASKS.md`**（TODO/DOING/BLOCKED/DONE + 时间 + 备注）。
-- 若路线调整，先改 `ROADMAP.md`，再同步改 `TASKS.md`。
-- **每个功能必须先定义验收标准（DoD/Acceptance Criteria）再开始实现。**
-- 未定义验收标准的任务，不允许进入 DOING。
-
-## 8) Git 提交与同步规范（强制）
-
-### Commit 原子化
-
-- 一个 commit 只做一个逻辑变更（不要把 feature/refactor/format 混在一起）。
-- 每个 commit 应该独立可理解、可审阅，且尽量可独立回滚。
-- 提交前保证该变更范围内可用（至少相关测试通过；若确属临时态需显式标记 WIP）。
-- 提交信息要清晰，建议采用 Conventional Commits（如 `feat(scope): ...` / `fix(scope): ...`）。
-
-### 及时 Push
-
-- 完成一个原子变更并通过该范围检查后，立即 push。
-- 连续开发时，最晚每 60–90 分钟 push 一次，避免本地漂移过大。
-- 任何上下文切换前必须 push（切仓库/开会/休息/收工）。
-- 高风险改动（大重构、冲突高发文件、关键配置）优先即时 push 以降低风险。
-- 避免长期堆积大量本地 commits 不上远端。
-
-## 9) 工作方式
-
-> 先统一模型，再统一接口，再打磨体验，用数据证明“更好、更快”。
+- Core tasks achievable with minimal learning
+- Error messages are actionable
+- Documentation updated with changes
