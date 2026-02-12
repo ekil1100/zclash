@@ -1,5 +1,49 @@
 # Changelog
 
+## v1.1.0 (预览中)
+
+### 迁移规则扩展（23 条 → 25 条）
+
+新增规则：
+- R15 MODE_ENUM_CHECK - mode 值枚举校验（rule/global/direct）
+- R16 PROXY_NAME_UNIQUENESS_CHECK - 代理名称唯一性检测
+- R17 PORT_RANGE_CHECK - 端口范围校验（1-65535）
+- R18 SS_PROTOCOL_CHECK - SS 协议变体识别（ss/ss-plugin）
+- R19 VMESS_ALTERID_RANGE_CHECK - VMess alterId 范围校验（0-65535）
+- R20 TROJAN_FIELDS_CHECK - Trojan 节点字段完整性（password/sni）
+- R21 RULES_FORMAT_CHECK - 规则格式校验（TYPE,VALUE,ACTION）
+- R22 VLESS_FIELDS_CHECK - VLESS 节点字段完整性（uuid/sni）
+- R23 PROXY_GROUP_REF_CHECK - 代理组引用有效性校验
+- R24 YAML_SYNTAX_CHECK - YAML 语法基础校验
+- R25 SUBSCRIPTION_URL_CHECK - 订阅 URL 格式校验
+
+### 安装体验优化
+
+- **curl 一键安装脚本**（最高优先级需求）
+  ```bash
+  curl -fsSL https://zclash.dev/install.sh | bash
+  ```
+- 支持指定版本、自定义安装目录
+- 完整安装文档：`docs/install/curl-install.md`
+
+### 诊断增强
+
+- doctor 命令新增字段：
+  - `config_path` - 配置文件路径
+  - `network_ok` - 网络连通性
+  - `proxy_reachable` - 代理端口监听状态
+  - `config_errors/config_warnings` - 配置校验详情
+  - `migration_hints` - 迁移建议
+  - `daemon_uptime_seconds` - 守护进程运行时长
+
+### 文档完善
+
+- 迁移规则速查表：`docs/compat/migrator-rules-quickref.md`
+- curl 安装指南：`docs/install/curl-install.md`
+- README GA 状态更新
+
+---
+
 ## v1.0.0 (准备中)
 
 ### 里程碑总览
