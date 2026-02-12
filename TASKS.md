@@ -634,13 +634,17 @@
   - DoD：`--json` 新增 `daemon_uptime_seconds`（从 PID 启动时间计算）；构建+测试通过
   - 预估：1-2h
 
-- [ ] P10-2E [1.0] 正式打 v1.0.0 tag（等 Like 确认）
-  - 范围：git tag + push
-  - DoD：`git tag v1.0.0 && git push --tags`
-  - 前置：Like 确认
-  - 预估：5min
+### P10-2 下一批任务（GA 发布 + 1.1 继续）
 
-- NEXT（唯一）：P10-2B（继续 1.1 迁移规则扩展）；P10-2E 等 Like 确认
+- [x] P10-2B [1.1] VMess uuid 格式校验（R13）
+- [x] P10-2C [1.1] mixed-port 与 port/socks-port 互斥提示（R14）
+- [x] P10-2D [1.1] doctor uptime 字段
+- [ ] P10-2E [1.0] GA tag v1.0.0 — **待 Like 确认后执行**
+  - 准备命令：`git tag v1.0.0 && git push origin v1.0.0`
+  - 触发效果：release workflow 自动构建 linux/macos 双平台产物并发布 GitHub Release
+  - 状态：🟡 等待确认，不主动执行
+- 迁移规则：R1-R14 共 14 条，回归 14/14 PASS
+- **1.0 GA 就绪：CHANGELOG / README / release workflow 全部就绪，等 tag**
 
 ---
 
@@ -805,4 +809,34 @@
 - 2026-02-12 08:30（GMT+8）完成 P10-1C：release workflow 验证 + 新增 install regression。
 - 2026-02-12 08:30（GMT+8）完成 P10-1D：R12 SS_CIPHER_ENUM_CHECK 规则。
 - 2026-02-12 08:30（GMT+8）完成 P10-1E：README 更新为 GA-ready + CHANGELOG 链接。
-- 2026-02-12 08:30（GMT+8）完成 P10-2A：P10-1 close-ready + P10-2 任务拆解。
+- 2026-02-12 09:22（GMT+8）完成 P10-2B：R13 VMESS_UUID_FORMAT_CHECK 规则。
+- 2026-02-12 09:22（GMT+8）完成 P10-2C：R14 MIXED_PORT_CONFLICT_CHECK 规则。
+- 2026-02-12 09:22（GMT+8）完成 P10-2D：doctor daemon_uptime_seconds 字段。
+- 2026-02-12 09:22（GMT+8）完成 P10-2E：GA tag 命令已准备，状态更新为待确认。
+- 2026-02-12 09:22（GMT+8）完成 P10-3A：P10-2 close-ready + P11 任务拆解。
+
+
+### P11 第一批任务（1.1 收尾 + 发布）
+
+- [ ] P11-1A [1.1] 迁移规则扩展：mode 枚举校验
+  - 范围：`tools/config-migrator/` + 回归
+  - DoD：检测 mode 值是否在 rule/global/direct 范围内；回归通过
+  - 预估：1h
+
+- [ ] P11-1B [1.1] 迁移规则扩展：proxy 名称唯一性检测
+  - 范围：`tools/config-migrator/` + 回归
+  - DoD：检测 proxies 列表中是否存在重复 name；回归通过
+  - 预估：1h
+
+- [ ] P11-1C [1.0] 正式发布 v1.0.0（等 Like 最终确认）
+  - 范围：git tag + GitHub Release
+  - DoD：执行 `git tag v1.0.0 && git push origin v1.0.0`，确认 release workflow 成功
+  - 前置：Like 明确确认
+  - 预估：5min
+
+- [ ] P11-1D [1.1] README 最终 GA 更新
+  - 范围：`README.md`
+  - DoD：去掉 Beta/GA-ready 标识，更新为正式 1.0 版本；补充 release 下载链接
+  - 预估：0.5h
+
+- NEXT（唯一）：P11-1A（继续 1.1 规则扩展）或 P11-1C（Like 确认后立即发布）
