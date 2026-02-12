@@ -482,6 +482,22 @@ else
   fi
 fi
 
+# R29 validation (PORT_CONFLICT_CHECK)
+R29_OUT="$REPORT_DIR/r29-regression.lint.json"
+if bash "$BASE/run.sh" lint "$BASE/examples/r29-port-conflict.yaml" > "$R29_OUT" 2>/dev/null || true; then
+  if grep -q '"rule":"PORT_CONFLICT_CHECK"' "$R29_OUT"; then
+    results+=("{\"sample_id\":\"R29_PORT_CONFLICT_CHECK\",\"input\":\"tools/config-migrator/examples/r29-port-conflict.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"port conflicts detected\"}")
+  else
+    results+=("{\"sample_id\":\"R29_PORT_CONFLICT_CHECK\",\"input\":\"tools/config-migrator/examples/r29-port-conflict.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"no port conflicts\"}")
+  fi
+else
+  if grep -q '"rule":"PORT_CONFLICT_CHECK"' "$R29_OUT" 2>/dev/null; then
+    results+=("{\"sample_id\":\"R29_PORT_CONFLICT_CHECK\",\"input\":\"tools/config-migrator/examples/r29-port-conflict.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"port conflicts detected\"}")
+  else
+    results+=("{\"sample_id\":\"R29_PORT_CONFLICT_CHECK\",\"input\":\"tools/config-migrator/examples/r29-port-conflict.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"no port conflicts\"}")
+  fi
+fi
+
 pass_count=0
 for r in "${results[@]}"; do
   if echo "$r" | grep -q '"result":"PASS"'; then

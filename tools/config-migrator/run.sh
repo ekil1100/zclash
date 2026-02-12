@@ -52,6 +52,28 @@ collect_issues() {
     fi
   done
 
+  # R29: PORT_CONFLICT_CHECK
+  if grep -Eq '^[[:space:]]*proxies:' "$file"; then
+    local -A port_map
+    local current_name=""
+    local current_port=""
+    
+    while IFS= read -r line; do
+      if echo "$line" | grep -Eq '^[[:space:]]*-[[:space:]]*name:'; then
+        current_name=$(echo "$line" | sed -E 's/^[[:space:]]*-[[:space:]]*name:[[:space:]]*"?([^"]*)"?[[:space:]]*$/\1/')
+      elif echo "$line" | grep -Eq '^[[:space:]]*port:'; then
+        current_port=$(echo "$line" | sed -E 's/^[[:space:]]*port:[[:space:]]*"?([^"]*)"?[[:space:]]*$/\1/')
+        if [[ -n "$current_name" && -n "$current_port" && "$current_port" =~ ^[0-9]+$ ]]; then
+          if [[ -n "${port_map[$current_port]:-}" ]]; then
+            issues+=("{\"rule\":\"PORT_CONFLICT_CHECK\",\"level\":\"warn\",\"path\":\"proxies[$current_name].port\",\"message\":\"port $current_port is also used by '${port_map[$current_port]}'\",\"fixable\":false}")
+          else
+            port_map[$current_port]="$current_name"
+          fi
+        fi
+      fi
+    done < <(grep -E '^[[:space:]]*(-[[:space:]]*name:|port:)' "$file")
+  fi
+
   # R28: UNSUPPORTED_PROXY_TYPE_CHECK
   local supported_types="direct|reject|ss|ss-plugin|vmess|trojan|vless|http|socks5|socks"
   while IFS= read -r line; do

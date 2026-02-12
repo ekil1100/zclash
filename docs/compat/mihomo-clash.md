@@ -106,6 +106,7 @@
 - `WS_OPTS_FORMAT_CHECK`
 - `TLS_SNI_CHECK`
 - `UNSUPPORTED_PROXY_TYPE_CHECK`
+- `PORT_CONFLICT_CHECK`
 
 ### P2（生态扩展）
 1. 实验字段透传与高级 provider 组合
