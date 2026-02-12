@@ -52,6 +52,57 @@ collect_issues() {
     fi
   done
 
+  # R27: TLS_SNI_CHECK
+  if grep -Eq '^[[:space:]]*tls:[[:space:]]*true' "$file"; then
+    # Get all proxy names and their tls/sni status
+    local proxy_names=()
+    local has_tls=()
+    local has_sni=()
+    local current_name=""
+    local in_tls_node=false
+    
+    while IFS= read -r line; do
+      if echo "$line" | grep -Eq '^[[:space:]]*-[[:space:]]*name:'; then
+        current_name=$(echo "$line" | sed -E 's/^[[:space:]]*-[[:space:]]*name:[[:space:]]*"?([^"]*)"?[[:space:]]*$/\1/')
+      elif echo "$line" | grep -Eq '^[[:space:]]*tls:[[:space:]]*true'; then
+        in_tls_node=true
+        proxy_names+=("$current_name")
+        has_tls+=("$current_name")
+      elif [[ "$in_tls_node" == "true" ]] && echo "$line" | grep -Eq '^[[:space:]]*sni:'; then
+        has_sni+=("$current_name")
+      elif [[ "$in_tls_node" == "true" ]] && echo "$line" | grep -Eq '^[[:space:]]*-[[:space:]]*name:'; then
+        in_tls_node=false
+      fi
+    done < <(grep -E '^[[:space:]]*(-[[:space:]]*name:|tls:|sni:)' "$file")
+    
+    # Check which tls nodes lack sni
+    for pn in "${has_tls[@]:-}"; do
+      local found_sni=false
+      for sn in "${has_sni[@]:-}"; do
+        if [[ "$sn" == "$pn" ]]; then
+          found_sni=true
+          break
+        fi
+      done
+      if [[ "$found_sni" == "false" ]]; then
+        issues+=("{\"rule\":\"TLS_SNI_CHECK\",\"level\":\"warn\",\"path\":\"proxies[$pn].sni\",\"message\":\"tls=true but sni not set for '$pn' (may cause TLS handshake failure)\",\"fixable\":false}")
+      fi
+    done
+  fi
+
+  # R26: WS_OPTS_FORMAT_CHECK
+  if grep -Eq '^[[:space:]]*ws-opts:' "$file"; then
+    # Check path format (should start with /)
+    while IFS= read -r line; do
+      if echo "$line" | grep -Eq 'path:[[:space:]]*[^/]'; then
+        local p=$(echo "$line" | sed -E 's/.*path:[[:space:]]*"?([^"]*)"?.*/\1/')
+        if [[ -n "$p" ]] && [[ "$p" != /* ]]; then
+          issues+=("{\"rule\":\"WS_OPTS_FORMAT_CHECK\",\"level\":\"warn\",\"path\":\"ws-opts.path\",\"message\":\"ws-opts path should start with /: $p\",\"fixable\":false,\"suggested\":\"/\${p}\"}")
+        fi
+      fi
+    done < <(grep -E '^[[:space:]]+path:' "$file")
+  fi
+
   # R25: SUBSCRIPTION_URL_CHECK
   if grep -Eq '^[[:space:]]*subscription-url:' "$file"; then
     local sub_url=$(grep -E '^[[:space:]]*subscription-url:' "$file" | head -n1 | sed -E 's/^[[:space:]]*subscription-url:[[:space:]]*"?([^"]*)"?[[:space:]]*$/\1/')

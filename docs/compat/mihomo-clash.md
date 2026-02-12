@@ -103,6 +103,8 @@
 - `PROXY_GROUP_REF_CHECK`
 - `YAML_SYNTAX_CHECK`
 - `SUBSCRIPTION_URL_CHECK`
+- `WS_OPTS_FORMAT_CHECK`
+- `TLS_SNI_CHECK`
 
 ### P2（生态扩展）
 1. 实验字段透传与高级 provider 组合

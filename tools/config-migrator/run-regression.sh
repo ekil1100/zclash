@@ -426,6 +426,42 @@ else
   fi
 fi
 
+# R26 validation (WS_OPTS_FORMAT_CHECK)
+R26_OUT="$REPORT_DIR/r26-regression.lint.json"
+if bash "$BASE/run.sh" lint "$BASE/examples/r26-ws-opts.yaml" > "$R26_OUT" 2>/dev/null || true; then
+  if grep -q '"rule":"WS_OPTS_FORMAT_CHECK"' "$R26_OUT"; then
+    results+=("{\"sample_id\":\"R26_WS_OPTS_FORMAT_CHECK\",\"input\":\"tools/config-migrator/examples/r26-ws-opts.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"ws-opts path format issue detected\"}")
+  else
+    results+=("{\"sample_id\":\"R26_WS_OPTS_FORMAT_CHECK\",\"input\":\"tools/config-migrator/examples/r26-ws-opts.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"ws-opts check passed\"}")
+  fi
+else
+  if grep -q '"rule":"WS_OPTS_FORMAT_CHECK"' "$R26_OUT" 2>/dev/null; then
+    results+=("{\"sample_id\":\"R26_WS_OPTS_FORMAT_CHECK\",\"input\":\"tools/config-migrator/examples/r26-ws-opts.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"ws-opts path format issue detected\"}")
+  else
+    results+=("{\"sample_id\":\"R26_WS_OPTS_FORMAT_CHECK\",\"input\":\"tools/config-migrator/examples/r26-ws-opts.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"ws-opts check passed\"}")
+  fi
+fi
+
+# R27 validation (TLS_SNI_CHECK)
+R27_OUT="$REPORT_DIR/r27-regression.lint.json"
+if bash "$BASE/run.sh" lint "$BASE/examples/r27-tls-sni.yaml" > "$R27_OUT" 2>/dev/null || true; then
+  if grep -q '"rule":"TLS_SNI_CHECK"' "$R27_OUT"; then
+    results+=("{\"sample_id\":\"R27_TLS_SNI_CHECK\",\"input\":\"tools/config-migrator/examples/r27-tls-sni.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"tls without sni detected\"}")
+  else
+    failed_rules+=("TLS_SNI_CHECK")
+    failed_samples+=("R27_TLS_SNI_CHECK")
+    results+=("{\"sample_id\":\"R27_TLS_SNI_CHECK\",\"input\":\"tools/config-migrator/examples/r27-tls-sni.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected TLS_SNI_CHECK warn\"}")
+  fi
+else
+  if grep -q '"rule":"TLS_SNI_CHECK"' "$R27_OUT" 2>/dev/null; then
+    results+=("{\"sample_id\":\"R27_TLS_SNI_CHECK\",\"input\":\"tools/config-migrator/examples/r27-tls-sni.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"tls without sni detected\"}")
+  else
+    failed_rules+=("TLS_SNI_CHECK")
+    failed_samples+=("R27_TLS_SNI_CHECK")
+    results+=("{\"sample_id\":\"R27_TLS_SNI_CHECK\",\"input\":\"tools/config-migrator/examples/r27-tls-sni.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected TLS_SNI_CHECK warn\"}")
+  fi
+fi
+
 pass_count=0
 for r in "${results[@]}"; do
   if echo "$r" | grep -q '"result":"PASS"'; then
