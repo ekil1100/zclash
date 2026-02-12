@@ -198,6 +198,18 @@ if bash "$BASE/run.sh" lint "$BASE/examples/r11-proxy-fields.yaml" > "$R11_OUT" 
   fi
 fi
 
+# R12 validation (SS_CIPHER_ENUM_CHECK)
+R12_OUT="$REPORT_DIR/r12-regression.lint.json"
+if bash "$BASE/run.sh" lint "$BASE/examples/r12-cipher-enum.yaml" > "$R12_OUT" 2>/dev/null || true; then
+  if grep -q '"rule":"SS_CIPHER_ENUM_CHECK"' "$R12_OUT" && grep -q 'aes-256-cbc' "$R12_OUT"; then
+    results+=("{\"sample_id\":\"R12_SS_CIPHER_ENUM_CHECK\",\"input\":\"tools/config-migrator/examples/r12-cipher-enum.yaml\",\"result\":\"PASS\",\"diff\":\"\",\"hint\":\"unsupported cipher detected\"}")
+  else
+    failed_rules+=("SS_CIPHER_ENUM_CHECK")
+    failed_samples+=("R12_SS_CIPHER_ENUM_CHECK")
+    results+=("{\"sample_id\":\"R12_SS_CIPHER_ENUM_CHECK\",\"input\":\"tools/config-migrator/examples/r12-cipher-enum.yaml\",\"result\":\"FAIL\",\"diff\":\"\",\"hint\":\"expected SS_CIPHER_ENUM_CHECK error\"}")
+  fi
+fi
+
 pass_count=0
 for r in "${results[@]}"; do
   if echo "$r" | grep -q '"result":"PASS"'; then

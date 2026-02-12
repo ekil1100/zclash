@@ -89,6 +89,7 @@
 - `ALLOW_LAN_BIND_CONFLICT`
 - `RULE_PROVIDER_REF_CHECK`
 - `PROXY_NODE_FIELDS_CHECK`
+- `SS_CIPHER_ENUM_CHECK`
 
 ### P2（生态扩展）
 1. 实验字段透传与高级 provider 组合

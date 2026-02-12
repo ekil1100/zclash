@@ -52,6 +52,15 @@ collect_issues() {
     fi
   done
 
+  # R12: SS_CIPHER_ENUM_CHECK
+  local valid_ciphers="aes-128-gcm|aes-192-gcm|aes-256-gcm|aes-128-cfb|aes-192-cfb|aes-256-cfb|chacha20-ietf-poly1305|chacha20-poly1305|rc4-md5|none"
+  while IFS= read -r line; do
+    cipher_val=$(echo "$line" | sed -E 's/^[[:space:]]*cipher:[[:space:]]*"?([^"]*)"?[[:space:]]*$/\1/')
+    if [[ -n "$cipher_val" ]] && ! echo "$cipher_val" | grep -Eq "^($valid_ciphers)$"; then
+      issues+=("{\"rule\":\"SS_CIPHER_ENUM_CHECK\",\"level\":\"error\",\"path\":\"proxies[].cipher\",\"message\":\"unsupported cipher: $cipher_val\",\"fixable\":false,\"suggested\":\"aes-256-gcm\"}")
+    fi
+  done < <(grep -E '^[[:space:]]*cipher:' "$file")
+
   # R11: PROXY_NODE_FIELDS_CHECK
   if grep -Eq '^[[:space:]]*proxies:' "$file"; then
     local proxy_block=""
