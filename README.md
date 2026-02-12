@@ -91,14 +91,38 @@
 
 ## 快速安装
 
-### 从 Release 安装（推荐）
+### Homebrew 安装（macOS/Linux）
+
+```bash
+brew tap ekil1100/zclash https://github.com/ekil1100/zclash
+brew install zclash
+```
+
+详见 [Homebrew 安装指南](docs/install/homebrew.md)。
+
+### Debian/Ubuntu 安装
+
+```bash
+# 下载 .deb 包
+wget https://github.com/ekil1100/zclash/releases/download/v1.0.0/zclash_1.0.0_amd64.deb
+sudo dpkg -i zclash_1.0.0_amd64.deb
+```
+
+详见 [Debian 安装指南](docs/install/debian.md)。
+
+### 使用 systemd（Linux）
+
+```bash
+sudo systemctl enable --now zclash
+```
+
+详见 [systemd 使用指南](docs/install/systemd.md)。
+
+### 从 Release 安装（通用）
 
 ```bash
 # 一键安装（使用 GitHub raw）
 curl -fsSL https://raw.githubusercontent.com/ekil1100/zclash/main/scripts/install-curl.sh | bash
-
-# 指定版本
-# https://github.com/ekil1100/zclash/releases
 ```
 
 详见 [curl 一键安装指南](docs/install/curl-install.md) 或 [快速启动指南（3 分钟上手）](docs/install/quick-start.md)。
