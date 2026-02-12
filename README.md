@@ -94,15 +94,14 @@
 ### 从 Release 安装（推荐）
 
 ```bash
-# 下载最新 release
-# https://github.com/ekil1100/zclash/releases
+# 一键安装（自动检测系统）
+curl -fsSL https://zclash.dev/install.sh | bash
 
-# 或使用安装脚本（3 步完成）
-bash scripts/install/oc-run.sh install --target-dir ~/.local/bin/zclash
-bash scripts/install/oc-run.sh verify  --target-dir ~/.local/bin/zclash
+# 指定版本
+# https://github.com/ekil1100/zclash/releases
 ```
 
-详见 [快速启动指南（3 分钟上手）](docs/install/quick-start.md)。
+详见 [curl 一键安装指南](docs/install/curl-install.md) 或 [快速启动指南（3 分钟上手）](docs/install/quick-start.md)。
 
 ### 一键健康检查
 
