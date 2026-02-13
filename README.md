@@ -7,15 +7,22 @@ A lightweight network tool built with Zig.
 ### Homebrew (macOS/Linux)
 
 ```bash
-brew tap ekil1100/zc https://github.com/ekil1100/zc
+brew install ekil1100/tap/zc
+```
+
+Or manually tap:
+
+```bash
+brew tap ekil1100/tap https://github.com/ekil1100/homebrew-tap
 brew install zc
 ```
 
 ### Debian/Ubuntu
 
 ```bash
-wget https://github.com/ekil1100/zc/releases/download/v1.0.0/zc_1.0.0_amd64.deb
-sudo dpkg -i zc_1.0.0_amd64.deb
+wget https://github.com/ekil1100/zc/releases/download/v1.0.0-rc1/zc-v1.0.0-rc1-linux-amd64.tar.gz
+tar -xzf zc-v1.0.0-rc1-linux-amd64.tar.gz
+sudo cp zc-v1.0.0-rc1-linux-amd64/zc /usr/local/bin/
 ```
 
 ### From Release
@@ -26,7 +33,7 @@ curl -fsSL https://raw.githubusercontent.com/ekil1100/zc/main/scripts/install-cu
 
 ### Build from Source
 
-Requires Zig 0.15.0+:
+Requires Zig 0.13.0+:
 
 ```bash
 git clone https://github.com/ekil1100/zc
