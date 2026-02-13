@@ -18,10 +18,10 @@ jobs:
           version: 0.15.2
 
       - name: Build
-        run: zig build
+        run: zig build -Dcpu=baseline
 
       - name: Test
-        run: zig build test
+        run: zig build test -Dcpu=baseline
 
       - name: Smoke (migrator regression)
         run: bash tools/config-migrator/run-all.sh
