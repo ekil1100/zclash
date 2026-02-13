@@ -94,3 +94,41 @@ jobs:
           files: |
             dist/*.tar.gz
             dist/*.sha256
+
+  update-tap:
+    needs: publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout homebrew-tap
+        uses: actions/checkout@v4
+        with:
+          repository: ekil1100/homebrew-tap
+          token: ${{ secrets.TAP_TOKEN }}
+          path: homebrew-tap
+
+      - name: Download release assets
+        run: |
+          cd homebrew-tap
+          VERSION="${{ github.ref_name }}"
+          # Download macOS ARM64
+          curl -fsSL "https://github.com/ekil1100/zc/releases/download/${VERSION}/zc-${VERSION}-macos-arm64.tar.gz" -o macos-arm64.tar.gz
+          # Download Linux AMD64
+          curl -fsSL "https://github.com/ekil1100/zc/releases/download/${VERSION}/zc-${VERSION}-linux-amd64.tar.gz" -o linux-amd64.tar.gz
+          # Calculate SHA256
+          MACOS_SHA=$(sha256sum macos-arm64.tar.gz | cut -d' ' -f1)
+          LINUX_SHA=$(sha256sum linux-amd64.tar.gz | cut -d' ' -f1)
+          # Update formula
+          sed -i "s/version \".*\"/version \"${VERSION#v}\"/" zc.rb
+          sed -i "s/sha256 \"c704101c409af5ba562c814db2762826ee47962833c684a1beae21602d3e23e2\"/sha256 \"${MACOS_SHA}\"/" zc.rb
+          sed -i "s/sha256 \"fdf5b6a70e562947af7d056d860d78107db2a420225e094ff674fa7ff6063d18\"/sha256 \"${LINUX_SHA}\"/" zc.rb
+          # Cleanup
+          rm -f macos-arm64.tar.gz linux-amd64.tar.gz
+
+      - name: Commit and push
+        run: |
+          cd homebrew-tap
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add zc.rb
+          git commit -m "Update zc to ${{ github.ref_name }}"
+          git push
