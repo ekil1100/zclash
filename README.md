@@ -33,7 +33,7 @@ curl -fsSL https://raw.githubusercontent.com/ekil1100/zc/main/scripts/install-cu
 
 ### Build from Source
 
-Requires Zig 0.13.0+:
+Requires Zig 0.15.0+:
 
 ```bash
 git clone https://github.com/ekil1100/zc
