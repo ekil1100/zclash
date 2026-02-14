@@ -627,6 +627,8 @@ pub fn downloadConfig(allocator: std.mem.Allocator, url: []const u8, name: ?[]co
         .response_writer = &response_writer.writer,
         .extra_headers = &.{
             .{ .name = "User-Agent", .value = "clash" },
+            .{ .name = "Accept", .value = "*/*" },
+            .{ .name = "Accept-Language", .value = "en-US,en;q=0.9" },
         },
     }) catch |err| {
         std.debug.print("Failed to download config: {s}\n", .{@errorName(err)});
@@ -634,7 +636,7 @@ pub fn downloadConfig(allocator: std.mem.Allocator, url: []const u8, name: ?[]co
     };
 
     if (result.status != .ok) {
-        std.debug.print("Failed to download config: HTTP {d}\n", .{@intFromEnum(result.status)});
+        std.debug.print("Failed to download config: HTTP {d} ({s})\n", .{@intFromEnum(result.status), @tagName(result.status)});
         return error.DownloadFailed;
     }
 
