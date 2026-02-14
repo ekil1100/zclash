@@ -625,6 +625,9 @@ pub fn downloadConfig(allocator: std.mem.Allocator, url: []const u8, name: ?[]co
         .location = .{ .url = url },
         .method = .GET,
         .response_writer = &response_writer.writer,
+        .extra_headers = &.{
+            .{ .name = "User-Agent", .value = "clash" },
+        },
     }) catch |err| {
         std.debug.print("Failed to download config: {s}\n", .{@errorName(err)});
         return err;
